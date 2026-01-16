@@ -6,14 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ImageUpload } from '@/components/ImageUpload';
 import { useLocations, useCreateLocation, useUpdateLocation, useToggleLocationStatus } from '@/hooks/useLocations';
-import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power } from 'lucide-react';
+import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power, Trash2 } from 'lucide-react';
 import type { Location } from '@/hooks/useLocations';
+
+interface TimeSlot {
+  start: string;
+  end: string;
+}
+
+const DEFAULT_TIME_SLOTS: TimeSlot[] = [
+  { start: '08:00', end: '17:00' },
+  { start: '18:00', end: '01:30' },
+];
 
 export default function AdminLocations() {
   const { data: locations, isLoading } = useLocations(true);
@@ -30,11 +40,13 @@ export default function AdminLocations() {
     description: '',
     capacity: 10,
     rules: '',
-    available_start_time: '08:00',
-    available_end_time: '22:00',
+    time_slots: DEFAULT_TIME_SLOTS,
     price_per_hour: 0,
     price_fixed: null as number | null,
+    price_per_hour_member: 0,
+    price_fixed_member: null as number | null,
     images: [] as string[],
+    imageUrls: '', // For manual URL input
   });
 
   const resetForm = () => {
@@ -43,49 +55,87 @@ export default function AdminLocations() {
       description: '',
       capacity: 10,
       rules: '',
-      available_start_time: '08:00',
-      available_end_time: '22:00',
+      time_slots: DEFAULT_TIME_SLOTS,
       price_per_hour: 0,
       price_fixed: null,
+      price_per_hour_member: 0,
+      price_fixed_member: null,
       images: [],
+      imageUrls: '',
     });
     setEditingLocation(null);
   };
 
   const openEditForm = (location: Location) => {
     setEditingLocation(location);
+    const timeSlots = (location as any).time_slots as TimeSlot[] || [
+      { start: location.available_start_time.substring(0, 5), end: location.available_end_time.substring(0, 5) }
+    ];
     setFormData({
       name: location.name,
       description: location.description || '',
       capacity: location.capacity,
       rules: location.rules || '',
-      available_start_time: location.available_start_time.substring(0, 5),
-      available_end_time: location.available_end_time.substring(0, 5),
+      time_slots: timeSlots.length > 0 ? timeSlots : DEFAULT_TIME_SLOTS,
       price_per_hour: location.price_per_hour,
       price_fixed: location.price_fixed,
+      price_per_hour_member: (location as any).price_per_hour_member || 0,
+      price_fixed_member: (location as any).price_fixed_member || null,
       images: location.images || [],
+      imageUrls: '',
     });
     setShowForm(true);
   };
 
+  const handleAddTimeSlot = () => {
+    setFormData({
+      ...formData,
+      time_slots: [...formData.time_slots, { start: '08:00', end: '22:00' }],
+    });
+  };
+
+  const handleRemoveTimeSlot = (index: number) => {
+    if (formData.time_slots.length <= 1) return;
+    setFormData({
+      ...formData,
+      time_slots: formData.time_slots.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleTimeSlotChange = (index: number, field: 'start' | 'end', value: string) => {
+    const newSlots = [...formData.time_slots];
+    newSlots[index] = { ...newSlots[index], [field]: value };
+    setFormData({ ...formData, time_slots: newSlots });
+  };
+
   const handleSubmit = async () => {
+    // Combine uploaded images with manual URLs
+    const manualUrls = formData.imageUrls.split('\n').filter(url => url.trim());
+    const allImages = [...formData.images, ...manualUrls];
+
+    // Use first time slot for legacy fields
+    const firstSlot = formData.time_slots[0] || DEFAULT_TIME_SLOTS[0];
+
     const data = {
       name: formData.name,
       description: formData.description || null,
       capacity: formData.capacity,
       rules: formData.rules || null,
-      available_start_time: formData.available_start_time,
-      available_end_time: formData.available_end_time,
+      available_start_time: firstSlot.start,
+      available_end_time: firstSlot.end,
+      time_slots: formData.time_slots,
       price_per_hour: formData.price_per_hour,
       price_fixed: formData.price_fixed,
-      images: formData.images.length > 0 ? formData.images : null,
+      price_per_hour_member: formData.price_per_hour_member,
+      price_fixed_member: formData.price_fixed_member,
+      images: allImages.length > 0 ? allImages : null,
     };
 
     try {
       if (editingLocation) {
-        await updateLocation.mutateAsync({ id: editingLocation.id, data });
+        await updateLocation.mutateAsync({ id: editingLocation.id, data: data as any });
       } else {
-        await createLocation.mutateAsync(data);
+        await createLocation.mutateAsync(data as any);
       }
       setShowForm(false);
       resetForm();
@@ -97,6 +147,14 @@ export default function AdminLocations() {
   const filteredLocations = locations?.filter(location =>
     location.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const formatTimeSlots = (location: Location) => {
+    const slots = (location as any).time_slots as TimeSlot[] | null;
+    if (slots && slots.length > 0) {
+      return slots.map(s => `${s.start} - ${s.end}`).join(' | ');
+    }
+    return `${location.available_start_time.substring(0, 5)} - ${location.available_end_time.substring(0, 5)}`;
+  };
 
   return (
     <AppLayout>
@@ -165,7 +223,7 @@ export default function AdminLocations() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>{location.available_start_time.substring(0, 5)} - {location.available_end_time.substring(0, 5)}</span>
+                        <span className="truncate max-w-[200px]">{formatTimeSlots(location)}</span>
                       </div>
                       <div className="flex items-center gap-1 text-primary font-medium">
                         <DollarSign className="w-4 h-4" />
@@ -176,6 +234,14 @@ export default function AdminLocations() {
                           }
                         </span>
                       </div>
+                      {((location as any).price_per_hour_member > 0 || (location as any).price_fixed_member) && (
+                        <Badge variant="outline" className="text-success border-success">
+                          Sócio: {(location as any).price_fixed_member 
+                            ? `R$ ${(location as any).price_fixed_member.toFixed(2)}`
+                            : `R$ ${((location as any).price_per_hour_member || 0).toFixed(2)}/h`
+                          }
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   
@@ -216,12 +282,13 @@ export default function AdminLocations() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) { setShowForm(false); resetForm(); } else setShowForm(true); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingLocation ? 'Editar Local' : 'Novo Local'}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Basic Info */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome *</Label>
@@ -265,63 +332,134 @@ export default function AdminLocations() {
                 rows={3}
               />
             </div>
-            
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_time">Horário de Início</Label>
-                <Input
-                  id="start_time"
-                  type="time"
-                  value={formData.available_start_time}
-                  onChange={(e) => setFormData({ ...formData, available_start_time: e.target.value })}
-                />
+
+            {/* Time Slots */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Horários de Funcionamento</Label>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddTimeSlot}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar Horário
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="end_time">Horário de Término</Label>
-                <Input
-                  id="end_time"
-                  type="time"
-                  value={formData.available_end_time}
-                  onChange={(e) => setFormData({ ...formData, available_end_time: e.target.value })}
-                />
-              </div>
+              
+              {formData.time_slots.map((slot, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Início</Label>
+                      <Input
+                        type="time"
+                        value={slot.start}
+                        onChange={(e) => handleTimeSlotChange(index, 'start', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Término</Label>
+                      <Input
+                        type="time"
+                        value={slot.end}
+                        onChange={(e) => handleTimeSlotChange(index, 'end', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {formData.time_slots.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveTimeSlot(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
             
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price_per_hour">Preço por Hora (R$)</Label>
-                <Input
-                  id="price_per_hour"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.price_per_hour}
-                  onChange={(e) => setFormData({ ...formData, price_per_hour: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="price_fixed">Preço Fixo (opcional)</Label>
-                <Input
-                  id="price_fixed"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.price_fixed || ''}
-                  onChange={(e) => setFormData({ ...formData, price_fixed: e.target.value ? parseFloat(e.target.value) : null })}
-                  placeholder="Deixe vazio para usar preço por hora"
-                />
+            {/* Pricing - Regular */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Preços Regulares</Label>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price_per_hour">Preço por Hora (R$)</Label>
+                  <Input
+                    id="price_per_hour"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.price_per_hour}
+                    onChange={(e) => setFormData({ ...formData, price_per_hour: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price_fixed">Preço Fixo (opcional)</Label>
+                  <Input
+                    id="price_fixed"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.price_fixed || ''}
+                    onChange={(e) => setFormData({ ...formData, price_fixed: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder="Deixe vazio para usar preço por hora"
+                  />
+                </div>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="images">URLs das Imagens (uma por linha)</Label>
-              <Textarea
-                id="images"
-                value={formData.images.join('\n')}
-                onChange={(e) => setFormData({ ...formData, images: e.target.value.split('\n').filter(Boolean) })}
-                placeholder="https://exemplo.com/imagem1.jpg&#10;https://exemplo.com/imagem2.jpg"
-                rows={3}
+
+            {/* Pricing - Member */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                Preços para Sócios
+                <Badge variant="outline" className="text-success border-success">Desconto</Badge>
+              </Label>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price_per_hour_member">Preço por Hora - Sócio (R$)</Label>
+                  <Input
+                    id="price_per_hour_member"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.price_per_hour_member}
+                    onChange={(e) => setFormData({ ...formData, price_per_hour_member: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price_fixed_member">Preço Fixo - Sócio (opcional)</Label>
+                  <Input
+                    id="price_fixed_member"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.price_fixed_member || ''}
+                    onChange={(e) => setFormData({ ...formData, price_fixed_member: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder="Deixe vazio para usar preço por hora"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Imagens do Local</Label>
+              <ImageUpload
+                images={formData.images}
+                onImagesChange={(images) => setFormData({ ...formData, images })}
+                maxImages={5}
               />
+              
+              <div className="space-y-2">
+                <Label htmlFor="imageUrls" className="text-sm text-muted-foreground">URLs de Imagens Externas (uma por linha)</Label>
+                <Textarea
+                  id="imageUrls"
+                  value={formData.imageUrls}
+                  onChange={(e) => setFormData({ ...formData, imageUrls: e.target.value })}
+                  placeholder="https://exemplo.com/imagem1.jpg&#10;https://exemplo.com/imagem2.jpg"
+                  rows={2}
+                />
+              </div>
             </div>
           </div>
           

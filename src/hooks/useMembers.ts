@@ -1,0 +1,176 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+
+export type Member = Tables<'members'>;
+
+export function useMembers(includeInactive = false) {
+  return useQuery({
+    queryKey: ['members', { includeInactive }],
+    queryFn: async () => {
+      let query = supabase
+        .from('members')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (!includeInactive) {
+        query = query.eq('is_active', true);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Member[];
+    },
+  });
+}
+
+export function useMember(id: string) {
+  return useQuery({
+    queryKey: ['members', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data as Member;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useUserMembership(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['user-membership', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as Member | null;
+    },
+    enabled: !!userId,
+  });
+}
+
+export function useCreateMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: TablesInsert<'members'>) => {
+      const { data: member, error } = await supabase
+        .from('members')
+        .insert(data)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return member;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Sócio cadastrado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao cadastrar sócio: ' + error.message);
+    },
+  });
+}
+
+export function useUpdateMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: TablesUpdate<'members'> }) => {
+      const { error } = await supabase
+        .from('members')
+        .update({ ...data, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Sócio atualizado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar sócio: ' + error.message);
+    },
+  });
+}
+
+export function useToggleMemberStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from('members')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, { isActive }) => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success(isActive ? 'Sócio ativado!' : 'Sócio desativado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao alterar status: ' + error.message);
+    },
+  });
+}
+
+export function useDeleteMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Sócio removido com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao remover sócio: ' + error.message);
+    },
+  });
+}
+
+export function useLinkMemberToUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ memberId, userId }: { memberId: string; userId: string | null }) => {
+      const { error } = await supabase
+        .from('members')
+        .update({ user_id: userId, updated_at: new Date().toISOString() })
+        .eq('id', memberId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['user-membership'] });
+      toast.success('Vínculo atualizado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao vincular: ' + error.message);
+    },
+  });
+}
