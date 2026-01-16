@@ -94,8 +94,11 @@ export type Database = {
           is_active: boolean
           name: string
           price_fixed: number | null
+          price_fixed_member: number | null
           price_per_hour: number
+          price_per_hour_member: number | null
           rules: string | null
+          time_slots: Json | null
           updated_at: string
         }
         Insert: {
@@ -109,8 +112,11 @@ export type Database = {
           is_active?: boolean
           name: string
           price_fixed?: number | null
+          price_fixed_member?: number | null
           price_per_hour?: number
+          price_per_hour_member?: number | null
           rules?: string | null
+          time_slots?: Json | null
           updated_at?: string
         }
         Update: {
@@ -124,11 +130,61 @@ export type Database = {
           is_active?: boolean
           name?: string
           price_fixed?: number | null
+          price_fixed_member?: number | null
           price_per_hour?: number
+          price_per_hour_member?: number | null
           rules?: string | null
+          time_slots?: Json | null
           updated_at?: string
         }
         Relationships: []
+      }
+      members: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
