@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Locations from "./pages/Locations";
+import LocationDetails from "./pages/LocationDetails";
+import MyReservations from "./pages/MyReservations";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,8 +51,9 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
-      <Route path="/my-reservations" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/notifications" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/locations/:id" element={<ProtectedRoute><LocationDetails /></ProtectedRoute>} />
+      <Route path="/my-reservations" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

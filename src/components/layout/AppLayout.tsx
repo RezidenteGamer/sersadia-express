@@ -10,7 +10,8 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 lg:ml-0">
-        <div className="content-container animate-fade-in">
+        {/* Add top padding on mobile to account for menu button */}
+        <div className="content-container animate-fade-in pt-16 lg:pt-8">
           {children}
         </div>
       </main>
