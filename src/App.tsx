@@ -13,6 +13,13 @@ import LocationDetails from "./pages/LocationDetails";
 import MyReservations from "./pages/MyReservations";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLocations from "./pages/admin/AdminLocations";
+import AdminReservations from "./pages/admin/AdminReservations";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminCheckin from "./pages/admin/AdminCheckin";
+import AdminReports from "./pages/admin/AdminReports";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +61,13 @@ function AppRoutes() {
       <Route path="/locations/:id" element={<ProtectedRoute><LocationDetails /></ProtectedRoute>} />
       <Route path="/my-reservations" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/locations" element={<ProtectedRoute><AdminLocations /></ProtectedRoute>} />
+      <Route path="/admin/reservations" element={<ProtectedRoute><AdminReservations /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
+      <Route path="/admin/checkin" element={<ProtectedRoute><AdminCheckin /></ProtectedRoute>} />
+      <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
