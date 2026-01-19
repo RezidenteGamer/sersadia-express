@@ -22,7 +22,7 @@ export default function Index() {
               Sistema de reservas de espaços simples, moderno e eficiente para sua associação.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="h-14 px-8 text-lg" onClick={() => navigate('/auth')}>
+              <Button size="lg" className="h-14 px-8 text-lg" onClick={() => navigate('/auth?mode=signup')}>
                 Começar Agora
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>

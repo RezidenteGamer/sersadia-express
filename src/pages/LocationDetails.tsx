@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, addDays, parse } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,12 +18,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+interface TimeSlot {
+  start: string;
+  end: string;
+}
+
 export default function LocationDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
-  const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
@@ -50,30 +55,35 @@ export default function LocationDetails() {
     );
   }
 
-  // Generate time slots based on location availability
-  const generateTimeSlots = () => {
-    const slots: { start: string; end: string; available: boolean }[] = [];
-    const startHour = parseInt(location.available_start_time.split(':')[0]);
-    const endHour = parseInt(location.available_end_time.split(':')[0]);
+  // Get fixed time slots from location - use time_slots field or fallback to legacy fields
+  const getFixedTimeSlots = (): { slot: TimeSlot; available: boolean }[] => {
+    // Try to get time_slots from location (stored as JSON)
+    const locationTimeSlots = (location as any).time_slots as TimeSlot[] | null;
     
-    for (let hour = startHour; hour < endHour; hour++) {
-      const start = `${hour.toString().padStart(2, '0')}:00`;
-      const end = `${(hour + 1).toString().padStart(2, '0')}:00`;
-      
-      // Check if this slot is already booked
-      const isBooked = bookedSlots?.some(slot => {
-        const slotStart = slot.start_time.substring(0, 5);
-        const slotEnd = slot.end_time.substring(0, 5);
-        return (start >= slotStart && start < slotEnd) || (end > slotStart && end <= slotEnd);
+    // Default slots if none defined
+    const defaultSlots: TimeSlot[] = [
+      { start: '08:00', end: '17:00' },
+      { start: '18:30', end: '01:30' },
+    ];
+    
+    const slots = locationTimeSlots && locationTimeSlots.length > 0 
+      ? locationTimeSlots 
+      : defaultSlots;
+    
+    // Check availability for each slot
+    return slots.map(slot => {
+      // Check if this exact slot is already booked
+      const isBooked = bookedSlots?.some(booked => {
+        const bookedStart = booked.start_time.substring(0, 5);
+        const bookedEnd = booked.end_time.substring(0, 5);
+        return bookedStart === slot.start && bookedEnd === slot.end;
       });
       
-      slots.push({ start, end, available: !isBooked });
-    }
-    
-    return slots;
+      return { slot, available: !isBooked };
+    });
   };
 
-  const timeSlots = generateTimeSlots();
+  const timeSlots = getFixedTimeSlots();
 
   const calculatePrice = () => {
     if (!selectedSlot) return 0;
@@ -200,22 +210,22 @@ export default function LocationDetails() {
               {/* Time Slots */}
               {selectedDate && (
                 <div>
-                  <Label className="mb-2 block">Horário Disponível</Label>
-                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                    {timeSlots.map((slot) => (
+                  <Label className="mb-2 block">Selecione o Período</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {timeSlots.map(({ slot, available }) => (
                       <button
-                        key={slot.start}
-                        onClick={() => slot.available && setSelectedSlot(slot)}
-                        disabled={!slot.available}
+                        key={`${slot.start}-${slot.end}`}
+                        onClick={() => available && setSelectedSlot(slot)}
+                        disabled={!available}
                         className={cn(
-                          "p-2 text-sm rounded-lg border transition-colors",
-                          !slot.available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50",
-                          slot.available && selectedSlot?.start === slot.start 
+                          "p-3 text-sm rounded-lg border transition-colors text-left",
+                          !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50",
+                          available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end
                             ? "bg-primary text-primary-foreground border-primary"
-                            : slot.available && "hover:border-primary hover:bg-primary/5"
+                            : available && "hover:border-primary hover:bg-primary/5"
                         )}
                       >
-                        {slot.start} - {slot.end}
+                        <span className="font-medium">{slot.start} - {slot.end}</span>
                       </button>
                     ))}
                   </div>
