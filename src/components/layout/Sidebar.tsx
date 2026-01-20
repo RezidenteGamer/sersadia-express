@@ -13,7 +13,8 @@ import {
   LogOut,
   Home,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -32,6 +33,7 @@ const userNavItems: NavItem[] = [
   { label: 'Locais', href: '/locations', icon: MapPin },
   { label: 'Minhas Reservas', href: '/my-reservations', icon: Calendar },
   { label: 'Notificações', href: '/notifications', icon: Bell },
+  { label: 'Meu Perfil', href: '/profile', icon: User },
 ];
 
 const adminNavItems: NavItem[] = [

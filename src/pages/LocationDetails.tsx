@@ -9,14 +9,16 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info } from 'lucide-react';
+import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 interface TimeSlot {
   start: string;
@@ -33,6 +35,8 @@ export default function LocationDetails() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   const { data: location, isLoading } = useLocation(id!);
+  const { data: membership } = useUserMembership(user?.id);
+  const isMember = !!membership;
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const { data: bookedSlots } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
@@ -87,11 +91,20 @@ export default function LocationDetails() {
 
   const calculatePrice = () => {
     if (!selectedSlot) return 0;
-    if (location.price_fixed) return location.price_fixed;
     
-    const startHour = parseInt(selectedSlot.start.split(':')[0]);
-    const endHour = parseInt(selectedSlot.end.split(':')[0]);
-    return (endHour - startHour) * location.price_per_hour;
+    // Use member prices if user is a member and member price is set
+    const fixedPrice = isMember && location.price_fixed_member != null 
+      ? location.price_fixed_member 
+      : location.price_fixed;
+    const hourlyPrice = isMember && location.price_per_hour_member != null
+      ? location.price_per_hour_member
+      : location.price_per_hour;
+    
+    // If fixed price is set, use it directly
+    if (fixedPrice != null && fixedPrice > 0) return fixedPrice;
+    
+    // Return hourly price (for the period, not calculated by hours)
+    return hourlyPrice;
   };
 
   const handleReserve = async () => {
@@ -161,10 +174,16 @@ export default function LocationDetails() {
                   <span>
                     {location.price_fixed 
                       ? `R$ ${location.price_fixed.toFixed(2)} (fixo)`
-                      : `R$ ${location.price_per_hour.toFixed(2)}/hora`
+                      : `R$ ${location.price_per_hour.toFixed(2)}/período`
                     }
                   </span>
                 </div>
+                {isMember && (
+                  <Badge variant="outline" className="text-success border-success">
+                    <Tag className="w-3 h-3 mr-1" />
+                    Preço de Sócio
+                  </Badge>
+                )}
               </div>
               
               {location.description && (
@@ -234,13 +253,19 @@ export default function LocationDetails() {
               
               {/* Price Summary */}
               {selectedSlot && (
-                <div className="p-4 bg-muted rounded-lg">
+                <div className="p-4 bg-muted rounded-lg space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Valor Total</span>
                     <span className="text-xl font-bold text-primary">
                       R$ {calculatePrice().toFixed(2)}
                     </span>
                   </div>
+                  {isMember && (
+                    <div className="text-xs text-success flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      Desconto de sócio aplicado
+                    </div>
+                  )}
                 </div>
               )}
               

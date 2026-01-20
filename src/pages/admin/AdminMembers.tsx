@@ -20,8 +20,9 @@ import {
   useLinkMemberToUser 
 } from '@/hooks/useMembers';
 import { useUsers } from '@/hooks/useUsers';
-import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink } from 'lucide-react';
+import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus } from 'lucide-react';
 import type { Member } from '@/hooks/useMembers';
+import { Tables } from '@/integrations/supabase/types';
 
 export default function AdminMembers() {
   const { data: members, isLoading } = useMembers(true);
@@ -35,15 +36,18 @@ export default function AdminMembers() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [linkingMember, setLinkingMember] = useState<Member | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserToAdd, setSelectedUserToAdd] = useState<string>('');
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     cpf: '',
+    mbrf_id: '',
     notes: '',
   });
 
@@ -53,6 +57,7 @@ export default function AdminMembers() {
       email: '',
       phone: '',
       cpf: '',
+      mbrf_id: '',
       notes: '',
     });
     setEditingMember(null);
@@ -65,6 +70,7 @@ export default function AdminMembers() {
       email: member.email || '',
       phone: member.phone || '',
       cpf: member.cpf || '',
+      mbrf_id: (member as any).mbrf_id || '',
       notes: member.notes || '',
     });
     setShowForm(true);
@@ -82,6 +88,7 @@ export default function AdminMembers() {
       email: formData.email || null,
       phone: formData.phone || null,
       cpf: formData.cpf || null,
+      mbrf_id: formData.mbrf_id || null,
       notes: formData.notes || null,
     };
 
@@ -122,7 +129,8 @@ export default function AdminMembers() {
   const filteredMembers = members?.filter(member =>
     member.name.toLowerCase().includes(search.toLowerCase()) ||
     member.email?.toLowerCase().includes(search.toLowerCase()) ||
-    member.cpf?.includes(search)
+    member.cpf?.includes(search) ||
+    (member as any).mbrf_id?.includes(search)
   );
 
   const getUserName = (userId: string | null) => {
@@ -131,16 +139,47 @@ export default function AdminMembers() {
     return user?.full_name || user?.email;
   };
 
+  // Get users that are not already members
+  const availableUsersToAdd = users?.filter(user => 
+    !members?.some(member => member.user_id === user.id)
+  );
+
+  const handleAddUserAsMember = async () => {
+    if (!selectedUserToAdd) return;
+    const user = users?.find(u => u.id === selectedUserToAdd);
+    if (!user) return;
+
+    try {
+      await createMember.mutateAsync({
+        name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        user_id: user.id,
+        mbrf_id: (user as any).mbrf_id || null,
+      });
+      setShowAddUserDialog(false);
+      setSelectedUserToAdd('');
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
   return (
     <AppLayout>
       <PageHeader 
         title="Gerenciar Sócios"
         description="Cadastre e gerencie os sócios do clube"
         action={
-          <Button onClick={() => { resetForm(); setShowForm(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Sócio
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Adicionar Usuário
+            </Button>
+            <Button onClick={() => { resetForm(); setShowForm(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Sócio
+            </Button>
+          </div>
         }
       />
 
@@ -324,6 +363,17 @@ export default function AdminMembers() {
                 placeholder="000.000.000-00"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mbrf_id">ID MBRF (6 dígitos)</Label>
+              <Input
+                id="mbrf_id"
+                value={formData.mbrf_id}
+                onChange={(e) => setFormData({ ...formData, mbrf_id: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                placeholder="000000"
+                maxLength={6}
+              />
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="notes">Observações</Label>
@@ -398,6 +448,49 @@ export default function AdminMembers() {
               disabled={linkMember.isPending}
             >
               {linkMember.isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add User as Member Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Usuário como Sócio</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione um usuário cadastrado para adicioná-lo como sócio automaticamente.
+            </p>
+            
+            <div className="space-y-2">
+              <Label>Usuário</Label>
+              <Select value={selectedUserToAdd} onValueChange={setSelectedUserToAdd}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um usuário..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUsersToAdd?.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAddUserAsMember}
+              disabled={!selectedUserToAdd || createMember.isPending}
+            >
+              {createMember.isPending ? 'Adicionando...' : 'Adicionar como Sócio'}
             </Button>
           </DialogFooter>
         </DialogContent>

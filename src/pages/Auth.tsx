@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, IdCard } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -16,6 +17,7 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  mbrfId: z.string().regex(/^\d{6}$/, 'ID MBRF deve ter exatamente 6 dígitos').optional().or(z.literal('')),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
@@ -35,6 +37,7 @@ export default function Auth() {
     password: '',
     confirmPassword: '',
     fullName: '',
+    mbrfId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,7 +87,7 @@ export default function Auth() {
           return;
         }
 
-        const { error } = await signUp(formData.email, formData.password, formData.fullName);
+        const { error, data } = await signUp(formData.email, formData.password, formData.fullName);
         if (error) {
           if (error.message.includes('already registered')) {
             toast.error('Este email já está cadastrado');
@@ -92,6 +95,13 @@ export default function Auth() {
             toast.error(error.message);
           }
         } else {
+          // Update profile with MBRF ID if provided
+          if (data?.user && formData.mbrfId) {
+            await supabase
+              .from('profiles')
+              .update({ mbrf_id: formData.mbrfId })
+              .eq('id', data.user.id);
+          }
           toast.success('Conta criada com sucesso! Bem-vindo!');
           navigate('/dashboard');
         }
@@ -145,6 +155,30 @@ export default function Auth() {
                   {errors.fullName && (
                     <p className="text-sm text-destructive">{errors.fullName}</p>
                   )}
+                </div>
+              )}
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="mbrfId">ID MBRF (6 dígitos)</Label>
+                  <div className="relative">
+                    <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="mbrfId"
+                      type="text"
+                      placeholder="000000"
+                      className="pl-10"
+                      maxLength={6}
+                      value={formData.mbrfId}
+                      onChange={(e) => setFormData({ ...formData, mbrfId: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                    />
+                  </div>
+                  {errors.mbrfId && (
+                    <p className="text-sm text-destructive">{errors.mbrfId}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Opcional. Se você é sócio, informe seu ID para ter desconto automaticamente.
+                  </p>
                 </div>
               )}
 
