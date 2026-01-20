@@ -12,6 +12,7 @@ import Locations from "./pages/Locations";
 import LocationDetails from "./pages/LocationDetails";
 import MyReservations from "./pages/MyReservations";
 import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLocations from "./pages/admin/AdminLocations";
@@ -62,6 +63,7 @@ function AppRoutes() {
       <Route path="/locations/:id" element={<ProtectedRoute><LocationDetails /></ProtectedRoute>} />
       <Route path="/my-reservations" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/locations" element={<ProtectedRoute><AdminLocations /></ProtectedRoute>} />
       <Route path="/admin/reservations" element={<ProtectedRoute><AdminReservations /></ProtectedRoute>} />

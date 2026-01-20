@@ -146,6 +146,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          mbrf_id: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -158,6 +159,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          mbrf_id?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -170,6 +172,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          mbrf_id?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -261,6 +264,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          mbrf_id: string | null
           phone: string | null
           updated_at: string
         }
@@ -270,6 +274,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          mbrf_id?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -279,6 +284,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          mbrf_id?: string | null
           phone?: string | null
           updated_at?: string
         }
