@@ -48,15 +48,36 @@ export function useUserMembership(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
       
-      const { data, error } = await supabase
+      // First try to find by user_id direct link
+      const { data: directMember, error: directError } = await supabase
         .from('members')
         .select('*')
         .eq('user_id', userId)
         .eq('is_active', true)
         .maybeSingle();
       
-      if (error) throw error;
-      return data as Member | null;
+      if (directError) throw directError;
+      if (directMember) return directMember as Member;
+      
+      // If not found, try to match by mbrf_id from user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('mbrf_id')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profile?.mbrf_id) return null;
+      
+      // Find member with matching mbrf_id
+      const { data: memberByMbrfId, error: memberError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('mbrf_id', profile.mbrf_id)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (memberError) throw memberError;
+      return memberByMbrfId as Member | null;
     },
     enabled: !!userId,
   });
