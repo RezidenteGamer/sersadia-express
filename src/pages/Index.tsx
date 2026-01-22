@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Shield, ArrowRight } from 'lucide-react';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -12,12 +13,10 @@ export default function Index() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-8">
-              <span className="text-primary-foreground font-bold text-3xl">F</span>
+            <div className="inline-flex items-center justify-center mb-8">
+              <BrandLogo className="h-16 sm:h-20" alt="Ser Sadia Express" />
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Facilite
-            </h1>
+            <h1 className="sr-only">Ser Sadia Express</h1>
             <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
               Sistema de reservas de espaços simples, moderno e eficiente para sua associação.
             </p>
@@ -67,14 +66,9 @@ export default function Index() {
       <footer className="border-t bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">F</span>
-              </div>
-              <span className="font-semibold text-foreground">Facilite</span>
-            </div>
+            <BrandLogo className="h-8" alt="Ser Sadia Express" />
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Facilite. Todos os direitos reservados.
+              © {new Date().getFullYear()} Ser Sadia Express. Todos os direitos reservados.
             </p>
           </div>
         </div>

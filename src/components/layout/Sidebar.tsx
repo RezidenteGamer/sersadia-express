@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { BrandLogo } from '@/components/BrandLogo';
 
 interface NavItem {
   label: string;
@@ -67,10 +68,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-lg">F</span>
-          </div>
-          <span className="text-xl font-bold text-sidebar-foreground">Facilite</span>
+          <BrandLogo className="h-9" />
         </Link>
       </div>
 
