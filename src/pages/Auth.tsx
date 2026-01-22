@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, IdCard } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { BrandLogo } from '@/components/BrandLogo';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -118,10 +119,10 @@ export default function Auth() {
       <div className="w-full max-w-md animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-            <span className="text-primary-foreground font-bold text-2xl">F</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <BrandLogo className="h-14" alt="Ser Sadia Express" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Facilite</h1>
+          <h1 className="sr-only">Ser Sadia Express</h1>
           <p className="text-muted-foreground mt-1">Sistema de Reservas</p>
         </div>
 
