@@ -1,26 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  CreditCard, 
-  UserCheck,
-  BarChart3,
-  Bell,
-  Settings,
-  LogOut,
-  Home,
-  Menu,
-  X,
-  User
-} from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Users, CreditCard, UserCheck, BarChart3, Bell, Settings, LogOut, Home, Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/BrandLogo';
-
 interface NavItem {
   label: string;
   href: string;
@@ -28,45 +12,88 @@ interface NavItem {
   permission?: string;
   adminOnly?: boolean;
 }
-
-const userNavItems: NavItem[] = [
-  { label: 'Início', href: '/dashboard', icon: Home },
-  { label: 'Locais', href: '/locations', icon: MapPin },
-  { label: 'Minhas Reservas', href: '/my-reservations', icon: Calendar },
-  { label: 'Notificações', href: '/notifications', icon: Bell },
-  { label: 'Meu Perfil', href: '/profile', icon: User },
-];
-
-const adminNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, adminOnly: true },
-  { label: 'Locais', href: '/admin/locations', icon: MapPin, permission: 'manage_locations' },
-  { label: 'Reservas', href: '/admin/reservations', icon: Calendar, permission: 'manage_reservations' },
-  { label: 'Sócios', href: '/admin/members', icon: Users, permission: 'manage_users' },
-  { label: 'Usuários', href: '/admin/users', icon: Settings, permission: 'manage_users' },
-  { label: 'Pagamentos', href: '/admin/payments', icon: CreditCard, permission: 'manage_payments' },
-  { label: 'Check-in', href: '/admin/checkin', icon: UserCheck, permission: 'manage_checkin' },
-  { label: 'Relatórios', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
-];
-
+const userNavItems: NavItem[] = [{
+  label: 'Início',
+  href: '/dashboard',
+  icon: Home
+}, {
+  label: 'Locais',
+  href: '/locations',
+  icon: MapPin
+}, {
+  label: 'Minhas Reservas',
+  href: '/my-reservations',
+  icon: Calendar
+}, {
+  label: 'Notificações',
+  href: '/notifications',
+  icon: Bell
+}, {
+  label: 'Meu Perfil',
+  href: '/profile',
+  icon: User
+}];
+const adminNavItems: NavItem[] = [{
+  label: 'Dashboard',
+  href: '/admin',
+  icon: LayoutDashboard,
+  adminOnly: true
+}, {
+  label: 'Locais',
+  href: '/admin/locations',
+  icon: MapPin,
+  permission: 'manage_locations'
+}, {
+  label: 'Reservas',
+  href: '/admin/reservations',
+  icon: Calendar,
+  permission: 'manage_reservations'
+}, {
+  label: 'Sócios',
+  href: '/admin/members',
+  icon: Users,
+  permission: 'manage_users'
+}, {
+  label: 'Usuários',
+  href: '/admin/users',
+  icon: Settings,
+  permission: 'manage_users'
+}, {
+  label: 'Pagamentos',
+  href: '/admin/payments',
+  icon: CreditCard,
+  permission: 'manage_payments'
+}, {
+  label: 'Check-in',
+  href: '/admin/checkin',
+  icon: UserCheck,
+  permission: 'manage_checkin'
+}, {
+  label: 'Relatórios',
+  href: '/admin/reports',
+  icon: BarChart3,
+  permission: 'view_reports'
+}];
 export function Sidebar() {
-  const { profile, isAdmin, permissions, signOut } = useAuth();
+  const {
+    profile,
+    isAdmin,
+    permissions,
+    signOut
+  } = useAuth();
   const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-
   const hasPermission = (permission?: string) => {
     if (!permission) return true;
     return isAdmin || permissions.includes(permission);
   };
-
   const filteredAdminItems = adminNavItems.filter(item => {
     if (item.adminOnly) return isAdmin;
     return hasPermission(item.permission);
   });
-
-  const NavContent = () => (
-    <div className="flex flex-col h-full">
+  const NavContent = () => <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-6 border-b border-sidebar-border bg-orange-50">
         <Link to="/" className="flex items-center gap-3">
           <BrandLogo className="h-9" />
         </Link>
@@ -76,59 +103,33 @@ export function Sidebar() {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {/* User Navigation */}
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-wider text-sidebar-foreground/50 px-3 mb-2">
+          <p className="text-xs uppercase tracking-wider px-3 mb-2 text-primary-foreground">
             Menu
           </p>
-          {userNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                  isActive 
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
-                )}
-              >
+          {userNavItems.map(item => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
+              </Link>;
+        })}
         </div>
 
         {/* Admin Navigation */}
-        {isAdmin && filteredAdminItems.length > 0 && (
-          <div>
-            <p className="text-xs uppercase tracking-wider text-sidebar-foreground/50 px-3 mb-2">
+        {isAdmin && filteredAdminItems.length > 0 && <div>
+            <p className="text-xs uppercase tracking-wider px-3 mb-2 text-primary-foreground">
               Administração
             </p>
-            {filteredAdminItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                    isActive 
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                      : "text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                >
+            {filteredAdminItems.map(item => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                </Link>;
+        })}
+          </div>}
       </nav>
 
       {/* User Profile & Logout */}
@@ -148,46 +149,24 @@ export function Sidebar() {
             </p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          onClick={signOut}
-        >
+        <Button variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={signOut}>
           <LogOut className="w-5 h-5 mr-3" />
           Sair
         </Button>
       </div>
-    </div>
-  );
-
-  return (
-    <>
+    </div>;
+  return <>
       {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
+      {isMobileOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileOpen(false)} />}
 
       {/* Sidebar with attached toggle button */}
-      <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-40 w-64 bg-sidebar transform transition-transform duration-200 ease-in-out",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
+      <aside className={cn("fixed lg:static inset-y-0 left-0 z-40 w-64 bg-sidebar transform transition-transform duration-200 ease-in-out", isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")}>
         {/* Mobile Toggle Button - Attached to sidebar */}
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className={cn(
-            "lg:hidden absolute top-4 p-2 rounded-r-lg bg-sidebar text-sidebar-foreground shadow-lg transition-all duration-200 ease-in-out",
-            isMobileOpen ? "right-4 rounded-lg" : "-right-12 rounded-r-lg"
-          )}
-        >
+        <button onClick={() => setIsMobileOpen(!isMobileOpen)} className={cn("lg:hidden absolute top-4 p-2 rounded-r-lg bg-sidebar text-sidebar-foreground shadow-lg transition-all duration-200 ease-in-out", isMobileOpen ? "right-4 rounded-lg" : "-right-12 rounded-r-lg")}>
           {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
         
         <NavContent />
       </aside>
-    </>
-  );
+    </>;
 }
