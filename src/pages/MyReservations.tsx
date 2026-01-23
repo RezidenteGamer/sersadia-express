@@ -13,57 +13,48 @@ import { Calendar, MapPin, Clock, X, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-
 export default function MyReservations() {
-  const { data: reservations, isLoading } = useUserReservations();
+  const {
+    data: reservations,
+    isLoading
+  } = useUserReservations();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
-
   if (isLoading) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <LoadingSpinner />
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
   const pendingReservations = reservations?.filter(r => r.status === 'pending') || [];
   const confirmedReservations = reservations?.filter(r => ['confirmed', 'presence_confirmed'].includes(r.status)) || [];
-  const pastReservations = reservations?.filter(r => 
-    ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)
-  ) || [];
-
+  const pastReservations = reservations?.filter(r => ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)) || [];
   const handleCancel = async () => {
     if (!cancelId) return;
     await cancelReservation.mutateAsync(cancelId);
     setCancelId(null);
   };
-
-  const ReservationCard = ({ reservation }: { reservation: NonNullable<typeof reservations>[0] }) => (
-    <Card className="hover:shadow-md transition-shadow">
+  const ReservationCard = ({
+    reservation
+  }: {
+    reservation: NonNullable<typeof reservations>[0];
+  }) => <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4">
             <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-              {reservation.location?.images?.[0] ? (
-                <img 
-                  src={reservation.location.images[0]} 
-                  alt={reservation.location.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
+              {reservation.location?.images?.[0] ? <img src={reservation.location.images[0]} alt={reservation.location.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">
                   <MapPin className="w-8 h-8 text-muted-foreground" />
-                </div>
-              )}
+                </div>}
             </div>
             <div className="space-y-1">
               <h3 className="font-semibold">{reservation.location?.name || 'Local'}</h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", {
+                  locale: ptBR
+                })}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
@@ -78,35 +69,18 @@ export default function MyReservations() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setViewReservation(reservation)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setViewReservation(reservation)}>
               <Eye className="w-4 h-4" />
             </Button>
-            {reservation.status === 'pending' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setCancelId(reservation.id)}
-              >
+            {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setCancelId(reservation.id)}>
                 <X className="w-4 h-4" />
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
-
-  return (
-    <AppLayout>
-      <PageHeader
-        title="Minhas Reservas"
-        description="Acompanhe todas as suas reservas"
-      />
+    </Card>;
+  return <AppLayout>
+      <PageHeader title="Minhas Reservas" description="Acompanhe todas as suas reservas" />
       
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
@@ -122,43 +96,18 @@ export default function MyReservations() {
         </TabsList>
         
         <TabsContent value="pending" className="space-y-4">
-          {pendingReservations.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="Nenhuma reserva pendente"
-              description="Suas reservas aguardando aprovação aparecerão aqui"
-              action={{
-                label: 'Fazer Reserva',
-                onClick: () => navigate('/locations'),
-              }}
-            />
-          ) : (
-            pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)
-          )}
+          {pendingReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva pendente" description="Suas reservas aguardando aprovação aparecerão aqui" action={{
+          label: 'Fazer Reserva',
+          onClick: () => navigate('/locations')
+        }} /> : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
         <TabsContent value="confirmed" className="space-y-4">
-          {confirmedReservations.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="Nenhuma reserva confirmada"
-              description="Suas reservas confirmadas aparecerão aqui"
-            />
-          ) : (
-            confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)
-          )}
+          {confirmedReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva confirmada" description="Suas reservas confirmadas aparecerão aqui" /> : confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
         <TabsContent value="history" className="space-y-4">
-          {pastReservations.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="Nenhum histórico"
-              description="Seu histórico de reservas aparecerá aqui"
-            />
-          ) : (
-            pastReservations.map(r => <ReservationCard key={r.id} reservation={r} />)
-          )}
+          {pastReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhum histórico" description="Seu histórico de reservas aparecerá aqui" /> : pastReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
       </Tabs>
       
@@ -175,11 +124,7 @@ export default function MyReservations() {
             <Button variant="outline" onClick={() => setCancelId(null)}>
               Voltar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleCancel}
-              disabled={cancelReservation.isPending}
-            >
+            <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending}>
               {cancelReservation.isPending ? 'Cancelando...' : 'Confirmar Cancelamento'}
             </Button>
           </DialogFooter>
@@ -192,12 +137,13 @@ export default function MyReservations() {
           <DialogHeader>
             <DialogTitle>Detalhes da Reserva</DialogTitle>
           </DialogHeader>
-          {viewReservation && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg space-y-2">
+          {viewReservation && <div className="space-y-4">
+              <div className="p-4 rounded-lg space-y-2 bg-primary-foreground">
                 <p><strong>Código:</strong> {viewReservation.code}</p>
                 <p><strong>Local:</strong> {viewReservation.location?.name}</p>
-                <p><strong>Data:</strong> {format(new Date(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p><strong>Data:</strong> {format(new Date(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", {
+                locale: ptBR
+              })}</p>
                 <p><strong>Horário:</strong> {viewReservation.start_time.substring(0, 5)} - {viewReservation.end_time.substring(0, 5)}</p>
                 <p><strong>Valor:</strong> R$ {viewReservation.total_price.toFixed(2)}</p>
                 <div className="flex items-center gap-2">
@@ -206,31 +152,23 @@ export default function MyReservations() {
                 </div>
               </div>
               
-              {viewReservation.user_notes && (
-                <div>
+              {viewReservation.user_notes && <div>
                   <p className="font-medium mb-1">Suas Observações:</p>
                   <p className="text-sm text-muted-foreground">{viewReservation.user_notes}</p>
-                </div>
-              )}
+                </div>}
               
-              {viewReservation.admin_notes && (
-                <div>
+              {viewReservation.admin_notes && <div>
                   <p className="font-medium mb-1">Observações da Administração:</p>
                   <p className="text-sm text-muted-foreground">{viewReservation.admin_notes}</p>
-                </div>
-              )}
+                </div>}
               
-              {viewReservation.status === 'confirmed' && (
-                <div className="p-4 bg-primary/10 rounded-lg">
+              {viewReservation.status === 'confirmed' && <div className="p-4 bg-primary/10 rounded-lg">
                   <p className="text-sm">
                     <strong>Importante:</strong> Apresente o código <span className="font-mono font-bold">{viewReservation.code}</span> no momento do check-in.
                   </p>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
         </DialogContent>
       </Dialog>
-    </AppLayout>
-  );
+    </AppLayout>;
 }
