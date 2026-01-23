@@ -239,7 +239,7 @@ export default function LocationDetails() {
             <DialogTitle>Confirmar Reserva</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg space-y-2">
+            <div className="p-4 rounded-lg space-y-2 bg-primary-foreground">
               <p><strong>Local:</strong> {location.name}</p>
               <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", {
                 locale: ptBR
