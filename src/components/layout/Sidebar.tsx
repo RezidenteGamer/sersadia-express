@@ -163,7 +163,7 @@ export function Sidebar() {
       <aside className={cn("fixed lg:static inset-y-0 left-0 z-40 w-64 bg-sidebar transform transition-transform duration-200 ease-in-out", isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")}>
         {/* Mobile Toggle Button - Attached to sidebar */}
         <button onClick={() => setIsMobileOpen(!isMobileOpen)} className={cn("lg:hidden absolute top-4 p-2 rounded-r-lg bg-sidebar text-sidebar-foreground shadow-lg transition-all duration-200 ease-in-out", isMobileOpen ? "right-4 rounded-lg" : "-right-12 rounded-r-lg")}>
-          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileOpen ? <X className="w-6 h-6 text-primary-foreground" /> : <Menu className="w-6 h-6" />}
         </button>
         
         <NavContent />
