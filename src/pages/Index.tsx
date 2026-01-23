@@ -2,12 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Shield, ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
-
 export default function Index() {
   const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
@@ -18,7 +15,7 @@ export default function Index() {
             </div>
             <h1 className="sr-only">Ser Sadia Express</h1>
             <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Sistema de reservas de espaços simples, moderno e eficiente para sua associação.
+              A melhor forma de realizar reservas no Ser Sadia!        
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="h-14 px-8 text-lg" onClick={() => navigate('/auth?mode=signup')}>
@@ -45,20 +42,29 @@ export default function Index() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { icon: MapPin, title: 'Locais', description: 'Cadastre e gerencie múltiplos espaços' },
-            { icon: Calendar, title: 'Reservas', description: 'Sistema completo de agendamentos' },
-            { icon: Users, title: 'Check-in', description: 'Controle de presença simplificado' },
-            { icon: Shield, title: 'Segurança', description: 'Permissões e acessos configuráveis' },
-          ].map((feature, index) => (
-            <div key={index} className="text-center p-6 rounded-2xl bg-card border hover:shadow-lg transition-shadow">
+          {[{
+          icon: MapPin,
+          title: 'Locais',
+          description: 'Cadastre e gerencie múltiplos espaços'
+        }, {
+          icon: Calendar,
+          title: 'Reservas',
+          description: 'Sistema completo de agendamentos'
+        }, {
+          icon: Users,
+          title: 'Check-in',
+          description: 'Controle de presença simplificado'
+        }, {
+          icon: Shield,
+          title: 'Segurança',
+          description: 'Permissões e acessos configuráveis'
+        }].map((feature, index) => <div key={index} className="text-center p-6 rounded-2xl bg-card border hover:shadow-lg transition-shadow">
               <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <feature.icon className="w-7 h-7 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
               <p className="text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
+            </div>)}
         </div>
       </div>
 
@@ -73,6 +79,5 @@ export default function Index() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
