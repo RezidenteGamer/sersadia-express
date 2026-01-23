@@ -110,8 +110,8 @@ export function Sidebar() {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
           return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <Icon className="w-5 h-5 text-primary-foreground" />
+                <span className="font-medium text-primary-foreground">{item.label}</span>
               </Link>;
         })}
         </div>
@@ -126,7 +126,7 @@ export function Sidebar() {
           const isActive = location.pathname === item.href;
           return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-primary-foreground">{item.label}</span>
                 </Link>;
         })}
           </div>}
