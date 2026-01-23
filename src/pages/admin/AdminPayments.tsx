@@ -16,34 +16,51 @@ import { usePayments, useMarkPaymentAsPaid, Payment } from '@/hooks/usePayments'
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin } from 'lucide-react';
-
-const PAYMENT_METHODS = [
-  { value: 'pix', label: 'PIX' },
-  { value: 'cash', label: 'Dinheiro' },
-  { value: 'credit_card', label: 'Cartão de Crédito' },
-  { value: 'debit_card', label: 'Cartão de Débito' },
-  { value: 'transfer', label: 'Transferência' },
-];
-
+const PAYMENT_METHODS = [{
+  value: 'pix',
+  label: 'PIX'
+}, {
+  value: 'cash',
+  label: 'Dinheiro'
+}, {
+  value: 'credit_card',
+  label: 'Cartão de Crédito'
+}, {
+  value: 'debit_card',
+  label: 'Cartão de Débito'
+}, {
+  value: 'transfer',
+  label: 'Transferência'
+}];
 export default function AdminPayments() {
   const [search, setSearch] = useState('');
   const [paymentDialog, setPaymentDialog] = useState<Payment | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [paymentNotes, setPaymentNotes] = useState('');
-  
-  const { data: allPayments, isLoading: loadingAll } = usePayments();
-  const { data: pendingPayments, isLoading: loadingPending } = usePayments({ isPaid: false });
-  const { data: paidPayments, isLoading: loadingPaid } = usePayments({ isPaid: true });
+  const {
+    data: allPayments,
+    isLoading: loadingAll
+  } = usePayments();
+  const {
+    data: pendingPayments,
+    isLoading: loadingPending
+  } = usePayments({
+    isPaid: false
+  });
+  const {
+    data: paidPayments,
+    isLoading: loadingPaid
+  } = usePayments({
+    isPaid: true
+  });
   const markAsPaid = useMarkPaymentAsPaid();
-
   const handleMarkPaid = async () => {
     if (!paymentDialog) return;
-    
     try {
       await markAsPaid.mutateAsync({
         id: paymentDialog.id,
         paymentMethod,
-        notes: paymentNotes || undefined,
+        notes: paymentNotes || undefined
       });
       setPaymentDialog(null);
       setPaymentMethod('pix');
@@ -52,21 +69,19 @@ export default function AdminPayments() {
       // Error handled by mutation
     }
   };
-
   const filterPayments = (payments: Payment[] | undefined) => {
     if (!payments) return [];
     if (!search) return payments;
-    
     const searchLower = search.toLowerCase();
-    return payments.filter(p =>
-      p.user_profile?.full_name?.toLowerCase().includes(searchLower) ||
-      p.user_profile?.email?.toLowerCase().includes(searchLower) ||
-      p.reservation?.location?.name?.toLowerCase().includes(searchLower)
-    );
+    return payments.filter(p => p.user_profile?.full_name?.toLowerCase().includes(searchLower) || p.user_profile?.email?.toLowerCase().includes(searchLower) || p.reservation?.location?.name?.toLowerCase().includes(searchLower));
   };
-
-  const PaymentCard = ({ payment, showPaidButton = false }: { payment: Payment; showPaidButton?: boolean }) => (
-    <Card className="hover:shadow-md transition-shadow">
+  const PaymentCard = ({
+    payment,
+    showPaidButton = false
+  }: {
+    payment: Payment;
+    showPaidButton?: boolean;
+  }) => <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1 space-y-2">
@@ -74,11 +89,9 @@ export default function AdminPayments() {
               <Badge variant={payment.is_paid ? 'default' : 'secondary'}>
                 {payment.is_paid ? 'Pago' : 'Pendente'}
               </Badge>
-              {payment.payment_method && (
-                <Badge variant="outline">
+              {payment.payment_method && <Badge variant="outline">
                   {PAYMENT_METHODS.find(m => m.value === payment.payment_method)?.label || payment.payment_method}
-                </Badge>
-              )}
+                </Badge>}
             </div>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-muted-foreground" />
@@ -98,41 +111,24 @@ export default function AdminPayments() {
                 <span>R$ {payment.amount.toFixed(2)}</span>
               </div>
             </div>
-            {payment.is_paid && payment.paid_at && (
-              <p className="text-xs text-muted-foreground">
+            {payment.is_paid && payment.paid_at && <p className="text-xs text-muted-foreground">
                 Pago em {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm")}
-              </p>
-            )}
-            {payment.notes && (
-              <p className="text-sm text-muted-foreground italic">{payment.notes}</p>
-            )}
+              </p>}
+            {payment.notes && <p className="text-sm text-muted-foreground italic">{payment.notes}</p>}
           </div>
           
-          {showPaidButton && !payment.is_paid && (
-            <Button
-              variant="outline"
-              className="text-success hover:text-success"
-              onClick={() => setPaymentDialog(payment)}
-            >
+          {showPaidButton && !payment.is_paid && <Button variant="outline" className="text-success hover:text-success" onClick={() => setPaymentDialog(payment)}>
               <Check className="w-4 h-4 mr-2" />
               Registrar Pagamento
-            </Button>
-          )}
+            </Button>}
         </div>
       </CardContent>
-    </Card>
-  );
-
+    </Card>;
   const pendingCount = pendingPayments?.length || 0;
   const paidCount = paidPayments?.length || 0;
   const totalPending = pendingPayments?.reduce((acc, p) => acc + p.amount, 0) || 0;
-
-  return (
-    <AppLayout>
-      <PageHeader 
-        title="Gerenciar Pagamentos"
-        description="Registre e acompanhe os pagamentos das reservas"
-      />
+  return <AppLayout>
+      <PageHeader title="Gerenciar Pagamentos" description="Registre e acompanhe os pagamentos das reservas" />
 
       {/* Summary Cards */}
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
@@ -174,15 +170,10 @@ export default function AdminPayments() {
       {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por usuário ou local..."
-          className="pl-10"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <Input placeholder="Buscar por usuário ou local..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      <Tabs defaultValue="pending" className="space-y-4">
+      <Tabs defaultValue="pending" className="space-y-4 bg-background">
         <TabsList>
           <TabsTrigger value="pending">Pendentes ({pendingCount})</TabsTrigger>
           <TabsTrigger value="paid">Pagos ({paidCount})</TabsTrigger>
@@ -190,69 +181,35 @@ export default function AdminPayments() {
         </TabsList>
         
         <TabsContent value="pending" className="space-y-4">
-          {loadingPending ? (
-            <div className="flex justify-center py-16">
+          {loadingPending ? <div className="flex justify-center py-16">
               <LoadingSpinner size="lg" />
-            </div>
-          ) : filterPayments(pendingPayments).length > 0 ? (
-            filterPayments(pendingPayments).map(p => (
-              <PaymentCard key={p.id} payment={p} showPaidButton />
-            ))
-          ) : (
-            <EmptyState
-              icon={CreditCard}
-              title="Nenhum pagamento pendente"
-              description="Todos os pagamentos foram registrados"
-            />
-          )}
+            </div> : filterPayments(pendingPayments).length > 0 ? filterPayments(pendingPayments).map(p => <PaymentCard key={p.id} payment={p} showPaidButton />) : <EmptyState icon={CreditCard} title="Nenhum pagamento pendente" description="Todos os pagamentos foram registrados" />}
         </TabsContent>
         
         <TabsContent value="paid" className="space-y-4">
-          {loadingPaid ? (
-            <div className="flex justify-center py-16">
+          {loadingPaid ? <div className="flex justify-center py-16">
               <LoadingSpinner size="lg" />
-            </div>
-          ) : filterPayments(paidPayments).length > 0 ? (
-            filterPayments(paidPayments).map(p => (
-              <PaymentCard key={p.id} payment={p} />
-            ))
-          ) : (
-            <EmptyState
-              icon={CreditCard}
-              title="Nenhum pagamento registrado"
-              description="Os pagamentos registrados aparecerão aqui"
-            />
-          )}
+            </div> : filterPayments(paidPayments).length > 0 ? filterPayments(paidPayments).map(p => <PaymentCard key={p.id} payment={p} />) : <EmptyState icon={CreditCard} title="Nenhum pagamento registrado" description="Os pagamentos registrados aparecerão aqui" />}
         </TabsContent>
         
         <TabsContent value="all" className="space-y-4">
-          {loadingAll ? (
-            <div className="flex justify-center py-16">
+          {loadingAll ? <div className="flex justify-center py-16">
               <LoadingSpinner size="lg" />
-            </div>
-          ) : filterPayments(allPayments).length > 0 ? (
-            filterPayments(allPayments).map(p => (
-              <PaymentCard key={p.id} payment={p} showPaidButton />
-            ))
-          ) : (
-            <EmptyState
-              icon={CreditCard}
-              title="Nenhum pagamento"
-              description="Os pagamentos aparecerão aqui"
-            />
-          )}
+            </div> : filterPayments(allPayments).length > 0 ? filterPayments(allPayments).map(p => <PaymentCard key={p.id} payment={p} showPaidButton />) : <EmptyState icon={CreditCard} title="Nenhum pagamento" description="Os pagamentos aparecerão aqui" />}
         </TabsContent>
       </Tabs>
 
       {/* Register Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={() => { setPaymentDialog(null); setPaymentNotes(''); }}>
+      <Dialog open={!!paymentDialog} onOpenChange={() => {
+      setPaymentDialog(null);
+      setPaymentNotes('');
+    }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Registrar Pagamento</DialogTitle>
           </DialogHeader>
           
-          {paymentDialog && (
-            <div className="space-y-4">
+          {paymentDialog && <div className="space-y-4">
               <div className="p-4 bg-muted rounded-lg">
                 <p><strong>Usuário:</strong> {paymentDialog.user_profile?.full_name}</p>
                 <p><strong>Local:</strong> {paymentDialog.reservation?.location?.name}</p>
@@ -266,38 +223,29 @@ export default function AdminPayments() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAYMENT_METHODS.map(m => (
-                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                    ))}
+                    {PAYMENT_METHODS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2">
                 <Label>Observações (opcional)</Label>
-                <Textarea
-                  value={paymentNotes}
-                  onChange={(e) => setPaymentNotes(e.target.value)}
-                  placeholder="Adicione observações..."
-                  rows={2}
-                />
+                <Textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} placeholder="Adicione observações..." rows={2} />
               </div>
-            </div>
-          )}
+            </div>}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setPaymentDialog(null); setPaymentNotes(''); }}>
+            <Button variant="outline" onClick={() => {
+            setPaymentDialog(null);
+            setPaymentNotes('');
+          }}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleMarkPaid}
-              disabled={markAsPaid.isPending}
-            >
+            <Button onClick={handleMarkPaid} disabled={markAsPaid.isPending}>
               {markAsPaid.isPending ? 'Registrando...' : 'Confirmar Pagamento'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
-  );
+    </AppLayout>;
 }
