@@ -19,61 +19,68 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-
 interface TimeSlot {
   start: string;
   end: string;
 }
-
 export default function LocationDetails() {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
-  const { data: location, isLoading } = useLocation(id!);
-  const { data: membership } = useUserMembership(user?.id);
+  const {
+    data: location,
+    isLoading
+  } = useLocation(id!);
+  const {
+    data: membership
+  } = useUserMembership(user?.id);
   const isMember = !!membership;
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
-  const { data: bookedSlots } = useLocationAvailability(id!, dateStr);
+  const {
+    data: bookedSlots
+  } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
-
   if (isLoading) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <LoadingSpinner />
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
   if (!location) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Local não encontrado</p>
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
 
   // Get fixed time slots from location - use time_slots field or fallback to legacy fields
-  const getFixedTimeSlots = (): { slot: TimeSlot; available: boolean }[] => {
+  const getFixedTimeSlots = (): {
+    slot: TimeSlot;
+    available: boolean;
+  }[] => {
     // Try to get time_slots from location (stored as JSON)
     const locationTimeSlots = (location as any).time_slots as TimeSlot[] | null;
-    
+
     // Default slots if none defined
-    const defaultSlots: TimeSlot[] = [
-      { start: '08:00', end: '17:00' },
-      { start: '18:30', end: '01:30' },
-    ];
-    
-    const slots = locationTimeSlots && locationTimeSlots.length > 0 
-      ? locationTimeSlots 
-      : defaultSlots;
-    
+    const defaultSlots: TimeSlot[] = [{
+      start: '08:00',
+      end: '17:00'
+    }, {
+      start: '18:30',
+      end: '01:30'
+    }];
+    const slots = locationTimeSlots && locationTimeSlots.length > 0 ? locationTimeSlots : defaultSlots;
+
     // Check availability for each slot
     return slots.map(slot => {
       // Check if this exact slot is already booked
@@ -82,34 +89,28 @@ export default function LocationDetails() {
         const bookedEnd = booked.end_time.substring(0, 5);
         return bookedStart === slot.start && bookedEnd === slot.end;
       });
-      
-      return { slot, available: !isBooked };
+      return {
+        slot,
+        available: !isBooked
+      };
     });
   };
-
   const timeSlots = getFixedTimeSlots();
-
   const calculatePrice = () => {
     if (!selectedSlot) return 0;
-    
+
     // Use member prices if user is a member and member price is set
-    const fixedPrice = isMember && location.price_fixed_member != null 
-      ? location.price_fixed_member 
-      : location.price_fixed;
-    const hourlyPrice = isMember && location.price_per_hour_member != null
-      ? location.price_per_hour_member
-      : location.price_per_hour;
-    
+    const fixedPrice = isMember && location.price_fixed_member != null ? location.price_fixed_member : location.price_fixed;
+    const hourlyPrice = isMember && location.price_per_hour_member != null ? location.price_per_hour_member : location.price_per_hour;
+
     // If fixed price is set, use it directly
     if (fixedPrice != null && fixedPrice > 0) return fixedPrice;
-    
+
     // Return hourly price (for the period, not calculated by hours)
     return hourlyPrice;
   };
-
   const handleReserve = async () => {
     if (!selectedDate || !selectedSlot || !user) return;
-    
     try {
       await createReservation.mutateAsync({
         location_id: id!,
@@ -117,7 +118,7 @@ export default function LocationDetails() {
         start_time: selectedSlot.start,
         end_time: selectedSlot.end,
         total_price: calculatePrice(),
-        user_notes: notes || null,
+        user_notes: notes || null
       });
       setShowConfirmDialog(false);
       navigate('/my-reservations');
@@ -125,14 +126,8 @@ export default function LocationDetails() {
       // Error handled by mutation
     }
   };
-
-  return (
-    <AppLayout>
-      <Button 
-        variant="ghost" 
-        className="mb-4" 
-        onClick={() => navigate('/locations')}
-      >
+  return <AppLayout>
+      <Button variant="ghost" className="mb-4" onClick={() => navigate('/locations')}>
         <ArrowLeft className="w-4 h-4 mr-2" />
         Voltar
       </Button>
@@ -142,17 +137,9 @@ export default function LocationDetails() {
         <div className="lg:col-span-2 space-y-6">
           {/* Image */}
           <div className="aspect-video rounded-xl overflow-hidden bg-muted">
-            {location.images && location.images.length > 0 ? (
-              <img 
-                src={location.images[0]} 
-                alt={location.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            {location.images && location.images.length > 0 ? <img src={location.images[0]} alt={location.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <MapPin className="w-16 h-16" />
-              </div>
-            )}
+              </div>}
           </div>
           
           <Card>
@@ -172,36 +159,27 @@ export default function LocationDetails() {
                 <div className="flex items-center gap-2 text-primary font-medium">
                   <DollarSign className="w-4 h-4" />
                   <span>
-                    {location.price_fixed 
-                      ? `R$ ${location.price_fixed.toFixed(2)} (fixo)`
-                      : `R$ ${location.price_per_hour.toFixed(2)}/período`
-                    }
+                    {location.price_fixed ? `R$ ${location.price_fixed.toFixed(2)} (fixo)` : `R$ ${location.price_per_hour.toFixed(2)}/período`}
                   </span>
                 </div>
-                {isMember && (
-                  <Badge variant="outline" className="text-success border-success">
+                {isMember && <Badge variant="outline" className="text-success border-success">
                     <Tag className="w-3 h-3 mr-1" />
                     Preço de Sócio
-                  </Badge>
-                )}
+                  </Badge>}
               </div>
               
-              {location.description && (
-                <div>
+              {location.description && <div>
                   <h4 className="font-medium mb-2">Descrição</h4>
                   <p className="text-muted-foreground">{location.description}</p>
-                </div>
-              )}
+                </div>}
               
-              {location.rules && (
-                <div className="p-4 bg-muted rounded-lg">
+              {location.rules && <div className="p-4 rounded-lg bg-background">
                   <div className="flex items-center gap-2 mb-2">
                     <Info className="w-4 h-4 text-primary" />
                     <h4 className="font-medium">Regras do Local</h4>
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-line">{location.rules}</p>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
         </div>
@@ -216,65 +194,37 @@ export default function LocationDetails() {
               {/* Calendar */}
               <div>
                 <Label className="mb-2 block">Selecione a Data</Label>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date()}
-                  className="rounded-md border pointer-events-auto"
-                  locale={ptBR}
-                />
+                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => date < new Date()} className="rounded-md border pointer-events-auto" locale={ptBR} />
               </div>
               
               {/* Time Slots */}
-              {selectedDate && (
-                <div>
+              {selectedDate && <div>
                   <Label className="mb-2 block">Selecione o Período</Label>
                   <div className="grid grid-cols-1 gap-2">
-                    {timeSlots.map(({ slot, available }) => (
-                      <button
-                        key={`${slot.start}-${slot.end}`}
-                        onClick={() => available && setSelectedSlot(slot)}
-                        disabled={!available}
-                        className={cn(
-                          "p-3 text-sm rounded-lg border transition-colors text-left",
-                          !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50",
-                          available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : available && "hover:border-primary hover:bg-primary/5"
-                        )}
-                      >
+                    {timeSlots.map(({
+                  slot,
+                  available
+                }) => <button key={`${slot.start}-${slot.end}`} onClick={() => available && setSelectedSlot(slot)} disabled={!available} className={cn("p-3 text-sm rounded-lg border transition-colors text-left", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50", available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end ? "bg-primary text-primary-foreground border-primary" : available && "hover:border-primary hover:bg-primary/5")}>
                         <span className="font-medium">{slot.start} - {slot.end}</span>
-                      </button>
-                    ))}
+                      </button>)}
                   </div>
-                </div>
-              )}
+                </div>}
               
               {/* Price Summary */}
-              {selectedSlot && (
-                <div className="p-4 bg-muted rounded-lg space-y-2">
+              {selectedSlot && <div className="p-4 rounded-lg space-y-2 bg-background">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Valor Total</span>
                     <span className="text-xl font-bold text-primary">
                       R$ {calculatePrice().toFixed(2)}
                     </span>
                   </div>
-                  {isMember && (
-                    <div className="text-xs text-success flex items-center gap-1">
+                  {isMember && <div className="text-xs text-success flex items-center gap-1">
                       <Tag className="w-3 h-3" />
                       Desconto de sócio aplicado
-                    </div>
-                  )}
-                </div>
-              )}
+                    </div>}
+                </div>}
               
-              <Button 
-                className="w-full" 
-                size="lg"
-                disabled={!selectedDate || !selectedSlot}
-                onClick={() => setShowConfirmDialog(true)}
-              >
+              <Button className="w-full" size="lg" disabled={!selectedDate || !selectedSlot} onClick={() => setShowConfirmDialog(true)}>
                 Solicitar Reserva
               </Button>
             </CardContent>
@@ -291,20 +241,16 @@ export default function LocationDetails() {
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <p><strong>Local:</strong> {location.name}</p>
-              <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+              <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", {
+                locale: ptBR
+              })}</p>
               <p><strong>Horário:</strong> {selectedSlot?.start} - {selectedSlot?.end}</p>
               <p><strong>Valor:</strong> R$ {calculatePrice().toFixed(2)}</p>
             </div>
             
             <div>
               <Label htmlFor="notes">Observações (opcional)</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Alguma informação adicional..."
-                className="mt-1"
-              />
+              <Textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Alguma informação adicional..." className="mt-1" />
             </div>
           </div>
           <DialogFooter>
@@ -317,6 +263,5 @@ export default function LocationDetails() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
-  );
+    </AppLayout>;
 }

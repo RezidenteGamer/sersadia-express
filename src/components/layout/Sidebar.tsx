@@ -93,7 +93,7 @@ export function Sidebar() {
   });
   const NavContent = () => <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border bg-orange-50">
+      <div className="p-6 border-b border-sidebar-border bg-background">
         <Link to="/" className="flex items-center gap-3">
           <BrandLogo className="h-9" />
         </Link>
