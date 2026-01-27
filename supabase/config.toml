@@ -1,1 +1,4 @@
 project_id = "irvwzvuwkmkntwkbkuac"
+
+[functions.create-pix-checkout]
+verify_jwt = false
