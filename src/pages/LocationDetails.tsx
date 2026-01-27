@@ -12,13 +12,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag } from 'lucide-react';
+import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 interface TimeSlot {
   start: string;
   end: string;
@@ -37,6 +39,7 @@ export default function LocationDetails() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [acceptedRules, setAcceptedRules] = useState(false);
   const {
     data: location,
     isLoading
@@ -233,13 +236,19 @@ export default function LocationDetails() {
       </div>
       
       {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
+      <Dialog open={showConfirmDialog} onOpenChange={(open) => {
+        setShowConfirmDialog(open);
+        if (!open) setAcceptedRules(false);
+      }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Confirmar Reserva</DialogTitle>
+            <DialogDescription>
+              Revise os detalhes da reserva e aceite as regras do local para continuar.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 rounded-lg space-y-2 bg-primary-foreground">
+            <div className="p-4 rounded-lg space-y-2 bg-muted/50">
               <p><strong>Local:</strong> {location.name}</p>
               <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", {
                 locale: ptBR
@@ -247,6 +256,34 @@ export default function LocationDetails() {
               <p><strong>Horário:</strong> {selectedSlot?.start} - {selectedSlot?.end}</p>
               <p><strong>Valor:</strong> R$ {calculatePrice().toFixed(2)}</p>
             </div>
+            
+            {/* Rules Section */}
+            {location.rules && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+                  <AlertTriangle className="w-4 h-4" />
+                  <Label className="font-medium">Regras do Local</Label>
+                </div>
+                <ScrollArea className="h-40 rounded-lg border bg-muted/30 p-4">
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {location.rules}
+                  </p>
+                </ScrollArea>
+                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-background">
+                  <Checkbox
+                    id="accept-rules"
+                    checked={acceptedRules}
+                    onCheckedChange={(checked) => setAcceptedRules(checked === true)}
+                  />
+                  <Label
+                    htmlFor="accept-rules"
+                    className="text-sm leading-relaxed cursor-pointer"
+                  >
+                    Li e concordo com as regras do local. Estou ciente de que o descumprimento das regras pode resultar no cancelamento da reserva.
+                  </Label>
+                </div>
+              </div>
+            )}
             
             <div>
               <Label htmlFor="notes">Observações (opcional)</Label>
@@ -257,7 +294,10 @@ export default function LocationDetails() {
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleReserve} disabled={createReservation.isPending}>
+            <Button 
+              onClick={handleReserve} 
+              disabled={createReservation.isPending || (location.rules && !acceptedRules)}
+            >
               {createReservation.isPending ? 'Enviando...' : 'Confirmar Reserva'}
             </Button>
           </DialogFooter>
