@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -112,10 +113,16 @@ export default function LocationDetails() {
     // Return hourly price (for the period, not calculated by hours)
     return hourlyPrice;
   };
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   const handleReserve = async () => {
     if (!selectedDate || !selectedSlot || !user) return;
+    
+    setIsProcessingPayment(true);
+    
     try {
-      await createReservation.mutateAsync({
+      // First create the reservation
+      const reservation = await createReservation.mutateAsync({
         location_id: id!,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: selectedSlot.start,
@@ -123,10 +130,37 @@ export default function LocationDetails() {
         total_price: calculatePrice(),
         user_notes: notes || null
       });
-      setShowConfirmDialog(false);
-      navigate('/my-reservations');
+
+      // Then redirect to PIX checkout
+      const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
+        body: {
+          reservationId: reservation.id,
+          amount: calculatePrice(),
+          locationName: location.name,
+          reservationDate: format(selectedDate, "dd/MM/yyyy"),
+          timeSlot: `${selectedSlot.start} - ${selectedSlot.end}`,
+        },
+      });
+
+      if (error) {
+        console.error('Checkout error:', error);
+        toast.error('Erro ao criar checkout. Você pode pagar depois em "Minhas Reservas".');
+        setShowConfirmDialog(false);
+        navigate('/my-reservations');
+        return;
+      }
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        toast.error('Erro ao obter URL de pagamento. Você pode pagar depois em "Minhas Reservas".');
+        setShowConfirmDialog(false);
+        navigate('/my-reservations');
+      }
     } catch (error) {
       // Error handled by mutation
+      setIsProcessingPayment(false);
     }
   };
   return <AppLayout>
@@ -291,14 +325,14 @@ export default function LocationDetails() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isProcessingPayment}>
               Cancelar
             </Button>
             <Button 
               onClick={handleReserve} 
-              disabled={createReservation.isPending || (location.rules && !acceptedRules)}
+              disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {createReservation.isPending ? 'Enviando...' : 'Confirmar Reserva'}
+              {isProcessingPayment ? 'Redirecionando para pagamento...' : createReservation.isPending ? 'Enviando...' : 'Pagar com PIX'}
             </Button>
           </DialogFooter>
         </DialogContent>
