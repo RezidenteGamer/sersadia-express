@@ -41,6 +41,7 @@ export default function LocationDetails() {
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const {
     data: location,
     isLoading
@@ -113,7 +114,6 @@ export default function LocationDetails() {
     // Return hourly price (for the period, not calculated by hours)
     return hourlyPrice;
   };
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handleReserve = async () => {
     if (!selectedDate || !selectedSlot || !user) return;
