@@ -47,67 +47,64 @@ serve(async (req) => {
     if (!accessToken) throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not set");
     logStep("Mercado Pago credentials loaded");
 
-    // Get origin for redirect URLs
-    const origin = req.headers.get("origin") || "https://faciliteteste.lovable.app";
+    // Generate idempotency key to avoid duplicate payments
+    const idempotencyKey = `${reservationId}-${Date.now()}`;
 
-    // Create Mercado Pago Checkout Pro preference
-    const preferenceData = {
-      items: [
-        {
-          id: reservationId,
-          title: `Reserva - ${locationName}`,
-          description: `Data: ${reservationDate} | Horário: ${timeSlot}`,
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: amount,
-        },
-      ],
+    // Create PIX payment using Mercado Pago Payments API
+    const paymentData = {
+      transaction_amount: amount,
+      description: `Reserva - ${locationName} | ${reservationDate} | ${timeSlot}`,
+      payment_method_id: "pix",
       payer: {
         email: user.email,
       },
-      back_urls: {
-        success: `${origin}/my-reservations?payment=success&reservation=${reservationId}`,
-        failure: `${origin}/my-reservations?payment=failed&reservation=${reservationId}`,
-        pending: `${origin}/my-reservations?payment=pending&reservation=${reservationId}`,
-      },
-      auto_return: "approved",
       external_reference: reservationId,
       metadata: {
         reservation_id: reservationId,
         user_id: user.id,
       },
-      statement_descriptor: "SERSADIA",
-      payment_methods: {
-        excluded_payment_types: [],
-        excluded_payment_methods: [],
-        installments: 1,
-      },
     };
 
-    logStep("Creating Mercado Pago preference", { items: preferenceData.items });
+    logStep("Creating PIX payment", { amount, description: paymentData.description });
 
-    const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
+    const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
+        "X-Idempotency-Key": idempotencyKey,
       },
-      body: JSON.stringify(preferenceData),
+      body: JSON.stringify(paymentData),
     });
 
+    const responseData = await mpResponse.json();
+
     if (!mpResponse.ok) {
-      const errorData = await mpResponse.text();
-      logStep("Mercado Pago API error", { status: mpResponse.status, error: errorData });
-      throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${errorData}`);
+      logStep("Mercado Pago API error", { status: mpResponse.status, error: responseData });
+      throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${JSON.stringify(responseData)}`);
     }
 
-    const preference = await mpResponse.json();
-    logStep("Preference created", { preferenceId: preference.id, initPoint: preference.init_point });
+    logStep("PIX payment created", { 
+      paymentId: responseData.id, 
+      status: responseData.status,
+      hasQrCode: !!responseData.point_of_interaction?.transaction_data?.qr_code
+    });
+
+    // Extract PIX data
+    const pixData = responseData.point_of_interaction?.transaction_data;
+    
+    if (!pixData) {
+      throw new Error("PIX data not available in response");
+    }
 
     return new Response(
       JSON.stringify({ 
-        url: preference.init_point, 
-        preferenceId: preference.id 
+        paymentId: responseData.id,
+        status: responseData.status,
+        qrCode: pixData.qr_code,
+        qrCodeBase64: pixData.qr_code_base64,
+        ticketUrl: pixData.ticket_url,
+        expirationDate: responseData.date_of_expiration,
       }), 
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
