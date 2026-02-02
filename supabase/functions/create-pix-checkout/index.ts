@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -43,62 +42,78 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Initialize Stripe
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    logStep("Stripe initialized");
+    // Get Mercado Pago Access Token
+    const accessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
+    if (!accessToken) throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not set");
+    logStep("Mercado Pago credentials loaded");
 
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
-    }
-
-    // Create checkout session with PIX as payment method
+    // Get origin for redirect URLs
     const origin = req.headers.get("origin") || "https://faciliteteste.lovable.app";
-    
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      payment_method_types: ["pix"],
-      line_items: [
+
+    // Create Mercado Pago Checkout Pro preference
+    const preferenceData = {
+      items: [
         {
-          price_data: {
-            currency: "brl",
-            product_data: {
-              name: `Reserva - ${locationName}`,
-              description: `Data: ${reservationDate} | Horário: ${timeSlot}`,
-            },
-            unit_amount: Math.round(amount * 100), // Convert to centavos
-          },
+          id: reservationId,
+          title: `Reserva - ${locationName}`,
+          description: `Data: ${reservationDate} | Horário: ${timeSlot}`,
           quantity: 1,
+          currency_id: "BRL",
+          unit_price: amount,
         },
       ],
-      mode: "payment",
-      success_url: `${origin}/my-reservations?payment=success&reservation=${reservationId}`,
-      cancel_url: `${origin}/my-reservations?payment=cancelled&reservation=${reservationId}`,
+      payer: {
+        email: user.email,
+      },
+      back_urls: {
+        success: `${origin}/my-reservations?payment=success&reservation=${reservationId}`,
+        failure: `${origin}/my-reservations?payment=failed&reservation=${reservationId}`,
+        pending: `${origin}/my-reservations?payment=pending&reservation=${reservationId}`,
+      },
+      auto_return: "approved",
+      external_reference: reservationId,
       metadata: {
         reservation_id: reservationId,
         user_id: user.id,
       },
-      payment_intent_data: {
-        metadata: {
-          reservation_id: reservationId,
-          user_id: user.id,
-        },
+      statement_descriptor: "SERSADIA",
+      payment_methods: {
+        excluded_payment_types: [],
+        excluded_payment_methods: [],
+        installments: 1,
       },
+    };
+
+    logStep("Creating Mercado Pago preference", { items: preferenceData.items });
+
+    const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(preferenceData),
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    if (!mpResponse.ok) {
+      const errorData = await mpResponse.text();
+      logStep("Mercado Pago API error", { status: mpResponse.status, error: errorData });
+      throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${errorData}`);
+    }
 
-    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    const preference = await mpResponse.json();
+    logStep("Preference created", { preferenceId: preference.id, initPoint: preference.init_point });
+
+    return new Response(
+      JSON.stringify({ 
+        url: preference.init_point, 
+        preferenceId: preference.id 
+      }), 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
