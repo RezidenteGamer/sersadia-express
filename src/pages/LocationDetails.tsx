@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,9 +21,20 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PixPaymentDialog } from '@/components/PixPaymentDialog';
+
 interface TimeSlot {
   start: string;
   end: string;
+}
+
+interface PixData {
+  qrCode: string;
+  qrCodeBase64: string;
+  ticketUrl?: string;
+  expirationDate?: string;
+  amount: number;
+  locationName: string;
 }
 export default function LocationDetails() {
   const {
@@ -42,6 +52,8 @@ export default function LocationDetails() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showPixDialog, setShowPixDialog] = useState(false);
+  const [pixData, setPixData] = useState<PixData | null>(null);
   const {
     data: location,
     isLoading
@@ -131,7 +143,7 @@ export default function LocationDetails() {
         user_notes: notes || null
       });
 
-      // Then redirect to PIX checkout
+      // Then create PIX payment
       const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
         body: {
           reservationId: reservation.id,
@@ -144,24 +156,40 @@ export default function LocationDetails() {
 
       if (error) {
         console.error('Checkout error:', error);
-        toast.error('Erro ao criar checkout. Você pode pagar depois em "Minhas Reservas".');
+        toast.error('Erro ao criar pagamento PIX. Você pode pagar depois em "Minhas Reservas".');
         setShowConfirmDialog(false);
         navigate('/my-reservations');
         return;
       }
 
-      if (data?.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+      if (data?.qrCode) {
+        // Show PIX dialog with QR code
+        setPixData({
+          qrCode: data.qrCode,
+          qrCodeBase64: data.qrCodeBase64,
+          ticketUrl: data.ticketUrl,
+          expirationDate: data.expirationDate,
+          amount: calculatePrice(),
+          locationName: location.name,
+        });
+        setShowConfirmDialog(false);
+        setShowPixDialog(true);
       } else {
-        toast.error('Erro ao obter URL de pagamento. Você pode pagar depois em "Minhas Reservas".');
+        toast.error('Erro ao gerar PIX. Você pode pagar depois em "Minhas Reservas".');
         setShowConfirmDialog(false);
         navigate('/my-reservations');
       }
     } catch (error) {
-      // Error handled by mutation
+      console.error('Reservation error:', error);
+      toast.error('Erro ao criar reserva.');
+    } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  const handlePaymentComplete = () => {
+    toast.success('Reserva criada! Aguardando confirmação do pagamento.');
+    navigate('/my-reservations');
   };
   return <AppLayout>
       <Button variant="ghost" className="mb-4" onClick={() => navigate('/locations')}>
@@ -332,10 +360,18 @@ export default function LocationDetails() {
               onClick={handleReserve} 
               disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {isProcessingPayment ? 'Redirecionando para pagamento...' : createReservation.isPending ? 'Enviando...' : 'Pagar com PIX'}
+              {isProcessingPayment ? 'Gerando PIX...' : createReservation.isPending ? 'Enviando...' : 'Pagar com PIX'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PIX Payment Dialog */}
+      <PixPaymentDialog
+        open={showPixDialog}
+        onOpenChange={setShowPixDialog}
+        pixData={pixData}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </AppLayout>;
 }
