@@ -21,20 +21,10 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 
 interface TimeSlot {
   start: string;
   end: string;
-}
-
-interface PixData {
-  qrCode: string;
-  qrCodeBase64: string;
-  ticketUrl?: string;
-  expirationDate?: string;
-  amount: number;
-  locationName: string;
 }
 export default function LocationDetails() {
   const {
@@ -52,8 +42,6 @@ export default function LocationDetails() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showPixDialog, setShowPixDialog] = useState(false);
-  const [pixData, setPixData] = useState<PixData | null>(null);
   const {
     data: location,
     isLoading
@@ -143,7 +131,7 @@ export default function LocationDetails() {
         user_notes: notes || null
       });
 
-      // Then create PIX payment
+      // Then create Checkout preference
       const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
         body: {
           reservationId: reservation.id,
@@ -156,26 +144,21 @@ export default function LocationDetails() {
 
       if (error) {
         console.error('Checkout error:', error);
-        toast.error('Erro ao criar pagamento PIX. Você pode pagar depois em "Minhas Reservas".');
+        toast.error('Erro ao criar checkout. Você pode pagar depois em "Minhas Reservas".');
         setShowConfirmDialog(false);
         navigate('/my-reservations');
         return;
       }
 
-      if (data?.qrCode) {
-        // Show PIX dialog with QR code
-        setPixData({
-          qrCode: data.qrCode,
-          qrCodeBase64: data.qrCodeBase64,
-          ticketUrl: data.ticketUrl,
-          expirationDate: data.expirationDate,
-          amount: calculatePrice(),
-          locationName: location.name,
-        });
-        setShowConfirmDialog(false);
-        setShowPixDialog(true);
+      // Redirect to Mercado Pago Checkout
+      // Use sandbox_init_point for test mode, init_point for production
+      const checkoutUrl = data?.sandboxInitPoint || data?.initPoint;
+      
+      if (checkoutUrl) {
+        toast.success('Redirecionando para o pagamento...');
+        window.location.href = checkoutUrl;
       } else {
-        toast.error('Erro ao gerar PIX. Você pode pagar depois em "Minhas Reservas".');
+        toast.error('Erro ao gerar link de pagamento. Você pode pagar depois em "Minhas Reservas".');
         setShowConfirmDialog(false);
         navigate('/my-reservations');
       }
@@ -185,11 +168,6 @@ export default function LocationDetails() {
     } finally {
       setIsProcessingPayment(false);
     }
-  };
-
-  const handlePaymentComplete = () => {
-    toast.success('Reserva criada! Aguardando confirmação do pagamento.');
-    navigate('/my-reservations');
   };
   return <AppLayout>
       <Button variant="ghost" className="mb-4" onClick={() => navigate('/locations')}>
@@ -360,18 +338,10 @@ export default function LocationDetails() {
               onClick={handleReserve} 
               disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {isProcessingPayment ? 'Gerando PIX...' : createReservation.isPending ? 'Enviando...' : 'Pagar com PIX'}
+              {isProcessingPayment ? 'Redirecionando...' : createReservation.isPending ? 'Enviando...' : 'Pagar Agora'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* PIX Payment Dialog */}
-      <PixPaymentDialog
-        open={showPixDialog}
-        onOpenChange={setShowPixDialog}
-        pixData={pixData}
-        onPaymentComplete={handlePaymentComplete}
-      />
     </AppLayout>;
 }
