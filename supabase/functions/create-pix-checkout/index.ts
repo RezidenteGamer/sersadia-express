@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-PIX-CHECKOUT] ${step}${detailsStr}`);
+  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -47,17 +47,29 @@ serve(async (req) => {
     if (!accessToken) throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not set");
     logStep("Mercado Pago credentials loaded");
 
-    // Generate idempotency key to avoid duplicate payments
-    const idempotencyKey = `${reservationId}-${Date.now()}`;
+    // Get origin for redirect URLs
+    const origin = req.headers.get("origin") || "https://faciliteteste.lovable.app";
 
-    // Create PIX payment using Mercado Pago Payments API
-    const paymentData = {
-      transaction_amount: amount,
-      description: `Reserva - ${locationName} | ${reservationDate} | ${timeSlot}`,
-      payment_method_id: "pix",
+    // Create Checkout Pro preference (redirect flow)
+    const preferenceData = {
+      items: [
+        {
+          title: `Reserva - ${locationName}`,
+          description: `${reservationDate} | ${timeSlot}`,
+          quantity: 1,
+          currency_id: "BRL",
+          unit_price: amount,
+        },
+      ],
       payer: {
         email: user.email,
       },
+      back_urls: {
+        success: `${origin}/my-reservations?payment=success`,
+        failure: `${origin}/my-reservations?payment=failure`,
+        pending: `${origin}/my-reservations?payment=pending`,
+      },
+      auto_return: "approved",
       external_reference: reservationId,
       metadata: {
         reservation_id: reservationId,
@@ -65,16 +77,15 @@ serve(async (req) => {
       },
     };
 
-    logStep("Creating PIX payment", { amount, description: paymentData.description });
+    logStep("Creating Checkout preference", { amount, locationName });
 
-    const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
+    const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
-        "X-Idempotency-Key": idempotencyKey,
       },
-      body: JSON.stringify(paymentData),
+      body: JSON.stringify(preferenceData),
     });
 
     const responseData = await mpResponse.json();
@@ -84,27 +95,17 @@ serve(async (req) => {
       throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${JSON.stringify(responseData)}`);
     }
 
-    logStep("PIX payment created", { 
-      paymentId: responseData.id, 
-      status: responseData.status,
-      hasQrCode: !!responseData.point_of_interaction?.transaction_data?.qr_code
+    logStep("Checkout preference created", { 
+      preferenceId: responseData.id,
+      initPoint: responseData.init_point,
+      sandboxInitPoint: responseData.sandbox_init_point
     });
-
-    // Extract PIX data
-    const pixData = responseData.point_of_interaction?.transaction_data;
-    
-    if (!pixData) {
-      throw new Error("PIX data not available in response");
-    }
 
     return new Response(
       JSON.stringify({ 
-        paymentId: responseData.id,
-        status: responseData.status,
-        qrCode: pixData.qr_code,
-        qrCodeBase64: pixData.qr_code_base64,
-        ticketUrl: pixData.ticket_url,
-        expirationDate: responseData.date_of_expiration,
+        preferenceId: responseData.id,
+        initPoint: responseData.init_point,
+        sandboxInitPoint: responseData.sandbox_init_point,
       }), 
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
