@@ -7,21 +7,57 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUserReservations, useCancelReservation } from '@/hooks/useReservations';
+import { usePayments } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, Clock, X, Eye } from 'lucide-react';
+import { Calendar, MapPin, Clock, X, Eye, CreditCard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 export default function MyReservations() {
   const {
     data: reservations,
     isLoading
   } = useUserReservations();
+  const { data: payments } = usePayments();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Check if a reservation has been paid
+  const isReservationPaid = (reservationId: string) => {
+    return payments?.some(p => p.reservation_id === reservationId && p.is_paid);
+  };
+
+  const handlePayment = async (reservation: NonNullable<typeof reservations>[0]) => {
+    setIsProcessingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
+        body: {
+          reservationId: reservation.id,
+          amount: reservation.total_price,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.sandboxInitPoint || data?.initPoint) {
+        window.location.href = data.sandboxInitPoint || data.initPoint;
+      } else {
+        throw new Error('URL de pagamento não retornada');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error('Erro ao iniciar pagamento: ' + error.message);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   if (isLoading) {
     return <AppLayout>
         <LoadingSpinner />
@@ -39,46 +75,64 @@ export default function MyReservations() {
     reservation
   }: {
     reservation: NonNullable<typeof reservations>[0];
-  }) => <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-4">
-            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-              {reservation.location?.images?.[0] ? <img src={reservation.location.images[0]} alt={reservation.location.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-muted-foreground" />
-                </div>}
+  }) => {
+    const isPaid = isReservationPaid(reservation.id);
+    const showPayButton = reservation.status === 'confirmed' && !isPaid;
+    
+    return (
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex gap-4">
+              <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                {reservation.location?.images?.[0] ? <img src={reservation.location.images[0]} alt={reservation.location.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-muted-foreground" />
+                  </div>}
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-semibold">{reservation.location?.name || 'Local'}</h3>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", {
+                    locale: ptBR
+                  })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>{reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StatusBadge status={reservation.status} />
+                  {isPaid && <span className="text-xs px-2 py-0.5 bg-success/10 text-success rounded-full">Pago</span>}
+                  {!isPaid && <span className="text-xs px-2 py-0.5 bg-warning/10 text-warning rounded-full">Pendente Pagamento</span>}
+                  <span className="text-sm font-medium text-primary">
+                    R$ {reservation.total_price.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="font-semibold">{reservation.location?.name || 'Local'}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", {
-                  locale: ptBR
-                })}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={reservation.status} />
-                <span className="text-sm font-medium text-primary">
-                  R$ {reservation.total_price.toFixed(2)}
-                </span>
-              </div>
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" size="sm" onClick={() => setViewReservation(reservation)}>
+                <Eye className="w-4 h-4" />
+              </Button>
+              {showPayButton && (
+                <Button 
+                  size="sm" 
+                  onClick={() => handlePayment(reservation)}
+                  disabled={isProcessingPayment}
+                >
+                  <CreditCard className="w-4 h-4" />
+                </Button>
+              )}
+              {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setCancelId(reservation.id)}>
+                  <X className="w-4 h-4" />
+                </Button>}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" size="sm" onClick={() => setViewReservation(reservation)}>
-              <Eye className="w-4 h-4" />
-            </Button>
-            {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setCancelId(reservation.id)}>
-                <X className="w-4 h-4" />
-              </Button>}
-          </div>
-        </div>
-      </CardContent>
-    </Card>;
+        </CardContent>
+      </Card>
+    );
+  };
   return <AppLayout>
       <PageHeader title="Minhas Reservas" description="Acompanhe todas as suas reservas" />
       
