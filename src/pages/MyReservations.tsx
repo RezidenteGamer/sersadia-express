@@ -77,7 +77,7 @@ export default function MyReservations() {
     reservation: NonNullable<typeof reservations>[0];
   }) => {
     const isPaid = isReservationPaid(reservation.id);
-    const showPayButton = reservation.status === 'confirmed' && !isPaid;
+    const showPayButton = ['pending', 'confirmed', 'presence_confirmed'].includes(reservation.status) && !isPaid;
     
     return (
       <Card className="hover:shadow-md transition-shadow">
