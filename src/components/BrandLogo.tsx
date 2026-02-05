@@ -11,7 +11,7 @@ export function BrandLogo({ className, alt }: BrandLogoProps) {
     <img
       src={logo}
       alt={alt ?? "Logo Ser Sadia Express"}
-      className={cn("h-10 w-auto select-none", className)}
+      className={cn("h-20 w-auto select-none", className)}
       loading="eager"
       draggable={false}
     />
