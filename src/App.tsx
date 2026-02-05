@@ -22,6 +22,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminCheckin from "./pages/admin/AdminCheckin";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminMembers from "./pages/admin/AdminMembers";
+import AdminBanners from "./pages/admin/AdminBanners";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ function AppRoutes() {
       <Route path="/admin/checkin" element={<ProtectedRoute><AdminCheckin /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
       <Route path="/admin/members" element={<ProtectedRoute><AdminMembers /></ProtectedRoute>} />
+      <Route path="/admin/banners" element={<ProtectedRoute><AdminBanners /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
