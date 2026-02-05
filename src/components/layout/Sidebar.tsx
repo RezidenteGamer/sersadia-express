@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, MapPin, Calendar, Users, CreditCard, UserCheck, BarChart3, Bell, Settings, LogOut, Home, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Users, CreditCard, UserCheck, BarChart3, Bell, Settings, LogOut, Home, Menu, X, User, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -69,6 +69,11 @@ const adminNavItems: NavItem[] = [{
   icon: UserCheck,
   permission: 'manage_checkin'
 }, {
+  label: 'Banners',
+  href: '/admin/banners',
+  icon: Image,
+  adminOnly: true
+}, {
   label: 'Relatórios',
   href: '/admin/reports',
   icon: BarChart3,
@@ -95,7 +100,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border bg-background">
         <Link to="/" className="flex items-center gap-3">
-          <BrandLogo className="h-16" />
+          <BrandLogo className="h-24" />
         </Link>
       </div>
 

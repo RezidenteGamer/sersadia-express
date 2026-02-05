@@ -11,7 +11,7 @@ export default function Index() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center">
             <div className="inline-flex items-center justify-center mb-8">
-              <BrandLogo className="h-32 sm:h-40" alt="Ser Sadia Express" />
+              <BrandLogo className="h-48 sm:h-64" alt="Ser Sadia Express" />
             </div>
             <h1 className="sr-only">Ser Sadia Express</h1>
             <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
@@ -72,7 +72,7 @@ export default function Index() {
       <footer className="border-t bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <BrandLogo className="h-16" alt="Ser Sadia Express" />
+            <BrandLogo className="h-24" alt="Ser Sadia Express" />
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Ser Sadia Express. Todos os direitos reservados.
             </p>

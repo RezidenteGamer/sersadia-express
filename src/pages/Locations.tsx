@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BannerCarousel } from '@/components/BannerCarousel';
 
 export default function Locations() {
   const [search, setSearch] = useState('');
@@ -36,6 +37,9 @@ export default function Locations() {
 
   return (
     <AppLayout>
+      {/* Banner Carousel */}
+      <BannerCarousel />
+
       <PageHeader 
         title="Locais Disponíveis"
         description="Escolha um espaço para fazer sua reserva"
