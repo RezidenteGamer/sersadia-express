@@ -95,7 +95,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border bg-background">
         <Link to="/" className="flex items-center gap-3">
-          <BrandLogo className="h-9" />
+          <BrandLogo className="h-16" />
         </Link>
       </div>
 
