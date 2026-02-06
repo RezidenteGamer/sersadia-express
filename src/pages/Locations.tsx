@@ -10,11 +10,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { BannerCarousel } from '@/components/BannerCarousel';
 
 export default function Locations() {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   const { data: locations, isLoading } = useQuery({
     queryKey: ['locations'],
@@ -63,7 +64,11 @@ export default function Locations() {
       ) : filteredLocations && filteredLocations.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredLocations.map((location) => (
-            <Card key={location.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+            <Card 
+              key={location.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer"
+              onClick={() => navigate(`/locations/${location.id}`)}
+            >
               {/* Image */}
               <div className="aspect-video bg-muted relative overflow-hidden">
                 {location.images && location.images[0] ? (
@@ -103,12 +108,10 @@ export default function Locations() {
                   </div>
                 </div>
 
-                <Link to={`/locations/${location.id}`}>
-                  <Button className="w-full">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Ver Disponibilidade
-                  </Button>
-                </Link>
+                <Button className="w-full">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Ver Disponibilidade
+                </Button>
               </CardContent>
             </Card>
           ))}
