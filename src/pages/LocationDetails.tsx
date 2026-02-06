@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
+import { ImageLightbox } from '@/components/ImageLightbox';
 
 interface TimeSlot {
   start: string;
@@ -30,6 +31,7 @@ interface TimeSlot {
 export default function LocationDetails() {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [imageCount, setImageCount] = useState(0);
   const {
     id
@@ -205,7 +207,10 @@ export default function LocationDetails() {
                 <CarouselContent>
                   {location.images.map((image, index) => (
                     <CarouselItem key={index}>
-                      <div className="aspect-video relative">
+                      <div 
+                        className="aspect-video relative cursor-pointer"
+                        onClick={() => setLightboxOpen(true)}
+                      >
                         {/* Blurred background for aspect ratio fill */}
                         <div 
                           className="absolute inset-0 bg-cover bg-center"
@@ -242,6 +247,16 @@ export default function LocationDetails() {
               </div>
             )}
           </div>
+
+          {/* Image Lightbox */}
+          {location.images && location.images.length > 0 && (
+            <ImageLightbox
+              images={location.images}
+              initialIndex={currentImageIndex}
+              open={lightboxOpen}
+              onOpenChange={setLightboxOpen}
+            />
+          )}
           
           <Card>
             <CardHeader>
