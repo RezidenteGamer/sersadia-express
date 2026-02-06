@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle } from 'lucide-react';
+import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -21,12 +21,16 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
 
 interface TimeSlot {
   start: string;
   end: string;
 }
 export default function LocationDetails() {
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageCount, setImageCount] = useState(0);
   const {
     id
   } = useParams<{
@@ -55,6 +59,18 @@ export default function LocationDetails() {
     data: bookedSlots
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
+
+  // Sync carousel state
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    setImageCount(carouselApi.scrollSnapList().length);
+    setCurrentImageIndex(carouselApi.selectedScrollSnap());
+    
+    carouselApi.on('select', () => {
+      setCurrentImageIndex(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
   if (isLoading) {
     return <AppLayout>
         <LoadingSpinner />
@@ -178,11 +194,53 @@ export default function LocationDetails() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Location Info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Image */}
-          <div className="aspect-video rounded-xl overflow-hidden bg-muted">
-            {location.images && location.images.length > 0 ? <img src={location.images[0]} alt={location.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+          {/* Image Carousel */}
+          <div className="relative rounded-xl overflow-hidden bg-muted">
+            {location.images && location.images.length > 0 ? (
+              <Carousel 
+                className="w-full" 
+                setApi={setCarouselApi}
+                opts={{ loop: true }}
+              >
+                <CarouselContent>
+                  {location.images.map((image, index) => (
+                    <CarouselItem key={index}>
+                      <div className="aspect-video relative">
+                        {/* Blurred background for aspect ratio fill */}
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center"
+                          style={{ 
+                            backgroundImage: `url(${image})`,
+                            filter: 'blur(20px)',
+                            transform: 'scale(1.1)'
+                          }}
+                        />
+                        {/* Main image */}
+                        <img 
+                          src={image} 
+                          alt={`${location.name} - Imagem ${index + 1}`} 
+                          className="relative w-full h-full object-contain z-10" 
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {location.images.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                    {/* Image counter */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                      {currentImageIndex + 1} / {imageCount}
+                    </div>
+                  </>
+                )}
+              </Carousel>
+            ) : (
+              <div className="aspect-video w-full flex items-center justify-center text-muted-foreground">
                 <MapPin className="w-16 h-16" />
-              </div>}
+              </div>
+            )}
           </div>
           
           <Card>
