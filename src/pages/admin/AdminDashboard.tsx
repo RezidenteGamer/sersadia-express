@@ -1,4 +1,5 @@
-import { AppLayout } from '@/components/layout/AppLayout';
+import { AdminDesktop } from '@/components/admin/AdminDesktop';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +13,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, MapPin, Users, DollarSign, Clock, ArrowRight, CheckCircle2, AlertCircle, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-export default function AdminDashboard() {
+export function AdminDashboardContent() {
   const today = new Date().toISOString().split('T')[0];
 
-  // Stats queries
+  // ... keep existing code (stats queries, pendingList, todayList)
   const {
     data: stats
   } = useQuery({
@@ -63,7 +64,6 @@ export default function AdminDashboard() {
     }
   });
 
-  // Pending reservations
   const {
     data: pendingList,
     isLoading: loadingPending
@@ -77,8 +77,6 @@ export default function AdminDashboard() {
         ascending: true
       }).limit(5);
       if (error) throw error;
-
-      // Get profiles
       const userIds = [...new Set(reservations.map(r => r.user_id))];
       const {
         data: profiles
@@ -91,7 +89,6 @@ export default function AdminDashboard() {
     }
   });
 
-  // Today's reservations for check-in
   const {
     data: todayList,
     isLoading: loadingToday
@@ -116,9 +113,9 @@ export default function AdminDashboard() {
       }));
     }
   });
-  return <AppLayout>
-      <PageHeader title="Dashboard Administrativo" description="Visão geral do sistema de reservas" />
 
+  return <>
+      <PageHeader title="Dashboard Administrativo" description="Visão geral do sistema de reservas" />
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         <StatCard title="Total Reservas" value={stats?.totalReservations || 0} icon={Calendar} variant="primary" />
@@ -196,5 +193,18 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>;
+    </>;
+}
+
+export default function AdminDashboard() {
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <main className="flex-1 lg:ml-0 flex flex-col">
+        <div className="flex-1 flex flex-col pt-12 lg:pt-0">
+          <AdminDesktop />
+        </div>
+      </main>
+    </div>
+  );
 }

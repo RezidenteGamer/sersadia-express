@@ -27,7 +27,7 @@ import { BarChart3, TrendingUp, Users, MapPin, Calendar, UserCheck, UserX } from
 
 const COLORS = ['hsl(173, 58%, 39%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(0, 72%, 51%)', 'hsl(210, 100%, 50%)'];
 
-export default function AdminReports() {
+export function AdminReportsContent() {
   const [period, setPeriod] = useState('30');
 
   // Reservations by status
@@ -234,8 +234,8 @@ export default function AdminReports() {
   const isLoading = loadingStatus || loadingLocation || loadingTimeline || loadingUsers || loadingNoShow || loadingTimeSlots;
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Relatórios"
         description="Análise de dados e estatísticas do sistema"
         action={
@@ -457,6 +457,10 @@ export default function AdminReports() {
           </Card>
         </div>
       )}
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminReports() {
+  return <AppLayout><AdminReportsContent /></AppLayout>;
 }

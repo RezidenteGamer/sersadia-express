@@ -24,7 +24,7 @@ import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus } fr
 import type { Member } from '@/hooks/useMembers';
 import { Tables } from '@/integrations/supabase/types';
 
-export default function AdminMembers() {
+export function AdminMembersContent() {
   const { data: members, isLoading } = useMembers(true);
   const { data: users } = useUsers();
   const createMember = useCreateMember();
@@ -165,8 +165,8 @@ export default function AdminMembers() {
   };
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Gerenciar Sócios"
         description="Cadastre e gerencie os sócios do clube"
         action={
@@ -495,6 +495,10 @@ export default function AdminMembers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminMembers() {
+  return <AppLayout><AdminMembersContent /></AppLayout>;
 }
