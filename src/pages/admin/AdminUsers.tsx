@@ -26,7 +26,7 @@ const PERMISSION_LABELS: Record<string, string> = {
 
 const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
 
-export default function AdminUsers() {
+export function AdminUsersContent() {
   const { data: users, isLoading } = useUsers();
   const updateRole = useUpdateUserRole();
   const updatePermissions = useUpdateUserPermissions();
@@ -82,8 +82,8 @@ export default function AdminUsers() {
   });
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Gerenciar Usuários"
         description="Gerencie papéis e permissões dos usuários"
       />
@@ -260,6 +260,10 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminUsers() {
+  return <AppLayout><AdminUsersContent /></AppLayout>;
 }

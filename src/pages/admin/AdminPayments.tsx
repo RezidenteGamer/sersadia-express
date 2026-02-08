@@ -32,7 +32,7 @@ const PAYMENT_METHODS = [{
   value: 'transfer',
   label: 'Transferência'
 }];
-export default function AdminPayments() {
+export function AdminPaymentsContent() {
   const [search, setSearch] = useState('');
   const [paymentDialog, setPaymentDialog] = useState<Payment | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('pix');
@@ -127,7 +127,7 @@ export default function AdminPayments() {
   const pendingCount = pendingPayments?.length || 0;
   const paidCount = paidPayments?.length || 0;
   const totalPending = pendingPayments?.reduce((acc, p) => acc + p.amount, 0) || 0;
-  return <AppLayout>
+  return <>
       <PageHeader title="Gerenciar Pagamentos" description="Registre e acompanhe os pagamentos das reservas" />
 
       {/* Summary Cards */}
@@ -247,5 +247,9 @@ export default function AdminPayments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>;
+    </>;
+}
+
+export default function AdminPayments() {
+  return <AppLayout><AdminPaymentsContent /></AppLayout>;
 }

@@ -13,7 +13,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 
-export default function AdminBanners() {
+export function AdminBannersContent() {
   const { data: banners, isLoading } = useAdminBanners();
   const createBanner = useCreateBanner();
   const updateBanner = useUpdateBanner();
@@ -115,7 +115,7 @@ export default function AdminBanners() {
   };
 
   return (
-    <AppLayout>
+    <>
       <PageHeader
         title="Gerenciar Banners"
         description="Adicione e gerencie banners promocionais"
@@ -299,6 +299,10 @@ export default function AdminBanners() {
           description="Crie banners para exibir promoções e novidades"
         />
       )}
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminBanners() {
+  return <AppLayout><AdminBannersContent /></AppLayout>;
 }

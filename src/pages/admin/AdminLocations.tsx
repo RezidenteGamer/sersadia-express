@@ -25,7 +25,7 @@ const DEFAULT_TIME_SLOTS: TimeSlot[] = [
   { start: '18:00', end: '01:30' },
 ];
 
-export default function AdminLocations() {
+export function AdminLocationsContent() {
   const { data: locations, isLoading } = useLocations(true);
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
@@ -157,8 +157,8 @@ export default function AdminLocations() {
   };
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Gerenciar Locais"
         description="Adicione, edite e gerencie os espaços disponíveis"
         action={
@@ -476,6 +476,10 @@ export default function AdminLocations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminLocations() {
+  return <AppLayout><AdminLocationsContent /></AppLayout>;
 }

@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Search, Check, X, Eye, Filter, MapPin, Clock, User } from 'lucide-react';
 
-export default function AdminReservations() {
+export function AdminReservationsContent() {
   const [searchParams] = useSearchParams();
   const initialStatus = searchParams.get('status') as any || undefined;
   
@@ -90,8 +90,8 @@ export default function AdminReservations() {
   ];
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Gerenciar Reservas"
         description="Aprove, recuse e gerencie todas as reservas"
       />
@@ -339,6 +339,10 @@ export default function AdminReservations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminReservations() {
+  return <AppLayout><AdminReservationsContent /></AppLayout>;
 }

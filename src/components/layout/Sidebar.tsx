@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, MapPin, Calendar, Users, CreditCard, UserCheck, BarChart3, Bell, Settings, LogOut, Home, Menu, X, User, Image } from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -34,50 +34,10 @@ const userNavItems: NavItem[] = [{
   icon: User
 }];
 const adminNavItems: NavItem[] = [{
-  label: 'Dashboard',
+  label: 'Administração',
   href: '/admin',
-  icon: LayoutDashboard,
+  icon: Monitor,
   adminOnly: true
-}, {
-  label: 'Locais',
-  href: '/admin/locations',
-  icon: MapPin,
-  permission: 'manage_locations'
-}, {
-  label: 'Reservas',
-  href: '/admin/reservations',
-  icon: Calendar,
-  permission: 'manage_reservations'
-}, {
-  label: 'Sócios',
-  href: '/admin/members',
-  icon: Users,
-  permission: 'manage_users'
-}, {
-  label: 'Usuários',
-  href: '/admin/users',
-  icon: Settings,
-  permission: 'manage_users'
-}, {
-  label: 'Pagamentos',
-  href: '/admin/payments',
-  icon: CreditCard,
-  permission: 'manage_payments'
-}, {
-  label: 'Check-in',
-  href: '/admin/checkin',
-  icon: UserCheck,
-  permission: 'manage_checkin'
-}, {
-  label: 'Banners',
-  href: '/admin/banners',
-  icon: Image,
-  adminOnly: true
-}, {
-  label: 'Relatórios',
-  href: '/admin/reports',
-  icon: BarChart3,
-  permission: 'view_reports'
 }];
 export function Sidebar() {
   const {

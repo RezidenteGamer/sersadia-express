@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserCheck, Search, Clock, MapPin, User, Calendar, Settings, Check } from 'lucide-react';
 
-export default function AdminCheckin() {
+export function AdminCheckinContent() {
   const [dateFilter, setDateFilter] = useState<string>(new Date().toISOString().split('T')[0]);
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -94,8 +94,8 @@ export default function AdminCheckin() {
   );
 
   return (
-    <AppLayout>
-      <PageHeader 
+    <>
+      <PageHeader
         title="Controle de Presença"
         description="Registre a presença dos usuários nas reservas"
         action={
@@ -347,6 +347,10 @@ export default function AdminCheckin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
+}
+
+export default function AdminCheckin() {
+  return <AppLayout><AdminCheckinContent /></AppLayout>;
 }
