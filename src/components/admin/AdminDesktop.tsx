@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -19,6 +19,7 @@ import { TaskManagerContent } from './TaskManagerContent';
 import { useDesktopSounds, loadSoundsEnabled, saveSoundsEnabled } from './useDesktopSounds';
 import { WallpaperConfig, loadWallpaper, saveWallpaper, getWallpaperStyle } from './wallpaperConfig';
 import { useNotifications, useUnreadNotificationsCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
+import { useDesktopTheme } from './useDesktopTheme';
 
 import { AdminDashboardContent } from '@/pages/admin/AdminDashboard';
 import { AdminLocationsContent } from '@/pages/admin/AdminLocations';
@@ -64,6 +65,7 @@ export function AdminDesktop() {
   const [wallpaperSettingsOpen, setWallpaperSettingsOpen] = useState(false);
   const [wallpaper, setWallpaper] = useState<WallpaperConfig>(loadWallpaper);
   const [soundsEnabled, setSoundsEnabled] = useState(loadSoundsEnabled);
+  const { theme, toggleTheme, isDark } = useDesktopTheme();
 
   // Sounds
   const sounds = useDesktopSounds(soundsEnabled);
@@ -211,10 +213,11 @@ export function AdminDesktop() {
       { label: 'Gerenciador de Tarefas', icon: <Activity className="w-4 h-4" />, onClick: () => handleOpenWindow(taskManagerApp) },
       { label: 'Papel de Parede', icon: <Paintbrush className="w-4 h-4" />, onClick: () => setWallpaperSettingsOpen(true), divider: true },
       { label: soundsEnabled ? 'Desativar sons' : 'Ativar sons', icon: soundsEnabled ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />, onClick: toggleSounds },
+      { label: isDark ? 'Tema claro' : 'Tema escuro', icon: isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />, onClick: toggleTheme },
       { label: 'Tela cheia', icon: <Maximize className="w-4 h-4" />, onClick: toggleFullscreen, divider: true },
       { label: 'Resetar ícones', icon: <ExternalLink className="w-4 h-4" />, onClick: () => { setIconPositions({}); localStorage.removeItem(STORAGE_KEY); } },
     ];
-  }, [contextMenu.appId, availableApps, windows, handleOpenWindow, handleCloseWindow, handleIconPositionChange, toggleFullscreen, taskManagerApp, soundsEnabled, toggleSounds]);
+  }, [contextMenu.appId, availableApps, windows, handleOpenWindow, handleCloseWindow, handleIconPositionChange, toggleFullscreen, taskManagerApp, soundsEnabled, toggleSounds, isDark, toggleTheme]);
 
   useKeyboardShortcuts({
     onCycleWindows: cycleWindows,
@@ -294,6 +297,8 @@ export function AdminDesktop() {
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         unreadCount={unreadCount}
         onOpenNotifications={() => setNotificationsOpen(prev => !prev)}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Command Palette */}
