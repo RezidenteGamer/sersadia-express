@@ -93,7 +93,8 @@ const [errors, setErrors] = useState<Record<string, string>>({});
           }
         } else {
           toast.success('Login realizado com sucesso!');
-          navigate('/dashboard');
+          const redirectTo = searchParams.get('redirect') || '/locations';
+          navigate(redirectTo);
         }
       } else {
         const result = signupSchema.safeParse(formData);
@@ -125,7 +126,8 @@ const [errors, setErrors] = useState<Record<string, string>>({});
               .eq('id', data.user.id);
           }
           toast.success('Conta criada com sucesso! Bem-vindo!');
-          navigate('/dashboard');
+          const redirectTo = searchParams.get('redirect') || '/locations';
+          navigate(redirectTo);
         }
       }
     } catch (err) {

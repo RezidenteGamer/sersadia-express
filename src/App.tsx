@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LoadingPage } from "./components/ui/loading-spinner";
 import Index from "./pages/Index";
@@ -42,13 +42,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const [searchParams] = useSearchParams();
 
   if (loading) {
     return <LoadingPage />;
   }
 
   if (user) {
-    return <Navigate to="/locations" replace />;
+    const redirectTo = searchParams.get('redirect') || '/locations';
+    return <Navigate to={redirectTo} replace />;
   }
 
   return <>{children}</>;
@@ -60,8 +62,8 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
-      <Route path="/locations/:id" element={<ProtectedRoute><LocationDetails /></ProtectedRoute>} />
+      <Route path="/locations" element={<Locations />} />
+      <Route path="/locations/:id" element={<LocationDetails />} />
       <Route path="/my-reservations" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
