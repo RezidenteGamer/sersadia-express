@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
@@ -20,6 +20,8 @@ import { useDesktopSounds, loadSoundsEnabled, saveSoundsEnabled } from './useDes
 import { WallpaperConfig, loadWallpaper, saveWallpaper, getWallpaperStyle } from './wallpaperConfig';
 import { useNotifications, useUnreadNotificationsCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
 import { useDesktopTheme } from './useDesktopTheme';
+import { AdminMobileView } from './AdminMobileView';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { AdminDashboardContent } from '@/pages/admin/AdminDashboard';
 import { AdminLocationsContent } from '@/pages/admin/AdminLocations';
@@ -57,6 +59,7 @@ function saveIconPositions(positions: Record<string, { col: number; row: number 
 }
 
 export function AdminDesktop() {
+  const isMobile = useIsMobile();
   const { isAdmin, permissions } = useAuth();
   const desktopRef = useRef<HTMLDivElement>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -234,6 +237,27 @@ export function AdminDesktop() {
 
   // All apps including task manager for command palette
   const allCommandApps = useMemo(() => [...availableApps, taskManagerApp], [availableApps, taskManagerApp]);
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full w-full">
+        <AdminMobileView
+          apps={availableApps}
+          unreadCount={unreadCount}
+          onOpenNotifications={() => setNotificationsOpen(prev => !prev)}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+        />
+        <NotificationPanel
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          notifications={notifications}
+          onMarkAsRead={(id) => markAsRead.mutate(id)}
+          onMarkAllAsRead={() => markAllAsRead.mutate()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full">
