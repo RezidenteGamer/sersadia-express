@@ -198,12 +198,12 @@ export function AdminDashboardContent() {
 
 export default function AdminDashboard() {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 lg:ml-64 flex flex-col">
-        <div className="flex-1 flex flex-col pt-12 lg:pt-0">
-          <AdminDesktop />
-        </div>
+    <div className="flex min-h-screen h-screen overflow-hidden">
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
+      <main className="flex-1 lg:ml-64 flex flex-col h-full">
+        <AdminDesktop />
       </main>
     </div>
   );
