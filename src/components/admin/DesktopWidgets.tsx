@@ -18,7 +18,7 @@ export function ClockWidget() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute bottom-4 right-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-white min-w-[220px] pointer-events-auto"
+      className="absolute bottom-4 right-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-white min-w-[220px] pointer-events-auto shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
     >
       <div className="flex items-center gap-2 mb-1 text-white/50">
         <Clock className="w-3.5 h-3.5" />
@@ -39,7 +39,7 @@ export function StatusWidget({ windowCount, activeApp }: { windowCount: number; 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="absolute bottom-4 right-[260px] bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-white min-w-[180px] pointer-events-auto"
+      className="absolute bottom-4 right-[268px] bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-white min-w-[180px] pointer-events-auto shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
     >
       <div className="flex items-center gap-2 mb-3 text-white/50">
         <Monitor className="w-3.5 h-3.5" />

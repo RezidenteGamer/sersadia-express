@@ -2,30 +2,42 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Paintbrush, X, Check, Image, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WallpaperConfig, PRESET_WALLPAPERS, getWallpaperStyle } from './wallpaperConfig';
+import { WallpaperConfig, PRESET_WALLPAPERS, PRESET_IMAGE_WALLPAPERS, getWallpaperStyle } from './wallpaperConfig';
 
 interface WallpaperSettingsProps {
   open: boolean;
   onClose: () => void;
   current: WallpaperConfig;
   onApply: (config: WallpaperConfig) => void;
+  onUploadFile?: (file: File) => Promise<string | null>;
 }
 
-export function WallpaperSettings({ open, onClose, current, onApply }: WallpaperSettingsProps) {
+export function WallpaperSettings({ open, onClose, current, onApply, onUploadFile }: WallpaperSettingsProps) {
   const [customUrl, setCustomUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      onApply({ type: 'image', value: dataUrl });
-    };
-    reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
+
+    if (onUploadFile) {
+      setUploading(true);
+      const url = await onUploadFile(file);
+      setUploading(false);
+      if (url) {
+        onApply({ type: 'image', value: url });
+      }
+    } else {
+      // Fallback to data URL (won't persist across browsers)
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        onApply({ type: 'image', value: dataUrl });
+      };
+      reader.readAsDataURL(file);
+    }
     e.target.value = '';
   };
 
@@ -47,7 +59,7 @@ export function WallpaperSettings({ open, onClose, current, onApply }: Wallpaper
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
           >
-            <div className="pointer-events-auto w-[480px] max-h-[80vh] bg-popover/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="pointer-events-auto w-[520px] max-h-[85vh] bg-popover/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
                 <div className="flex items-center gap-2">
@@ -60,13 +72,44 @@ export function WallpaperSettings({ open, onClose, current, onApply }: Wallpaper
               </div>
 
               {/* Content */}
-              <div className="p-5 space-y-5 overflow-y-auto max-h-[60vh]">
-                {/* Presets */}
+              <div className="p-5 space-y-5 overflow-y-auto max-h-[70vh]">
+                {/* Gradient/Solid Presets */}
                 <div>
                   <h3 className="text-sm font-medium text-foreground mb-3">Predefinidos</h3>
                   <div className="grid grid-cols-3 gap-2.5">
                     {PRESET_WALLPAPERS.map((preset, i) => {
                       const isActive = JSON.stringify(current) === JSON.stringify(preset.config);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => onApply(preset.config)}
+                          className={cn(
+                            "relative rounded-xl overflow-hidden h-20 border-2 transition-all group",
+                            isActive ? "border-primary shadow-lg" : "border-border/40 hover:border-border"
+                          )}
+                        >
+                          <div className="absolute inset-0" style={getWallpaperStyle(preset.config)} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <span className="absolute bottom-1.5 left-2 text-[10px] text-white font-medium">
+                            {preset.label}
+                          </span>
+                          {isActive && (
+                            <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Image Presets */}
+                <div>
+                  <h3 className="text-sm font-medium text-foreground mb-3">Imagens Ser Sadia</h3>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {PRESET_IMAGE_WALLPAPERS.map((preset, i) => {
+                      const isActive = current.type === 'image' && current.value === preset.config.value;
                       return (
                         <button
                           key={i}
@@ -104,10 +147,11 @@ export function WallpaperSettings({ open, onClose, current, onApply }: Wallpaper
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                    disabled={uploading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-colors text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
                   >
                     <Upload className="w-4 h-4" />
-                    Selecionar imagem...
+                    {uploading ? 'Enviando...' : 'Selecionar imagem...'}
                   </button>
                 </div>
 

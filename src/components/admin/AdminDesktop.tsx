@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
@@ -18,6 +18,7 @@ import { WallpaperSettings } from './WallpaperSettings';
 import { TaskManagerContent } from './TaskManagerContent';
 import { useDesktopSounds, loadSoundsEnabled, saveSoundsEnabled } from './useDesktopSounds';
 import { WallpaperConfig, loadWallpaper, saveWallpaper, getWallpaperStyle } from './wallpaperConfig';
+import { useWallpaperSync } from '@/hooks/useWallpaperSync';
 import { useNotifications, useUnreadNotificationsCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
 import { useDesktopTheme } from './useDesktopTheme';
 import { AdminMobileView } from './AdminMobileView';
@@ -69,6 +70,12 @@ export function AdminDesktop() {
   const [wallpaper, setWallpaper] = useState<WallpaperConfig>(loadWallpaper);
   const [soundsEnabled, setSoundsEnabled] = useState(loadSoundsEnabled);
   const { theme, toggleTheme, isDark } = useDesktopTheme();
+  const { dbWallpaper, saveAndSync, uploadWallpaperFile } = useWallpaperSync();
+
+  // Sync wallpaper from DB on load
+  useEffect(() => {
+    if (dbWallpaper) setWallpaper(dbWallpaper);
+  }, [dbWallpaper]);
 
   // Sounds
   const sounds = useDesktopSounds(soundsEnabled);
@@ -175,8 +182,8 @@ export function AdminDesktop() {
 
   const handleApplyWallpaper = useCallback((config: WallpaperConfig) => {
     setWallpaper(config);
-    saveWallpaper(config);
-  }, []);
+    saveAndSync(config);
+  }, [saveAndSync]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -357,6 +364,7 @@ export function AdminDesktop() {
         onClose={() => setWallpaperSettingsOpen(false)}
         current={wallpaper}
         onApply={handleApplyWallpaper}
+        onUploadFile={uploadWallpaperFile}
       />
     </div>
   );
