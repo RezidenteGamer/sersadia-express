@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Sun, Moon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { WindowState } from './useDesktopManager';
 
@@ -11,6 +11,8 @@ interface DesktopTaskbarProps {
   onOpenCommandPalette: () => void;
   unreadCount: number;
   onOpenNotifications: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
 function TaskbarWindowButton({
@@ -89,7 +91,7 @@ function TaskbarWindowButton({
   );
 }
 
-export function DesktopTaskbar({ windows, activeWindowId, onToggleWindow, onOpenCommandPalette, unreadCount, onOpenNotifications }: DesktopTaskbarProps) {
+export function DesktopTaskbar({ windows, activeWindowId, onToggleWindow, onOpenCommandPalette, unreadCount, onOpenNotifications, isDark, onToggleTheme }: DesktopTaskbarProps) {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -125,6 +127,15 @@ export function DesktopTaskbar({ windows, activeWindowId, onToggleWindow, onOpen
 
       {/* System tray */}
       <div className="flex items-center gap-1 shrink-0">
+        {/* Theme toggle */}
+        <button
+          onClick={onToggleTheme}
+          className="p-2 rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+          title={isDark ? 'Tema claro' : 'Tema escuro'}
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+
         {/* Notifications bell */}
         <button
           onClick={onOpenNotifications}
