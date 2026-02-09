@@ -2,7 +2,8 @@ import { useMemo, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
-  CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2, ExternalLink
+  CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -13,6 +14,10 @@ import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import { DesktopContextMenu } from './DesktopContextMenu';
 import { ClockWidget, StatusWidget } from './DesktopWidgets';
 import { NotificationPanel } from './NotificationPanel';
+import { WallpaperSettings } from './WallpaperSettings';
+import { TaskManagerContent } from './TaskManagerContent';
+import { useDesktopSounds, loadSoundsEnabled, saveSoundsEnabled } from './useDesktopSounds';
+import { WallpaperConfig, loadWallpaper, saveWallpaper, getWallpaperStyle } from './wallpaperConfig';
 import { useNotifications, useUnreadNotificationsCount, useMarkAsRead, useMarkAllAsRead } from '@/hooks/useNotifications';
 
 import { AdminDashboardContent } from '@/pages/admin/AdminDashboard';
@@ -37,9 +42,6 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
 ];
 
-// Badge mapping: which apps get notification badges
-const BADGE_APP_IDS = ['reservations', 'payments'];
-
 const STORAGE_KEY = 'admin-desktop-icon-positions';
 
 function loadIconPositions(): Record<string, { col: number; row: number }> {
@@ -59,6 +61,20 @@ export function AdminDesktop() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [iconPositions, setIconPositions] = useState<Record<string, { col: number; row: number }>>(loadIconPositions);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [wallpaperSettingsOpen, setWallpaperSettingsOpen] = useState(false);
+  const [wallpaper, setWallpaper] = useState<WallpaperConfig>(loadWallpaper);
+  const [soundsEnabled, setSoundsEnabled] = useState(loadSoundsEnabled);
+
+  // Sounds
+  const sounds = useDesktopSounds(soundsEnabled);
+
+  const toggleSounds = useCallback(() => {
+    setSoundsEnabled(prev => {
+      const next = !prev;
+      saveSoundsEnabled(next);
+      return next;
+    });
+  }, []);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ open: boolean; x: number; y: number; appId: string | null }>({
@@ -77,6 +93,22 @@ export function AdminDesktop() {
     toggleMinimizeFromTaskbar, cycleWindows, closeActiveWindow,
   } = useDesktopManager();
 
+  // Wrap window actions with sounds
+  const handleOpenWindow = useCallback((app: DesktopApp) => {
+    sounds.playOpen();
+    openWindow(app);
+  }, [openWindow, sounds]);
+
+  const handleCloseWindow = useCallback((id: string) => {
+    sounds.playClose();
+    closeWindow(id);
+  }, [closeWindow, sounds]);
+
+  const handleMinimizeWindow = useCallback((id: string) => {
+    sounds.playMinimize();
+    minimizeWindow(id);
+  }, [minimizeWindow, sounds]);
+
   const availableApps = useMemo(() => {
     return ALL_APPS.filter(app => {
       if (app.adminOnly) return isAdmin;
@@ -84,6 +116,23 @@ export function AdminDesktop() {
       return true;
     });
   }, [isAdmin, permissions]);
+
+  // Task Manager as a special "app"
+  const TaskManagerWrapper = useCallback(() => (
+    <TaskManagerContent
+      windows={windows}
+      onFocusWindow={focusWindow}
+      onCloseWindow={handleCloseWindow}
+      onMinimizeWindow={handleMinimizeWindow}
+    />
+  ), [windows, focusWindow, handleCloseWindow, handleMinimizeWindow]);
+
+  const taskManagerApp: DesktopApp = useMemo(() => ({
+    id: 'task-manager',
+    title: 'Gerenciador de Tarefas',
+    icon: Activity,
+    component: TaskManagerWrapper,
+  }), [TaskManagerWrapper]);
 
   const resolvedPositions = useMemo(() => {
     const result: Record<string, { col: number; row: number }> = { ...iconPositions };
@@ -119,6 +168,11 @@ export function AdminDesktop() {
     });
   }, []);
 
+  const handleApplyWallpaper = useCallback((config: WallpaperConfig) => {
+    setWallpaper(config);
+    saveWallpaper(config);
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen?.();
@@ -147,18 +201,20 @@ export function AdminDesktop() {
       if (!app) return [];
       const isOpen = windows.some(w => w.id === app.id);
       return [
-        { label: 'Abrir', icon: <FolderOpen className="w-4 h-4" />, onClick: () => openWindow(app) },
-        ...(isOpen ? [{ label: 'Fechar', icon: <Trash2 className="w-4 h-4" />, onClick: () => closeWindow(app.id), danger: true, divider: true }] : []),
+        { label: 'Abrir', icon: <FolderOpen className="w-4 h-4" />, onClick: () => handleOpenWindow(app) },
+        ...(isOpen ? [{ label: 'Fechar', icon: <Trash2 className="w-4 h-4" />, onClick: () => handleCloseWindow(app.id), danger: true, divider: true }] : []),
         { label: 'Resetar posição', icon: <ExternalLink className="w-4 h-4" />, onClick: () => handleIconPositionChange(app.id, { col: 0, row: 0 }), divider: !isOpen },
       ];
     }
-    // Desktop context menu
     return [
       { label: 'Command Palette', icon: <ExternalLink className="w-4 h-4" />, onClick: () => setCommandPaletteOpen(true) },
-      { label: 'Tela cheia', icon: <ExternalLink className="w-4 h-4" />, onClick: toggleFullscreen },
-      { label: 'Resetar ícones', icon: <ExternalLink className="w-4 h-4" />, onClick: () => { setIconPositions({}); localStorage.removeItem(STORAGE_KEY); }, divider: true },
+      { label: 'Gerenciador de Tarefas', icon: <Activity className="w-4 h-4" />, onClick: () => handleOpenWindow(taskManagerApp) },
+      { label: 'Papel de Parede', icon: <Paintbrush className="w-4 h-4" />, onClick: () => setWallpaperSettingsOpen(true), divider: true },
+      { label: soundsEnabled ? 'Desativar sons' : 'Ativar sons', icon: soundsEnabled ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />, onClick: toggleSounds },
+      { label: 'Tela cheia', icon: <Maximize className="w-4 h-4" />, onClick: toggleFullscreen, divider: true },
+      { label: 'Resetar ícones', icon: <ExternalLink className="w-4 h-4" />, onClick: () => { setIconPositions({}); localStorage.removeItem(STORAGE_KEY); } },
     ];
-  }, [contextMenu.appId, availableApps, windows, openWindow, closeWindow, handleIconPositionChange, toggleFullscreen]);
+  }, [contextMenu.appId, availableApps, windows, handleOpenWindow, handleCloseWindow, handleIconPositionChange, toggleFullscreen, taskManagerApp, soundsEnabled, toggleSounds]);
 
   useKeyboardShortcuts({
     onCycleWindows: cycleWindows,
@@ -173,16 +229,17 @@ export function AdminDesktop() {
     return w?.title || null;
   }, [activeWindowId, windows]);
 
+  // All apps including task manager for command palette
+  const allCommandApps = useMemo(() => [...availableApps, taskManagerApp], [availableApps, taskManagerApp]);
+
   return (
     <div className="flex flex-col h-full w-full">
       {/* Desktop Area */}
       <div
         ref={desktopRef}
-        className="flex-1 relative overflow-hidden"
+        className="flex-1 relative overflow-hidden cursor-default"
         onContextMenu={handleDesktopContextMenu}
-        style={{
-          background: 'linear-gradient(135deg, hsl(var(--sidebar-background)) 0%, hsl(var(--sidebar-background) / 0.85) 40%, hsl(var(--primary) / 0.12) 100%)',
-        }}
+        style={getWallpaperStyle(wallpaper)}
       >
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
@@ -198,15 +255,14 @@ export function AdminDesktop() {
             label={app.title}
             appId={app.id}
             gridPosition={resolvedPositions[app.id] || { col: 0, row: 0 }}
-            badge={BADGE_APP_IDS.includes(app.id) ? undefined : undefined}
-            onOpen={() => openWindow(app)}
+            onOpen={() => handleOpenWindow(app)}
             onPositionChange={handleIconPositionChange}
             occupiedCells={occupiedCells}
             onContextMenu={handleIconContextMenu}
           />
         ))}
 
-        {/* Widgets (only visible when no windows cover them) */}
+        {/* Widgets */}
         <div className="pointer-events-none absolute inset-0">
           <ClockWidget />
           <StatusWidget windowCount={windows.length} activeApp={activeAppTitle} />
@@ -218,8 +274,8 @@ export function AdminDesktop() {
             key={win.id}
             window={win}
             isActive={win.id === activeWindowId}
-            onClose={() => closeWindow(win.id)}
-            onMinimize={() => minimizeWindow(win.id)}
+            onClose={() => handleCloseWindow(win.id)}
+            onMinimize={() => handleMinimizeWindow(win.id)}
             onToggleMaximize={() => toggleMaximize(win.id)}
             onFocus={() => focusWindow(win.id)}
             onUpdatePosition={(pos) => updatePosition(win.id, pos)}
@@ -244,8 +300,8 @@ export function AdminDesktop() {
       <CommandPalette
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
-        apps={availableApps}
-        onSelectApp={openWindow}
+        apps={allCommandApps}
+        onSelectApp={handleOpenWindow}
       />
 
       {/* Context Menu */}
@@ -264,6 +320,14 @@ export function AdminDesktop() {
         notifications={notifications}
         onMarkAsRead={(id) => markAsRead.mutate(id)}
         onMarkAllAsRead={() => markAllAsRead.mutate()}
+      />
+
+      {/* Wallpaper Settings */}
+      <WallpaperSettings
+        open={wallpaperSettingsOpen}
+        onClose={() => setWallpaperSettingsOpen(false)}
+        current={wallpaper}
+        onApply={handleApplyWallpaper}
       />
     </div>
   );
