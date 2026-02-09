@@ -12,6 +12,7 @@ export function useLocations(includeInactive = false) {
       let query = supabase
         .from('locations')
         .select('*')
+        .order('display_order', { ascending: true })
         .order('name', { ascending: true });
       
       if (!includeInactive) {
@@ -124,6 +125,28 @@ export function useToggleLocationStatus() {
     },
     onError: (error) => {
       toast.error('Erro ao alterar status: ' + error.message);
+    },
+  });
+}
+
+export function useReorderLocations() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      const updates = orderedIds.map((id, index) =>
+        supabase.from('locations').update({ display_order: index }).eq('id', id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find(r => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+      toast.success('Ordem atualizada!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao reordenar: ' + error.message);
     },
   });
 }

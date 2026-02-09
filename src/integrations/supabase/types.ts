@@ -122,6 +122,7 @@ export type Database = {
           capacity: number
           created_at: string
           description: string | null
+          display_order: number
           id: string
           images: string[] | null
           is_active: boolean
@@ -140,6 +141,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           description?: string | null
+          display_order?: number
           id?: string
           images?: string[] | null
           is_active?: boolean
@@ -158,6 +160,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           description?: string | null
+          display_order?: number
           id?: string
           images?: string[] | null
           is_active?: boolean
