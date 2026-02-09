@@ -200,7 +200,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 lg:ml-0 flex flex-col">
+      <main className="flex-1 lg:ml-64 flex flex-col">
         <div className="flex-1 flex flex-col pt-12 lg:pt-0">
           <AdminDesktop />
         </div>
