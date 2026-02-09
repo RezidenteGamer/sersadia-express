@@ -25,6 +25,10 @@ export default function Index() {
               <Button size="lg" variant="outline" className="h-14 px-8 text-lg" onClick={() => navigate('/auth')}>
                 Fazer Login
               </Button>
+              <Button size="lg" variant="ghost" className="h-14 px-8 text-lg" onClick={() => navigate('/locations')}>
+                <MapPin className="w-5 h-5 mr-2" />
+                Ver Locais Disponíveis
+              </Button>
             </div>
           </div>
         </div>
