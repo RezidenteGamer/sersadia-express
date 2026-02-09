@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Paintbrush, X, Check, Image, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,21 @@ interface WallpaperSettingsProps {
 
 export function WallpaperSettings({ open, onClose, current, onApply }: WallpaperSettingsProps) {
   const [customUrl, setCustomUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      onApply({ type: 'image', value: dataUrl });
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
 
   return (
     <AnimatePresence>
@@ -77,9 +92,28 @@ export function WallpaperSettings({ open, onClose, current, onApply }: Wallpaper
                   </div>
                 </div>
 
+                {/* Upload local image */}
+                <div>
+                  <h3 className="text-sm font-medium text-foreground mb-3">Enviar imagem do computador</h3>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Selecionar imagem...
+                  </button>
+                </div>
+
                 {/* Custom image URL */}
                 <div>
-                  <h3 className="text-sm font-medium text-foreground mb-3">Imagem personalizada</h3>
+                  <h3 className="text-sm font-medium text-foreground mb-3">Ou usar URL de imagem</h3>
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
