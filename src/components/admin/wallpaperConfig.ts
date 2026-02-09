@@ -22,6 +22,14 @@ export const PRESET_WALLPAPERS: { label: string; config: WallpaperConfig }[] = [
   { label: 'Dark Navy', config: { type: 'solid', value: '#0f172a' } },
 ];
 
+export const PRESET_IMAGE_WALLPAPERS: { label: string; config: WallpaperConfig }[] = [
+  { label: 'Ser Sadia Colorido', config: { type: 'image', value: '/wallpapers/wallpaper-dark-colorful.png' } },
+  { label: 'Ser Sadia Festivo', config: { type: 'image', value: '/wallpapers/wallpaper-light-festive.png' } },
+  { label: 'Ser Sadia Celebração', config: { type: 'image', value: '/wallpapers/wallpaper-purple-celebration.png' } },
+  { label: 'Ser Sadia Raios', config: { type: 'image', value: '/wallpapers/wallpaper-dark-rays.png' } },
+  { label: 'Ser Sadia Escritório', config: { type: 'image', value: '/wallpapers/wallpaper-office.png' } },
+];
+
 export function loadWallpaper(): WallpaperConfig {
   try {
     const saved = localStorage.getItem(WALLPAPER_KEY);

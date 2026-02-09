@@ -32,6 +32,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_wallpaper_preferences: {
+        Row: {
+          id: string
+          updated_at: string
+          user_id: string
+          wallpaper_config: Json
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          user_id: string
+          wallpaper_config: Json
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          user_id?: string
+          wallpaper_config?: Json
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           created_at: string

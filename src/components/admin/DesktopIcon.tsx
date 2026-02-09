@@ -98,11 +98,12 @@ export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onO
     >
       <div className="relative">
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-150",
+          "w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-150",
           "bg-white/10 backdrop-blur-sm border border-white/15",
-          "hover:scale-110 hover:shadow-xl hover:bg-white/15",
+          "shadow-[0_4px_12px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.4)]",
+          "hover:scale-110 hover:shadow-[0_8px_24px_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.5)] hover:bg-white/15",
         )}>
-          <Icon className="w-6 h-6 text-white drop-shadow" />
+          <Icon className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" />
         </div>
         {/* Notification badge */}
         {badge !== undefined && badge > 0 && (
@@ -111,7 +112,7 @@ export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onO
           </span>
         )}
       </div>
-      <span className="text-[11px] text-white font-medium text-center leading-tight drop-shadow-md w-20 truncate">
+      <span className="text-[11px] text-white font-semibold text-center leading-tight w-20 truncate" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
         {label}
       </span>
     </button>
