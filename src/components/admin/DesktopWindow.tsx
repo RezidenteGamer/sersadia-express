@@ -90,19 +90,19 @@ export function DesktopWindow({
             onClick={(e) => { e.stopPropagation(); onMinimize(); }}
             className="p-1 rounded hover:bg-white/20 transition-colors"
           >
-            <Minus className="w-3.5 h-3.5" />
+            <Minus className="w-3.5 h-3.5 text-white" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onToggleMaximize(); }}
             className="p-1 rounded hover:bg-white/20 transition-colors"
           >
-            {win.isMaximized ? <Square className="w-3 h-3" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {win.isMaximized ? <Square className="w-3 h-3 text-white" /> : <Maximize2 className="w-3.5 h-3.5 text-white" />}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             className="p-1 rounded hover:bg-destructive/80 transition-colors"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
       </div>
