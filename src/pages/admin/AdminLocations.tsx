@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,8 +11,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
-import { useLocations, useCreateLocation, useUpdateLocation, useToggleLocationStatus } from '@/hooks/useLocations';
-import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power, Trash2 } from 'lucide-react';
+import { useLocations, useCreateLocation, useUpdateLocation, useToggleLocationStatus, useReorderLocations } from '@/hooks/useLocations';
+import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power, Trash2, GripVertical } from 'lucide-react';
 import type { Location } from '@/hooks/useLocations';
 
 interface TimeSlot {
@@ -30,6 +30,10 @@ export function AdminLocationsContent() {
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
   const toggleStatus = useToggleLocationStatus();
+  const reorderLocations = useReorderLocations();
+  
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -187,9 +191,38 @@ export function AdminLocationsContent() {
       ) : filteredLocations && filteredLocations.length > 0 ? (
         <div className="grid gap-4">
           {filteredLocations.map((location) => (
-            <Card key={location.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={location.id}
+              className={`hover:shadow-md transition-shadow ${draggedId === location.id ? 'opacity-50' : ''} ${dragOverId === location.id ? 'ring-2 ring-primary' : ''}`}
+              draggable={!search}
+              onDragStart={() => setDraggedId(location.id)}
+              onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOverId(location.id); }}
+              onDragLeave={() => setDragOverId(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverId(null);
+                if (!draggedId || draggedId === location.id || !filteredLocations) return;
+                const ids = filteredLocations.map(l => l.id);
+                const fromIdx = ids.indexOf(draggedId);
+                const toIdx = ids.indexOf(location.id);
+                if (fromIdx === -1 || toIdx === -1) return;
+                const newIds = [...ids];
+                newIds.splice(fromIdx, 1);
+                newIds.splice(toIdx, 0, draggedId);
+                reorderLocations.mutate(newIds);
+                setDraggedId(null);
+              }}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
+                  {/* Drag Handle */}
+                  {!search && (
+                    <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+                      <GripVertical className="w-5 h-5" />
+                    </div>
+                  )}
+                  
                   {/* Image */}
                   <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {location.images && location.images[0] ? (

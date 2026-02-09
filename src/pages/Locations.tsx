@@ -24,6 +24,7 @@ export default function Locations() {
         .from('locations')
         .select('*')
         .eq('is_active', true)
+        .order('display_order')
         .order('name');
 
       if (error) throw error;
