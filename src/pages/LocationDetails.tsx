@@ -340,8 +340,14 @@ export default function LocationDetails() {
                     </div>}
                 </div>}
               
-              <Button className="w-full" size="lg" disabled={!selectedDate || !selectedSlot} onClick={() => setShowConfirmDialog(true)}>
-                Solicitar Reserva
+              <Button className="w-full" size="lg" disabled={!selectedDate || !selectedSlot} onClick={() => {
+                if (!user) {
+                  navigate(`/auth?redirect=/locations/${id}`);
+                  return;
+                }
+                setShowConfirmDialog(true);
+              }}>
+                {user ? 'Solicitar Reserva' : 'Entrar para Reservar'}
               </Button>
             </CardContent>
           </Card>
