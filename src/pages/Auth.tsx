@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, IdCard } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, IdCard, MapPin } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -309,7 +309,7 @@ const [errors, setErrors] = useState<Record<string, string>>({});
               </form>
             )}
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 space-y-3 text-center">
               <p className="text-sm text-muted-foreground">
                 {forgotPassword ? (
                   <button
@@ -335,6 +335,10 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                   </>
                 )}
               </p>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/locations')}>
+                <MapPin className="w-4 h-4 mr-2" />
+                Ver Locais Disponíveis
+              </Button>
             </div>
           </CardContent>
         </Card>
