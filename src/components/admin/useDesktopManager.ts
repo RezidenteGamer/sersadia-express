@@ -15,28 +15,34 @@ export interface WindowState {
   component: React.ComponentType;
   isMinimized: boolean;
   isMaximized: boolean;
+  isSnapped: 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
   position: { x: number; y: number };
+  size: { width: number; height: number };
   zIndex: number;
+  isClosing: boolean;
 }
 
 let nextZIndex = 10;
 
+const DEFAULT_SIZE = { width: 900, height: 600 };
+
 export function useDesktopManager() {
   const [windows, setWindows] = useState<WindowState[]>([]);
+  const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
 
   const openWindow = useCallback((app: DesktopApp) => {
     setWindows(prev => {
       const existing = prev.find(w => w.id === app.id);
       if (existing) {
-        // If minimized, restore it; always bring to front
+        setActiveWindowId(app.id);
         return prev.map(w =>
           w.id === app.id
-            ? { ...w, isMinimized: false, zIndex: ++nextZIndex }
+            ? { ...w, isMinimized: false, isClosing: false, zIndex: ++nextZIndex }
             : w
         );
       }
-      // Open new window with staggered position
       const offset = prev.length * 30;
+      setActiveWindowId(app.id);
       return [...prev, {
         id: app.id,
         title: app.title,
@@ -44,32 +50,53 @@ export function useDesktopManager() {
         component: app.component,
         isMinimized: false,
         isMaximized: false,
+        isSnapped: null,
         position: { x: 60 + offset, y: 40 + offset },
+        size: { ...DEFAULT_SIZE },
         zIndex: ++nextZIndex,
+        isClosing: false,
       }];
     });
   }, []);
 
   const closeWindow = useCallback((id: string) => {
-    setWindows(prev => prev.filter(w => w.id !== id));
+    // Mark as closing for exit animation
+    setWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isClosing: true } : w
+    ));
+    // Remove after animation
+    setTimeout(() => {
+      setWindows(prev => prev.filter(w => w.id !== id));
+      setActiveWindowId(prev => prev === id ? null : prev);
+    }, 200);
   }, []);
 
   const minimizeWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, isMinimized: true } : w
     ));
+    setActiveWindowId(prev => prev === id ? null : prev);
   }, []);
 
   const toggleMaximize = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
-      w.id === id ? { ...w, isMaximized: !w.isMaximized, zIndex: ++nextZIndex } : w
+      w.id === id ? { ...w, isMaximized: !w.isMaximized, isSnapped: null, zIndex: ++nextZIndex } : w
     ));
+    setActiveWindowId(id);
+  }, []);
+
+  const snapWindow = useCallback((id: string, snap: WindowState['isSnapped']) => {
+    setWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isSnapped: snap, isMaximized: false, zIndex: ++nextZIndex } : w
+    ));
+    setActiveWindowId(id);
   }, []);
 
   const focusWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, zIndex: ++nextZIndex } : w
     ));
+    setActiveWindowId(id);
   }, []);
 
   const updatePosition = useCallback((id: string, position: { x: number; y: number }) => {
@@ -78,37 +105,66 @@ export function useDesktopManager() {
     ));
   }, []);
 
+  const updateSize = useCallback((id: string, size: { width: number; height: number }) => {
+    setWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, size } : w
+    ));
+  }, []);
+
   const toggleMinimizeFromTaskbar = useCallback((id: string) => {
     setWindows(prev => {
       const win = prev.find(w => w.id === id);
       if (!win) return prev;
       if (win.isMinimized) {
+        setActiveWindowId(id);
         return prev.map(w =>
           w.id === id ? { ...w, isMinimized: false, zIndex: ++nextZIndex } : w
         );
       }
-      // If it's the top window, minimize it
       const maxZ = Math.max(...prev.map(w => w.zIndex));
       if (win.zIndex === maxZ) {
+        setActiveWindowId(null);
         return prev.map(w =>
           w.id === id ? { ...w, isMinimized: true } : w
         );
       }
-      // Otherwise just focus
+      setActiveWindowId(id);
       return prev.map(w =>
         w.id === id ? { ...w, zIndex: ++nextZIndex } : w
       );
     });
   }, []);
 
+  const cycleWindows = useCallback(() => {
+    setWindows(prev => {
+      const visible = prev.filter(w => !w.isMinimized);
+      if (visible.length <= 1) return prev;
+      const sorted = [...visible].sort((a, b) => a.zIndex - b.zIndex);
+      const nextWin = sorted[0]; // bring lowest to top
+      setActiveWindowId(nextWin.id);
+      return prev.map(w =>
+        w.id === nextWin.id ? { ...w, zIndex: ++nextZIndex } : w
+      );
+    });
+  }, []);
+
+  const closeActiveWindow = useCallback(() => {
+    if (activeWindowId) closeWindow(activeWindowId);
+  }, [activeWindowId, closeWindow]);
+
   return {
     windows,
+    activeWindowId,
     openWindow,
     closeWindow,
     minimizeWindow,
     toggleMaximize,
+    snapWindow,
     focusWindow,
     updatePosition,
+    updateSize,
     toggleMinimizeFromTaskbar,
+    cycleWindows,
+    closeActiveWindow,
   };
 }

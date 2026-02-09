@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
@@ -8,8 +8,9 @@ import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
 import { DesktopTaskbar } from './DesktopTaskbar';
 import { DesktopIcon } from './DesktopIcon';
+import { CommandPalette } from './CommandPalette';
+import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 
-// Inline content components (no AppLayout wrapper)
 import { AdminDashboardContent } from '@/pages/admin/AdminDashboard';
 import { AdminLocationsContent } from '@/pages/admin/AdminLocations';
 import { AdminReservationsContent } from '@/pages/admin/AdminReservations';
@@ -32,11 +33,30 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
 ];
 
+const STORAGE_KEY = 'admin-desktop-icon-positions';
+
+function loadIconPositions(): Record<string, { col: number; row: number }> {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
+function saveIconPositions(positions: Record<string, { col: number; row: number }>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+}
+
 export function AdminDesktop() {
   const { isAdmin, permissions } = useAuth();
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [iconPositions, setIconPositions] = useState<Record<string, { col: number; row: number }>>(loadIconPositions);
+
   const {
-    windows, openWindow, closeWindow, minimizeWindow,
-    toggleMaximize, focusWindow, updatePosition, toggleMinimizeFromTaskbar,
+    windows, activeWindowId, openWindow, closeWindow, minimizeWindow,
+    toggleMaximize, snapWindow, focusWindow, updatePosition, updateSize,
+    toggleMinimizeFromTaskbar, cycleWindows, closeActiveWindow,
   } = useDesktopManager();
 
   const availableApps = useMemo(() => {
@@ -47,37 +67,103 @@ export function AdminDesktop() {
     });
   }, [isAdmin, permissions]);
 
+  // Assign default grid positions to apps that don't have saved positions
+  const resolvedPositions = useMemo(() => {
+    const result: Record<string, { col: number; row: number }> = { ...iconPositions };
+    let nextCol = 0;
+    let nextRow = 0;
+    availableApps.forEach(app => {
+      if (!result[app.id]) {
+        // Find next free slot
+        while (Object.values(result).some(p => p.col === nextCol && p.row === nextRow)) {
+          nextCol++;
+          if (nextCol > 7) { nextCol = 0; nextRow++; }
+        }
+        result[app.id] = { col: nextCol, row: nextRow };
+        nextCol++;
+        if (nextCol > 7) { nextCol = 0; nextRow++; }
+      }
+    });
+    return result;
+  }, [availableApps, iconPositions]);
+
+  const occupiedCells = useMemo(() => {
+    const map = new Map<string, string>();
+    Object.entries(resolvedPositions).forEach(([appId, pos]) => {
+      map.set(`${pos.col}-${pos.row}`, appId);
+    });
+    return map;
+  }, [resolvedPositions]);
+
+  const handleIconPositionChange = useCallback((appId: string, pos: { col: number; row: number }) => {
+    setIconPositions(prev => {
+      const next = { ...prev, [appId]: pos };
+      saveIconPositions(next);
+      return next;
+    });
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  useKeyboardShortcuts({
+    onCycleWindows: cycleWindows,
+    onCloseActiveWindow: closeActiveWindow,
+    onOpenCommandPalette: () => setCommandPaletteOpen(true),
+    onToggleFullscreen: toggleFullscreen,
+  });
+
   return (
     <div className="flex flex-col h-full w-full">
       {/* Desktop Area */}
       <div
+        ref={desktopRef}
         className="flex-1 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, hsl(var(--sidebar-background)) 0%, hsl(var(--sidebar-background) / 0.8) 50%, hsl(var(--primary) / 0.15) 100%)',
+          background: 'linear-gradient(135deg, hsl(var(--sidebar-background)) 0%, hsl(var(--sidebar-background) / 0.85) 40%, hsl(var(--primary) / 0.12) 100%)',
         }}
       >
-        {/* Desktop Icons Grid */}
-        <div className="absolute inset-0 p-6 grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 auto-rows-min gap-2 content-start">
-          {availableApps.map(app => (
-            <DesktopIcon
-              key={app.id}
-              icon={app.icon}
-              label={app.title}
-              onClick={() => openWindow(app)}
-            />
-          ))}
-        </div>
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }} />
+
+        {/* Desktop Icons */}
+        {availableApps.map(app => (
+          <DesktopIcon
+            key={app.id}
+            icon={app.icon}
+            label={app.title}
+            appId={app.id}
+            gridPosition={resolvedPositions[app.id] || { col: 0, row: 0 }}
+            onOpen={() => openWindow(app)}
+            onPositionChange={handleIconPositionChange}
+            occupiedCells={occupiedCells}
+          />
+        ))}
 
         {/* Floating Windows */}
         {windows.map(win => (
           <DesktopWindow
             key={win.id}
             window={win}
+            isActive={win.id === activeWindowId}
             onClose={() => closeWindow(win.id)}
             onMinimize={() => minimizeWindow(win.id)}
             onToggleMaximize={() => toggleMaximize(win.id)}
             onFocus={() => focusWindow(win.id)}
             onUpdatePosition={(pos) => updatePosition(win.id, pos)}
+            onUpdateSize={(size) => updateSize(win.id, size)}
+            onSnap={(snap) => snapWindow(win.id, snap)}
+            containerRef={desktopRef}
           />
         ))}
       </div>
@@ -85,7 +171,17 @@ export function AdminDesktop() {
       {/* Taskbar */}
       <DesktopTaskbar
         windows={windows}
+        activeWindowId={activeWindowId}
         onToggleWindow={toggleMinimizeFromTaskbar}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        apps={availableApps}
+        onSelectApp={openWindow}
       />
     </div>
   );
