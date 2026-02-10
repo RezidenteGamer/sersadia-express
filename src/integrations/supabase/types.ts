@@ -279,6 +279,7 @@ export type Database = {
           created_at: string
           id: string
           is_paid: boolean
+          mp_payment_id: string | null
           notes: string | null
           paid_at: string | null
           payment_method: string | null
@@ -289,6 +290,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_paid?: boolean
+          mp_payment_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
@@ -299,6 +301,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_paid?: boolean
+          mp_payment_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null

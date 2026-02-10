@@ -80,6 +80,7 @@ serve(async (req) => {
         pending: `${origin}/my-reservations?payment=pending`,
       },
       auto_return: "approved",
+      notification_url: `https://irvwzvuwkmkntwkbkuac.supabase.co/functions/v1/mercado-pago-webhook`,
       external_reference: reservationId,
       metadata: {
         reservation_id: reservationId,
