@@ -65,8 +65,6 @@ serve(async (req) => {
         email: user.email,
       },
       payment_methods: {
-        default_payment_method_id: "pix",
-        excluded_payment_types: [],
         installments: 1,
       },
       back_urls: {
