@@ -22,7 +22,17 @@ export interface WindowState {
   isClosing: boolean;
 }
 
+// Keep window z-index below 40 so Radix portals (z-50) always render on top
 let nextZIndex = 10;
+const MAX_WINDOW_Z = 39;
+
+function getNextZIndex() {
+  nextZIndex++;
+  if (nextZIndex > MAX_WINDOW_Z) {
+    nextZIndex = 10;
+  }
+  return nextZIndex;
+}
 
 const DEFAULT_SIZE = { width: 900, height: 600 };
 
@@ -37,7 +47,7 @@ export function useDesktopManager() {
         setActiveWindowId(app.id);
         return prev.map(w =>
           w.id === app.id
-            ? { ...w, isMinimized: false, isClosing: false, zIndex: ++nextZIndex }
+            ? { ...w, isMinimized: false, isClosing: false, zIndex: getNextZIndex() }
             : w
         );
       }
@@ -53,7 +63,7 @@ export function useDesktopManager() {
         isSnapped: null,
         position: { x: 60 + offset, y: 40 + offset },
         size: { ...DEFAULT_SIZE },
-        zIndex: ++nextZIndex,
+        zIndex: getNextZIndex(),
         isClosing: false,
       }];
     });
@@ -80,21 +90,21 @@ export function useDesktopManager() {
 
   const toggleMaximize = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
-      w.id === id ? { ...w, isMaximized: !w.isMaximized, isSnapped: null, zIndex: ++nextZIndex } : w
+      w.id === id ? { ...w, isMaximized: !w.isMaximized, isSnapped: null, zIndex: getNextZIndex() } : w
     ));
     setActiveWindowId(id);
   }, []);
 
   const snapWindow = useCallback((id: string, snap: WindowState['isSnapped']) => {
     setWindows(prev => prev.map(w =>
-      w.id === id ? { ...w, isSnapped: snap, isMaximized: false, zIndex: ++nextZIndex } : w
+      w.id === id ? { ...w, isSnapped: snap, isMaximized: false, zIndex: getNextZIndex() } : w
     ));
     setActiveWindowId(id);
   }, []);
 
   const focusWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
-      w.id === id ? { ...w, zIndex: ++nextZIndex } : w
+      w.id === id ? { ...w, zIndex: getNextZIndex() } : w
     ));
     setActiveWindowId(id);
   }, []);
@@ -118,7 +128,7 @@ export function useDesktopManager() {
       if (win.isMinimized) {
         setActiveWindowId(id);
         return prev.map(w =>
-          w.id === id ? { ...w, isMinimized: false, zIndex: ++nextZIndex } : w
+          w.id === id ? { ...w, isMinimized: false, zIndex: getNextZIndex() } : w
         );
       }
       const maxZ = Math.max(...prev.map(w => w.zIndex));
@@ -130,7 +140,7 @@ export function useDesktopManager() {
       }
       setActiveWindowId(id);
       return prev.map(w =>
-        w.id === id ? { ...w, zIndex: ++nextZIndex } : w
+        w.id === id ? { ...w, zIndex: getNextZIndex() } : w
       );
     });
   }, []);
@@ -143,7 +153,7 @@ export function useDesktopManager() {
       const nextWin = sorted[0]; // bring lowest to top
       setActiveWindowId(nextWin.id);
       return prev.map(w =>
-        w.id === nextWin.id ? { ...w, zIndex: ++nextZIndex } : w
+        w.id === nextWin.id ? { ...w, zIndex: getNextZIndex() } : w
       );
     });
   }, []);
