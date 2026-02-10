@@ -274,9 +274,16 @@ export default function LocationDetails() {
                 </div>
                 <div className="flex items-center gap-2 text-primary font-medium">
                   <DollarSign className="w-4 h-4" />
-                  <span>
-                    {location.price_fixed ? `R$ ${location.price_fixed.toFixed(2)} (fixo)` : `R$ ${location.price_per_hour.toFixed(2)}/período`}
-                  </span>
+                  <div className="flex flex-col">
+                    <span>
+                      {location.price_fixed ? `R$ ${location.price_fixed.toFixed(2)} (fixo)` : `R$ ${location.price_per_hour.toFixed(2)}/período`}
+                    </span>
+                    {!isMember && (location.price_fixed_member || location.price_per_hour_member) && (
+                      <span className="text-[11px] text-muted-foreground font-normal">
+                        Sócio: R$ {location.price_fixed_member ? location.price_fixed_member.toFixed(2) : location.price_per_hour_member?.toFixed(2)}{location.price_fixed_member ? '' : '/período'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {isMember && <Badge variant="outline" className="text-success border-success">
                     <Tag className="w-3 h-3 mr-1" />

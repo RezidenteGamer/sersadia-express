@@ -83,9 +83,16 @@ export default function Locations() {
                     <MapPin className="w-12 h-12 text-muted-foreground/50" />
                   </div>
                 )}
-                <Badge className="absolute top-3 right-3 bg-card/90 text-foreground">
-                  R$ {Number(location.price_per_hour).toFixed(2)}/h
-                </Badge>
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                  <Badge className="bg-card/90 text-foreground">
+                    R$ {location.price_fixed ? Number(location.price_fixed).toFixed(2) : Number(location.price_per_hour).toFixed(2)}{location.price_fixed ? '' : '/h'}
+                  </Badge>
+                  {(location.price_fixed_member || location.price_per_hour_member) && (
+                    <span className="text-[10px] text-white drop-shadow-md bg-black/40 backdrop-blur-sm rounded px-1.5 py-0.5">
+                      Sócio: R$ {location.price_fixed_member ? Number(location.price_fixed_member).toFixed(2) : Number(location.price_per_hour_member).toFixed(2)}{location.price_fixed_member ? '' : '/h'}
+                    </span>
+                  )}
+                </div>
               </div>
               
               <CardContent className="p-5">
