@@ -170,7 +170,7 @@ export default function LocationDetails() {
 
       // Redirect to Mercado Pago Checkout
       // Use sandbox_init_point for test mode, init_point for production
-      const checkoutUrl = data?.sandboxInitPoint || data?.initPoint;
+      const checkoutUrl = data?.initPoint || data?.sandboxInitPoint;
       
       if (checkoutUrl) {
         toast.success('Redirecionando para o pagamento...');

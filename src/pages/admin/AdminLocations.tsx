@@ -480,7 +480,7 @@ export function AdminLocationsContent() {
               <ImageUpload
                 images={formData.images}
                 onImagesChange={(images) => setFormData({ ...formData, images })}
-                maxImages={5}
+                maxImages={15}
               />
               
               <div className="space-y-2">
