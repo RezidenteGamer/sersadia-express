@@ -70,8 +70,9 @@ serve(async (req) => {
           { id: "credit_card" },
           { id: "debit_card" },
           { id: "ticket" },
+          { id: "atm" },
+          { id: "prepaid_card" },
         ],
-        default_payment_method_id: "pix",
       },
       back_urls: {
         success: `${origin}/my-reservations?payment=success`,
