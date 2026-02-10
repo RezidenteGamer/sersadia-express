@@ -66,6 +66,12 @@ serve(async (req) => {
       },
       payment_methods: {
         installments: 1,
+        excluded_payment_types: [
+          { id: "credit_card" },
+          { id: "debit_card" },
+          { id: "ticket" },
+        ],
+        default_payment_method_id: "pix",
       },
       back_urls: {
         success: `${origin}/my-reservations?payment=success`,
