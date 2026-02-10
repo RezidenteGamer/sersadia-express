@@ -163,6 +163,27 @@ export function useCancelReservation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // If admin is cancelling, try to refund the payment first
+      if (isAdmin) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData.session?.access_token;
+          
+          const response = await supabase.functions.invoke('refund-payment', {
+            body: { reservationId: id },
+          });
+          
+          if (response.error) {
+            console.warn('Refund attempt warning:', response.error);
+          } else if (response.data?.refunded) {
+            toast.info('Reembolso processado via Mercado Pago');
+          }
+        } catch (refundError) {
+          console.warn('Refund attempt failed:', refundError);
+          // Continue with cancellation even if refund fails
+        }
+      }
+
       const status = isAdmin ? 'cancelled_by_admin' : 'cancelled_by_user';
       const { error } = await supabase
         .from('reservations')
@@ -173,6 +194,7 @@ export function useCancelReservation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       toast.success('Reserva cancelada com sucesso!');
     },
     onError: (error) => {
