@@ -103,7 +103,7 @@ export default function Locations() {
                   {location.description || 'Sem descrição disponível'}
                 </p>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
                     <span>{location.capacity} pessoas</span>
@@ -114,6 +114,18 @@ export default function Locations() {
                       {location.available_start_time.slice(0, 5)} - {location.available_end_time.slice(0, 5)}
                     </span>
                   </div>
+                </div>
+
+                {/* Pricing below details */}
+                <div className="mb-4 space-y-0.5">
+                  <p className="text-sm font-semibold text-foreground">
+                    R$ {location.price_fixed ? Number(location.price_fixed).toFixed(2) : Number(location.price_per_hour).toFixed(2)}{location.price_fixed ? ' (fixo)' : '/período'}
+                  </p>
+                  {(location.price_fixed_member || location.price_per_hour_member) && (
+                    <p className="text-[11px] text-muted-foreground/70">
+                      Sócio: R$ {location.price_fixed_member ? Number(location.price_fixed_member).toFixed(2) : Number(location.price_per_hour_member).toFixed(2)}{location.price_fixed_member ? '' : '/período'}
+                    </p>
+                  )}
                 </div>
 
                 <Button className="w-full">
