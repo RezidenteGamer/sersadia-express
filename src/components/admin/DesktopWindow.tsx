@@ -218,7 +218,7 @@ export function DesktopWindow({
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 overflow-auto flex flex-col">
+      <div className="relative flex-1 min-h-0 overflow-auto">
         <ContentComponent />
       </div>
 

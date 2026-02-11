@@ -53,7 +53,7 @@ export function SupportChat({ ticketId, ticketStatus, isAdmin = false, onBack }:
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
       {onBack && (
         <div className="flex items-center gap-2 p-3 border-b border-border">
