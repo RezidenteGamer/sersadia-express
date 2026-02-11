@@ -162,26 +162,21 @@ export function useCancelReservation() {
   const { isAdmin } = useAuth();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      // If admin is cancelling, try to refund the payment first
-      if (isAdmin) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const token = sessionData.session?.access_token;
-          
-          const response = await supabase.functions.invoke('refund-payment', {
-            body: { reservationId: id },
-          });
-          
-          if (response.error) {
-            console.warn('Refund attempt warning:', response.error);
-          } else if (response.data?.refunded) {
-            toast.info('Reembolso processado via Mercado Pago');
-          }
-        } catch (refundError) {
-          console.warn('Refund attempt failed:', refundError);
-          // Continue with cancellation even if refund fails
+    mutationFn: async ({ id, refundAmount }: { id: string; refundAmount?: number }) => {
+      // Try to refund the payment
+      try {
+        const response = await supabase.functions.invoke('refund-payment', {
+          body: { reservationId: id, refundAmount },
+        });
+        
+        if (response.error) {
+          console.warn('Refund attempt warning:', response.error);
+        } else if (response.data?.refunded) {
+          const amt = response.data.refundedAmount;
+          toast.info(`Reembolso de R$ ${Number(amt).toFixed(2)} processado via Mercado Pago`);
         }
+      } catch (refundError) {
+        console.warn('Refund attempt failed:', refundError);
       }
 
       const status = isAdmin ? 'cancelled_by_admin' : 'cancelled_by_user';
@@ -201,4 +196,43 @@ export function useCancelReservation() {
       toast.error('Erro ao cancelar reserva: ' + error.message);
     },
   });
+}
+
+// Helper: calculate cancellation fee
+export function calculateCancellationFee(
+  totalPrice: number,
+  feeType: string,
+  feeValue: number,
+  deadlineHours: number,
+  reservationDate: string,
+  startTime: string,
+): { fee: number; refundAmount: number; isWithinDeadline: boolean } {
+  if (feeValue <= 0) {
+    return { fee: 0, refundAmount: totalPrice, isWithinDeadline: false };
+  }
+
+  // Calculate deadline datetime
+  const [year, month, day] = reservationDate.split('-').map(Number);
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const reservationStart = new Date(year, month - 1, day, hours, minutes);
+  const deadline = new Date(reservationStart.getTime() - deadlineHours * 60 * 60 * 1000);
+  const now = new Date();
+
+  if (now <= deadline) {
+    // Outside deadline - no fee
+    return { fee: 0, refundAmount: totalPrice, isWithinDeadline: false };
+  }
+
+  // Within deadline - apply fee
+  let fee: number;
+  if (feeType === 'percentage') {
+    fee = totalPrice * (feeValue / 100);
+  } else {
+    fee = Math.min(feeValue, totalPrice);
+  }
+
+  fee = Math.round(fee * 100) / 100;
+  const refundAmount = Math.max(0, Math.round((totalPrice - fee) * 100) / 100);
+
+  return { fee, refundAmount, isWithinDeadline: true };
 }

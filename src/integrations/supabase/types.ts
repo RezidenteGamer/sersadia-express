@@ -140,6 +140,9 @@ export type Database = {
         Row: {
           available_end_time: string
           available_start_time: string
+          cancellation_deadline_hours: number
+          cancellation_fee_type: string
+          cancellation_fee_value: number
           capacity: number
           created_at: string
           description: string | null
@@ -159,6 +162,9 @@ export type Database = {
         Insert: {
           available_end_time?: string
           available_start_time?: string
+          cancellation_deadline_hours?: number
+          cancellation_fee_type?: string
+          cancellation_fee_value?: number
           capacity?: number
           created_at?: string
           description?: string | null
@@ -178,6 +184,9 @@ export type Database = {
         Update: {
           available_end_time?: string
           available_start_time?: string
+          cancellation_deadline_hours?: number
+          cancellation_fee_type?: string
+          cancellation_fee_value?: number
           capacity?: number
           created_at?: string
           description?: string | null

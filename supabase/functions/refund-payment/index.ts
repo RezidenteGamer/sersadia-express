@@ -40,10 +40,10 @@ serve(async (req) => {
     const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: user.id });
     if (!isAdmin) throw new Error("Unauthorized: admin only");
 
-    const { reservationId } = await req.json();
+    const { reservationId, refundAmount } = await req.json();
     if (!reservationId) throw new Error("Missing reservationId");
 
-    logStep("Processing refund", { reservationId, adminId: user.id });
+    logStep("Processing refund", { reservationId, refundAmount, adminId: user.id });
 
     // Find the payment with MP payment ID
     const { data: payment, error: paymentError } = await supabase
@@ -72,6 +72,12 @@ serve(async (req) => {
     const accessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!accessToken) throw new Error("MERCADO_PAGO_ACCESS_TOKEN not set");
 
+    // Build refund body - if refundAmount is provided and less than payment amount, do partial refund
+    const refundBody: Record<string, any> = {};
+    if (refundAmount !== undefined && refundAmount !== null && refundAmount > 0) {
+      refundBody.amount = refundAmount;
+    }
+
     const mpResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/${payment.mp_payment_id}/refunds`,
       {
@@ -80,6 +86,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`,
         },
+        body: Object.keys(refundBody).length > 0 ? JSON.stringify(refundBody) : undefined,
       }
     );
 
@@ -90,11 +97,14 @@ serve(async (req) => {
       throw new Error(`Refund failed: ${JSON.stringify(refundData)}`);
     }
 
+    const actualRefundAmount = refundAmount || payment.amount;
+    const feeAmount = payment.amount - actualRefundAmount;
+
     // Update payment record
     await supabase
       .from("payments")
       .update({
-        notes: `Reembolso realizado. Refund ID: ${refundData.id}`,
+        notes: `Reembolso de R$ ${Number(actualRefundAmount).toFixed(2)} realizado. ${feeAmount > 0 ? `Multa: R$ ${Number(feeAmount).toFixed(2)}. ` : ''}Refund ID: ${refundData.id}`,
       })
       .eq("id", payment.id);
 
@@ -103,7 +113,7 @@ serve(async (req) => {
       reservation_id: reservationId,
       admin_id: user.id,
       action: "payment_refunded",
-      details: `Reembolso processado via Mercado Pago. Refund ID: ${refundData.id}`,
+      details: `Reembolso de R$ ${Number(actualRefundAmount).toFixed(2)} processado via Mercado Pago. ${feeAmount > 0 ? `Multa aplicada: R$ ${Number(feeAmount).toFixed(2)}. ` : ''}Refund ID: ${refundData.id}`,
     });
 
     // Notify user
@@ -117,13 +127,13 @@ serve(async (req) => {
       await supabase.from("notifications").insert({
         user_id: reservation.user_id,
         title: "Reembolso processado",
-        message: `O reembolso da reserva ${reservation.code} foi processado. O valor será devolvido em breve.`,
+        message: `O reembolso de R$ ${Number(actualRefundAmount).toFixed(2)} da reserva ${reservation.code} foi processado. ${feeAmount > 0 ? `Uma multa de R$ ${Number(feeAmount).toFixed(2)} foi aplicada. ` : ''}O valor será devolvido em breve.`,
       });
     }
 
     logStep("Refund completed successfully");
 
-    return new Response(JSON.stringify({ refunded: true, refundId: refundData.id }), {
+    return new Response(JSON.stringify({ refunded: true, refundId: refundData.id, refundedAmount: actualRefundAmount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
