@@ -12,7 +12,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useLocations, useCreateLocation, useUpdateLocation, useToggleLocationStatus, useReorderLocations } from '@/hooks/useLocations';
-import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power, Trash2, GripVertical } from 'lucide-react';
+import { MapPin, Plus, Pencil, Users, Clock, DollarSign, Search, Power, Trash2, GripVertical, ShieldAlert } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Location } from '@/hooks/useLocations';
 
 interface TimeSlot {
@@ -51,6 +52,9 @@ export function AdminLocationsContent() {
     price_fixed_member: null as number | null,
     images: [] as string[],
     imageUrls: '', // For manual URL input
+    cancellation_fee_type: 'percentage',
+    cancellation_fee_value: 0,
+    cancellation_deadline_hours: 24,
   });
 
   const resetForm = () => {
@@ -66,6 +70,9 @@ export function AdminLocationsContent() {
       price_fixed_member: null,
       images: [],
       imageUrls: '',
+      cancellation_fee_type: 'percentage',
+      cancellation_fee_value: 0,
+      cancellation_deadline_hours: 24,
     });
     setEditingLocation(null);
   };
@@ -87,6 +94,9 @@ export function AdminLocationsContent() {
       price_fixed_member: (location as any).price_fixed_member || null,
       images: location.images || [],
       imageUrls: '',
+      cancellation_fee_type: (location as any).cancellation_fee_type || 'percentage',
+      cancellation_fee_value: (location as any).cancellation_fee_value || 0,
+      cancellation_deadline_hours: (location as any).cancellation_deadline_hours ?? 24,
     });
     setShowForm(true);
   };
@@ -133,6 +143,9 @@ export function AdminLocationsContent() {
       price_per_hour_member: formData.price_per_hour_member,
       price_fixed_member: formData.price_fixed_member,
       images: allImages.length > 0 ? allImages : null,
+      cancellation_fee_type: formData.cancellation_fee_type,
+      cancellation_fee_value: formData.cancellation_fee_value,
+      cancellation_deadline_hours: formData.cancellation_deadline_hours,
     };
 
     try {
@@ -472,6 +485,56 @@ export function AdminLocationsContent() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Cancellation Policy */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4" />
+                Política de Cancelamento
+              </Label>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo de Multa</Label>
+                  <Select
+                    value={formData.cancellation_fee_type}
+                    onValueChange={(v) => setFormData({ ...formData, cancellation_fee_type: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">Porcentagem (%)</SelectItem>
+                      <SelectItem value="fixed">Valor Fixo (R$)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor da Multa {formData.cancellation_fee_type === 'percentage' ? '(%)' : '(R$)'}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={formData.cancellation_fee_type === 'percentage' ? 1 : 0.01}
+                    max={formData.cancellation_fee_type === 'percentage' ? 100 : undefined}
+                    value={formData.cancellation_fee_value}
+                    onChange={(e) => setFormData({ ...formData, cancellation_fee_value: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Prazo Limite (horas)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={formData.cancellation_deadline_hours}
+                    onChange={(e) => setFormData({ ...formData, cancellation_deadline_hours: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formData.cancellation_fee_value > 0
+                  ? `Cancelamentos feitos com menos de ${formData.cancellation_deadline_hours}h de antecedência terão multa de ${formData.cancellation_fee_type === 'percentage' ? `${formData.cancellation_fee_value}%` : `R$ ${formData.cancellation_fee_value.toFixed(2)}`}.`
+                  : 'Sem multa configurada. Cancelamentos terão reembolso total.'}
+              </p>
             </div>
 
             {/* Image Upload */}

@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useUserReservations, useCancelReservation } from '@/hooks/useReservations';
+import { useUserReservations, useCancelReservation, calculateCancellationFee } from '@/hooks/useReservations';
 import { usePayments } from '@/hooks/usePayments';
+import { useLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, Clock, X, Eye, CreditCard } from 'lucide-react';
+import { Calendar, MapPin, Clock, X, Eye, CreditCard, AlertTriangle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
@@ -22,9 +23,11 @@ export default function MyReservations() {
     isLoading
   } = useUserReservations();
   const { data: payments } = usePayments();
+  const { data: locations } = useLocations();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
   const [cancelId, setCancelId] = useState<string | null>(null);
+  const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -66,10 +69,29 @@ export default function MyReservations() {
   const pendingReservations = reservations?.filter(r => r.status === 'pending') || [];
   const confirmedReservations = reservations?.filter(r => ['confirmed', 'presence_confirmed'].includes(r.status)) || [];
   const pastReservations = reservations?.filter(r => ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)) || [];
+  const handleOpenCancel = (reservation: NonNullable<typeof reservations>[0]) => {
+    const location = locations?.find(l => l.id === reservation.location_id);
+    const feeType = (location as any)?.cancellation_fee_type || 'percentage';
+    const feeValue = (location as any)?.cancellation_fee_value || 0;
+    const deadlineHours = (location as any)?.cancellation_deadline_hours ?? 24;
+    
+    const info = calculateCancellationFee(
+      reservation.total_price,
+      feeType,
+      feeValue,
+      deadlineHours,
+      reservation.reservation_date,
+      reservation.start_time,
+    );
+    setCancelFeeInfo(info);
+    setCancelId(reservation.id);
+  };
+
   const handleCancel = async () => {
     if (!cancelId) return;
-    await cancelReservation.mutateAsync(cancelId);
+    await cancelReservation.mutateAsync({ id: cancelId, refundAmount: cancelFeeInfo?.refundAmount });
     setCancelId(null);
+    setCancelFeeInfo(null);
   };
   const ReservationCard = ({
     reservation
@@ -124,7 +146,7 @@ export default function MyReservations() {
                   <CreditCard className="w-4 h-4" />
                 </Button>
               )}
-              {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setCancelId(reservation.id)}>
+              {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleOpenCancel(reservation)}>
                   <X className="w-4 h-4" />
                 </Button>}
             </div>
@@ -166,7 +188,7 @@ export default function MyReservations() {
       </Tabs>
       
       {/* Cancel Dialog */}
-      <Dialog open={!!cancelId} onOpenChange={() => setCancelId(null)}>
+      <Dialog open={!!cancelId} onOpenChange={() => { setCancelId(null); setCancelFeeInfo(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancelar Reserva</DialogTitle>
@@ -174,8 +196,22 @@ export default function MyReservations() {
               Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
+          {cancelFeeInfo && cancelFeeInfo.isWithinDeadline && cancelFeeInfo.fee > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg text-sm">
+              <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-warning">Multa por cancelamento</p>
+                <p className="text-muted-foreground mt-1">
+                  Como o cancelamento está dentro do prazo limite, uma multa de <strong>R$ {cancelFeeInfo.fee.toFixed(2)}</strong> será aplicada.
+                  {cancelFeeInfo.refundAmount > 0 && (
+                    <> O reembolso será de <strong>R$ {cancelFeeInfo.refundAmount.toFixed(2)}</strong>.</>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelId(null)}>
+            <Button variant="outline" onClick={() => { setCancelId(null); setCancelFeeInfo(null); }}>
               Voltar
             </Button>
             <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending}>

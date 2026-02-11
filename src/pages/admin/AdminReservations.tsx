@@ -14,9 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAllReservations, useUpdateReservationStatus, useCancelReservation, Reservation } from '@/hooks/useReservations';
 import { useLocations } from '@/hooks/useLocations';
+import { usePayments } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, Search, Check, X, Eye, Filter, MapPin, Clock, User } from 'lucide-react';
+import { Calendar, Search, Check, X, Eye, Filter, MapPin, Clock, User, AlertTriangle } from 'lucide-react';
 
 export function AdminReservationsContent() {
   const [searchParams] = useSearchParams();
@@ -30,6 +31,7 @@ export function AdminReservationsContent() {
   const [viewReservation, setViewReservation] = useState<Reservation | null>(null);
   const [actionReservation, setActionReservation] = useState<{ reservation: Reservation; action: 'confirm' | 'reject' | 'cancel' } | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
+  const [refundAmount, setRefundAmount] = useState<string>('');
   
   const { data: reservations, isLoading } = useAllReservations({
     status: statusFilter !== 'all' ? statusFilter as any : undefined,
@@ -37,8 +39,13 @@ export function AdminReservationsContent() {
     date: dateFilter || undefined,
   });
   const { data: locations } = useLocations(true);
+  const { data: payments } = usePayments();
   const updateStatus = useUpdateReservationStatus();
   const cancelReservation = useCancelReservation();
+
+  const getPaymentForReservation = (reservationId: string) => {
+    return payments?.find(p => p.reservation_id === reservationId && p.is_paid);
+  };
 
   const handleAction = async () => {
     if (!actionReservation) return;
@@ -59,13 +66,21 @@ export function AdminReservationsContent() {
           adminNotes: adminNotes || undefined,
         });
       } else if (action === 'cancel') {
-        await cancelReservation.mutateAsync(reservation.id);
+        const amount = refundAmount ? parseFloat(refundAmount) : undefined;
+        await cancelReservation.mutateAsync({ id: reservation.id, refundAmount: amount });
       }
       setActionReservation(null);
       setAdminNotes('');
+      setRefundAmount('');
     } catch (error) {
       // Error handled by mutation
     }
+  };
+
+  const openCancelDialog = (reservation: Reservation) => {
+    const payment = getPaymentForReservation(reservation.id);
+    setRefundAmount(payment ? String(payment.amount) : String(reservation.total_price));
+    setActionReservation({ reservation, action: 'cancel' });
   };
 
   const filteredReservations = reservations?.filter(r => {
@@ -210,12 +225,12 @@ export function AdminReservationsContent() {
                         </Button>
                       </>
                     )}
-                    {reservation.status === 'confirmed' && (
+                    {['confirmed', 'pending'].includes(reservation.status) && (
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-destructive hover:text-destructive"
-                        onClick={() => setActionReservation({ reservation, action: 'cancel' })}
+                        onClick={() => openCancelDialog(reservation)}
                       >
                         Cancelar
                       </Button>
@@ -297,7 +312,7 @@ export function AdminReservationsContent() {
       </Dialog>
 
       {/* Action Confirmation Dialog */}
-      <Dialog open={!!actionReservation} onOpenChange={() => { setActionReservation(null); setAdminNotes(''); }}>
+      <Dialog open={!!actionReservation} onOpenChange={() => { setActionReservation(null); setAdminNotes(''); setRefundAmount(''); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -308,7 +323,7 @@ export function AdminReservationsContent() {
             <DialogDescription>
               {actionReservation?.action === 'confirm' && 'A reserva será aprovada e o usuário será notificado.'}
               {actionReservation?.action === 'reject' && 'A reserva será recusada e o usuário será notificado.'}
-              {actionReservation?.action === 'cancel' && 'A reserva será cancelada. Esta ação não pode ser desfeita.'}
+              {actionReservation?.action === 'cancel' && 'A reserva será cancelada e o reembolso será processado.'}
             </DialogDescription>
           </DialogHeader>
           
@@ -324,9 +339,42 @@ export function AdminReservationsContent() {
               />
             </div>
           )}
+
+          {actionReservation && actionReservation.action === 'cancel' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg space-y-1 text-sm">
+                <p><strong>Reserva:</strong> {actionReservation.reservation.code}</p>
+                <p><strong>Valor Total:</strong> R$ {actionReservation.reservation.total_price.toFixed(2)}</p>
+                {getPaymentForReservation(actionReservation.reservation.id) && (
+                  <p><strong>Pagamento:</strong> R$ {getPaymentForReservation(actionReservation.reservation.id)!.amount.toFixed(2)} (pago)</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="refund-amount">Valor do Reembolso (R$)</Label>
+                <Input
+                  id="refund-amount"
+                  type="number"
+                  min={0}
+                  max={actionReservation.reservation.total_price}
+                  step={0.01}
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Informe o valor a ser reembolsado. Pode ser inferior ao total caso haja multa.
+                </p>
+              </div>
+              {refundAmount && parseFloat(refundAmount) < actionReservation.reservation.total_price && (
+                <div className="flex items-center gap-2 p-2 bg-warning/10 rounded text-sm text-warning">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>Multa de R$ {(actionReservation.reservation.total_price - parseFloat(refundAmount)).toFixed(2)} será aplicada.</span>
+                </div>
+              )}
+            </div>
+          )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setActionReservation(null); setAdminNotes(''); }}>
+            <Button variant="outline" onClick={() => { setActionReservation(null); setAdminNotes(''); setRefundAmount(''); }}>
               Voltar
             </Button>
             <Button
