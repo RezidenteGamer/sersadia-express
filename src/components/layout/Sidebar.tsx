@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn } from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn, Headset } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,10 @@ const userNavItems: NavItem[] = [{
   label: 'Notificações',
   href: '/notifications',
   icon: Bell
+}, {
+  label: 'Suporte',
+  href: '/support',
+  icon: Headset
 }, {
   label: 'Meu Perfil',
   href: '/profile',
