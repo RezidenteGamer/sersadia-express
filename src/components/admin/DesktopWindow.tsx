@@ -218,7 +218,10 @@ export function DesktopWindow({
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 min-h-0 overflow-auto">
+      <div
+        className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <ContentComponent />
       </div>
 
