@@ -24,7 +24,7 @@ export function AdminSupportContent() {
 
   if (selectedTicket) {
     return (
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="absolute inset-0 flex flex-col">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
           <div>
             <h3 className="text-sm font-semibold">{selectedTicket.subject}</h3>
