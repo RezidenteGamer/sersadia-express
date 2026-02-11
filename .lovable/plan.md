@@ -1,50 +1,97 @@
 
+# Sistema de Suporte via Chat
 
-## Permitir Visualizacao de Locais sem Login
+## Resumo
+Criar um sistema completo de suporte onde usuarios podem abrir solicitacoes de atendimento via chat e administradores podem visualizar, aceitar e responder essas solicitacoes diretamente no painel admin.
 
-### Objetivo
-Tornar as paginas de listagem de locais (`/locations`) e detalhes do local (`/locations/:id`) acessiveis sem autenticacao. Quando o usuario tentar reservar, sera redirecionado para a tela de login/cadastro.
+## Funcionalidades
 
-### Mudancas Planejadas
+### Para o Usuario
+- Nova opcao "Suporte" no menu lateral com icone de headset
+- Pagina dedicada `/support` com lista de tickets anteriores e botao para abrir novo
+- Chat em tempo real apos abertura do ticket
+- Status visivel do ticket (aguardando, em atendimento, resolvido)
+- Possibilidade de reabrir ticket resolvido
+- Indicador de "admin digitando" e confirmacao de leitura
+- Avaliacao do atendimento apos resolucao (1-5 estrelas)
 
-**1. Rotas publicas (App.tsx)**
-- Remover o `ProtectedRoute` das rotas `/locations` e `/locations/:id`, tornando-as acessiveis a qualquer visitante.
-
-**2. Layout para visitantes (AppLayout.tsx e Sidebar.tsx)**
-- Quando o usuario nao estiver logado, a Sidebar exibira uma versao simplificada:
-  - Logo no topo
-  - Link para "Locais"
-  - Botao "Entrar / Cadastrar" no rodape (em vez do perfil e botao de sair)
-- A secao de perfil, links protegidos (Reservas, Notificacoes, Perfil) e admin ficam ocultos para visitantes.
-
-**3. Bloqueio na reserva (LocationDetails.tsx)**
-- O botao "Solicitar Reserva" verificara se o usuario esta logado.
-- Se nao estiver logado, ao clicar no botao, o usuario sera redirecionado para `/auth` com um parametro de retorno (ex: `/auth?redirect=/locations/ID-DO-LOCAL`), para que apos o login ele volte diretamente a pagina do local.
-
-**4. Redirecionamento pos-login (Auth.tsx)**
-- Apos login/cadastro bem-sucedido, verificar se existe um parametro `redirect` na URL.
-- Se existir, redirecionar para essa URL em vez da rota padrao `/locations`.
-
----
+### Para o Administrador
+- Novo modulo "Suporte" no desktop admin com icone de headset
+- Tela com 3 abas: Aguardando, Em Atendimento, Resolvidos
+- Preview das mensagens do usuario antes de aceitar o ticket
+- Botao "Aceitar Atendimento" que vincula o admin ao ticket
+- Chat em tempo real com o usuario apos aceitar
+- Opcao de encerrar/resolver o ticket
+- Adicionar notas internas (visiveis apenas para admins)
+- Badge com contador de tickets aguardando na taskbar
 
 ### Detalhes Tecnicos
 
-**App.tsx** - Alterar as rotas:
+#### 1. Banco de Dados - Novas Tabelas
+
+**support_tickets**
+- `id` (uuid, PK)
+- `user_id` (uuid, NOT NULL) - quem abriu
+- `admin_id` (uuid, NULL) - admin que aceitou
+- `subject` (text, NOT NULL) - assunto do ticket
+- `status` (enum: `waiting`, `in_progress`, `resolved`, `closed`)
+- `rating` (integer, NULL) - avaliacao 1-5
+- `created_at`, `updated_at` (timestamptz)
+
+**support_messages**
+- `id` (uuid, PK)
+- `ticket_id` (uuid, FK -> support_tickets)
+- `sender_id` (uuid, NOT NULL) - quem enviou
+- `message` (text, NOT NULL)
+- `is_internal` (boolean, default false) - nota interna do admin
+- `is_read` (boolean, default false)
+- `created_at` (timestamptz)
+
+Enum: `support_ticket_status` com valores `waiting`, `in_progress`, `resolved`, `closed`.
+
+RLS Policies:
+- Usuarios veem apenas seus proprios tickets e mensagens (exceto internas)
+- Admins veem todos os tickets e todas as mensagens
+- Usuarios podem criar tickets e enviar mensagens nos seus tickets
+- Admins podem atualizar tickets e enviar mensagens
+
+Realtime habilitado para ambas as tabelas.
+
+#### 2. Nova Permissao Admin
+- Adicionar `manage_support` ao enum `admin_permission`
+
+#### 3. Novos Arquivos
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/Support.tsx` | Pagina do usuario com lista de tickets + chat |
+| `src/pages/admin/AdminSupport.tsx` | Conteudo do modulo admin |
+| `src/hooks/useSupport.ts` | Hooks para tickets e mensagens com realtime |
+| `src/components/support/SupportChat.tsx` | Componente de chat reutilizavel |
+| `src/components/support/TicketList.tsx` | Lista de tickets |
+| `src/components/support/TicketStatusBadge.tsx` | Badge de status |
+| `src/components/support/RatingDialog.tsx` | Dialog de avaliacao |
+
+#### 4. Alteracoes em Arquivos Existentes
+
+- **Sidebar.tsx**: Adicionar item "Suporte" com icone `Headset` no menu do usuario
+- **App.tsx**: Adicionar rota `/support` protegida
+- **AdminDesktop.tsx**: Adicionar app "Suporte" na lista `ALL_APPS`
+- **AdminMobileView.tsx**: Incluir modulo suporte na view mobile
+
+#### 5. Fluxo
+
 ```text
-/locations       -> sem ProtectedRoute
-/locations/:id   -> sem ProtectedRoute
+Usuario abre ticket -> Status: "waiting"
+                    -> Admin ve na aba "Aguardando" com preview
+                    -> Admin clica "Aceitar"
+                    -> Status: "in_progress", admin_id preenchido
+                    -> Chat em tempo real bidirecional
+                    -> Admin clica "Resolver"
+                    -> Status: "resolved"
+                    -> Usuario pode avaliar (1-5 estrelas)
 ```
 
-**Sidebar.tsx** - Condicionar renderizacao com base em `user`:
-- Se `user` for `null`: mostrar apenas logo + link "Locais" + botao "Entrar"
-- Se `user` existir: manter comportamento atual
-
-**LocationDetails.tsx** - No clique de "Solicitar Reserva":
-- Se `!user`: redirecionar para `/auth?redirect=/locations/${id}`
-- Se `user`: abrir o dialog de confirmacao normalmente
-
-**Auth.tsx** - No `PublicRoute` e apos login:
-- Ler `searchParams.get('redirect')`
-- Usar esse valor como destino do `Navigate` em vez do `/locations` fixo
-
-**AuthContext.tsx** - Nenhuma alteracao necessaria. O `useAuth` ja retorna `user: null` quando nao autenticado.
+#### 6. Realtime
+- `support_messages` com realtime para atualizacao instantanea do chat
+- `support_tickets` com realtime para atualizar contadores e status
