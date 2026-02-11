@@ -441,6 +441,77 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_internal: boolean
+          is_read: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          is_read?: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          is_read?: boolean
+          message?: string
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          id: string
+          rating: number | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          rating?: number | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -488,6 +559,7 @@ export type Database = {
         | "manage_payments"
         | "manage_checkin"
         | "view_reports"
+        | "manage_support"
       app_role: "admin" | "user"
       reservation_status:
         | "pending"
@@ -497,6 +569,7 @@ export type Database = {
         | "cancelled_by_admin"
         | "expired"
         | "presence_confirmed"
+      support_ticket_status: "waiting" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -631,6 +704,7 @@ export const Constants = {
         "manage_payments",
         "manage_checkin",
         "view_reports",
+        "manage_support",
       ],
       app_role: ["admin", "user"],
       reservation_status: [
@@ -642,6 +716,7 @@ export const Constants = {
         "expired",
         "presence_confirmed",
       ],
+      support_ticket_status: ["waiting", "in_progress", "resolved", "closed"],
     },
   },
 } as const

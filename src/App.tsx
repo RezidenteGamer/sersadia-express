@@ -23,6 +23,8 @@ import AdminCheckin from "./pages/admin/AdminCheckin";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminMembers from "./pages/admin/AdminMembers";
 import AdminBanners from "./pages/admin/AdminBanners";
+import Support from "./pages/Support";
+import AdminSupport from "./pages/admin/AdminSupport";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,7 @@ function AppRoutes() {
       <Route path="/my-reservations" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/locations" element={<ProtectedRoute><AdminLocations /></ProtectedRoute>} />
       <Route path="/admin/reservations" element={<ProtectedRoute><AdminReservations /></ProtectedRoute>} />
@@ -76,6 +79,7 @@ function AppRoutes() {
       <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
       <Route path="/admin/members" element={<ProtectedRoute><AdminMembers /></ProtectedRoute>} />
       <Route path="/admin/banners" element={<ProtectedRoute><AdminBanners /></ProtectedRoute>} />
+      <Route path="/admin/support" element={<ProtectedRoute><AdminSupport /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
