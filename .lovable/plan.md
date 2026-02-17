@@ -1,102 +1,93 @@
 
-# Plano: Sistema de Reembolso com Multa de Cancelamento
+# Plano de Melhorias para o Ser Sadia Express
 
-## Resumo
-
-Implementar um sistema completo de reembolso configuravel por local, onde:
-1. O admin pode definir o valor do reembolso ao cancelar (padrao: valor total)
-2. Cada local tem configuracao de multa por cancelamento do usuario (% ou valor fixo)
-3. A multa se aplica quando o usuario cancela dentro de X horas antes do horario agendado
-4. O reembolso automatico ja desconta a multa
+Vamos implementar todas as 5 melhorias, organizadas da mais simples para a mais complexa:
 
 ---
 
-## Mudancas no Banco de Dados
+## 1. Modo Escuro (Dark Mode Toggle)
+**Complexidade: Baixa**
 
-Adicionar novas colunas na tabela `locations`:
+O sistema de cores dark já existe no CSS (`index.css` linha 98). Falta apenas um botão para o usuario alternar.
 
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| `cancellation_fee_type` | text | Tipo da multa: `percentage` ou `fixed` (padrao: `percentage`) |
-| `cancellation_fee_value` | numeric | Valor da multa (ex: 20 para 20% ou 50.00 para R$50) (padrao: 0 = sem multa) |
-| `cancellation_deadline_hours` | integer | Horas antes do horario agendado para aplicar multa (padrao: 24) |
-
----
-
-## Mudancas na Interface
-
-### 1. Formulario de Local (AdminLocations)
-Adicionar uma nova secao "Politica de Cancelamento" no formulario de criacao/edicao de local com:
-- Tipo de multa (porcentagem ou valor fixo)
-- Valor da multa
-- Prazo limite em horas (ex: cancelamentos feitos com menos de 24h de antecedencia geram multa)
-
-### 2. Dialog de Cancelamento pelo Admin (AdminReservations)
-Quando o admin clicar em "Cancelar" uma reserva:
-- Exibir um dialog com campo de valor do reembolso (pre-preenchido com o valor total pago)
-- Mostrar informacoes do pagamento original
-- Permitir que o admin ajuste o valor para baixo
-- Exibir aviso se houver multa configurada e sugerir o valor ja descontado
-
-### 3. Cancelamento pelo Usuario (MyReservations)
-Quando o usuario cancelar:
-- Verificar se esta dentro do prazo de multa
-- Exibir aviso sobre a multa que sera aplicada (se houver)
-- Calcular automaticamente o valor de reembolso (total - multa)
+- Adicionar um botão com icone de sol/lua no rodape da Sidebar (ao lado do botao "Sair")
+- Usar `localStorage` para persistir a preferencia
+- Aplicar/remover a classe `dark` no `<html>` ao clicar
+- O admin desktop ja tem um hook similar (`useDesktopTheme.ts`), vamos reutilizar a mesma logica
 
 ---
 
-## Mudancas no Backend
+## 2. QR Code na Carteirinha Digital
+**Complexidade: Baixa**
 
-### Edge Function: `refund-payment`
-Atualizar para aceitar um parametro `refundAmount` opcional:
-- Se fornecido, fazer reembolso parcial via API do Mercado Pago (enviar `amount` no body da requisicao de refund)
-- Se nao fornecido, fazer reembolso total (comportamento atual)
-- Registrar o valor reembolsado e o valor da multa nos logs
+- Instalar a biblioteca `qrcode.react` (leve, sem dependencias extras)
+- Adicionar um QR Code na parte inferior da carteirinha contendo o `mbrf_id` do socio
+- O QR Code sera incluido dentro do `cardRef` para que apareca tambem no download da imagem PNG
+- Formato do QR: texto simples com o ID do socio para leitura rapida no check-in
 
-### Hook: `useReservations`
-Atualizar `useCancelReservation` para:
-- Aceitar parametro de valor de reembolso
-- Passar o valor para a edge function `refund-payment`
+---
+
+## 3. Melhoria da Landing Page
+**Complexidade: Media**
+
+Atualizar a pagina inicial (`Index.tsx`) com:
+- Secao de depoimentos/beneficios com cards visuais
+- Banner de chamada para acao (CTA) mais impactante com gradientes
+- Secao "Como funciona" com passos numerados (1. Cadastre-se, 2. Reserve, 3. Aproveite)
+- Melhor uso de espacamento, icones e animacoes suaves com Framer Motion (ja instalado)
+- Manter os elementos existentes mas com visual mais profissional
+
+---
+
+## 4. Notificacoes em Tempo Real
+**Complexidade: Media-Alta**
+
+- Habilitar Supabase Realtime na tabela `notifications` (migration SQL)
+- Criar um hook `useRealtimeNotifications` que escuta eventos `INSERT` na tabela de notificacoes
+- Ao receber nova notificacao: exibir um toast automatico e atualizar o contador de nao-lidas
+- Integrar o listener no Sidebar para mostrar um badge com numero de notificacoes nao lidas ao lado do icone "Notificacoes"
+- O listener so sera ativo quando o usuario estiver logado
+
+---
+
+## 5. Progressive Web App (PWA)
+**Complexidade: Alta**
+
+- Instalar `vite-plugin-pwa`
+- Configurar o plugin no `vite.config.ts` com manifest, service worker e icones
+- Adicionar meta tags de PWA no `index.html` (theme-color, apple-touch-icon)
+- Criar icones PWA (192x192 e 512x512) na pasta `public`
+- Configurar `navigateFallbackDenylist` para excluir rotas de OAuth (`/~oauth`)
+- Resultado: usuarios poderao "instalar" o app no celular pelo navegador, com icone na tela inicial, splash screen e funcionamento offline
 
 ---
 
 ## Detalhes Tecnicos
 
-### Calculo da Multa (frontend)
-```text
-Se cancellation_fee_value > 0 E horario atual esta dentro do prazo:
-  Se tipo = "percentage":
-    multa = total_price * (cancellation_fee_value / 100)
-  Se tipo = "fixed":
-    multa = min(cancellation_fee_value, total_price)
-  
-  reembolso = total_price - multa
-Senao:
-  reembolso = total_price (sem multa)
+### Arquivos que serao criados:
+- `src/hooks/useThemeToggle.ts` - hook para controle do dark mode
+- `src/hooks/useRealtimeNotifications.ts` - hook para notificacoes em tempo real
+
+### Arquivos que serao modificados:
+- `src/components/layout/Sidebar.tsx` - toggle dark mode + badge de notificacoes
+- `src/pages/MembershipCard.tsx` - QR Code
+- `src/pages/Index.tsx` - redesign da landing page
+- `src/hooks/useNotifications.ts` - integrar realtime
+- `vite.config.ts` - plugin PWA
+- `index.html` - meta tags PWA
+
+### Dependencias novas:
+- `qrcode.react` - geracao de QR Codes
+- `vite-plugin-pwa` - suporte a PWA
+
+### Migration SQL:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 ```
 
-### Verificacao do Prazo
-```text
-prazo = reservation_date + start_time - cancellation_deadline_hours
-se agora > prazo: aplica multa
-se agora <= prazo: sem multa (reembolso total)
-```
-
-### Reembolso Parcial no Mercado Pago
-A API do Mercado Pago suporta reembolso parcial enviando o campo `amount` no POST de refund:
-```text
-POST /v1/payments/{id}/refunds
-Body: { "amount": valor_reembolso }
-```
-
----
-
-## Arquivos Afetados
-
-1. **Migracao SQL** - Adicionar colunas na tabela `locations`
-2. **`src/pages/admin/AdminLocations.tsx`** - Secao de politica de cancelamento no formulario
-3. **`src/pages/admin/AdminReservations.tsx`** - Dialog de cancelamento com campo de valor de reembolso
-4. **`src/pages/MyReservations.tsx`** - Aviso de multa no cancelamento pelo usuario
-5. **`src/hooks/useReservations.ts`** - Parametro de valor de reembolso no cancelamento
-6. **`supabase/functions/refund-payment/index.ts`** - Suporte a reembolso parcial
+### Ordem de implementacao:
+1. Dark Mode Toggle (rapido, visual imediato)
+2. QR Code na Carteirinha (rapido, valor pratico)
+3. Landing Page (visual, sem backend)
+4. Notificacoes Realtime (backend + frontend)
+5. PWA (configuracao mais tecnica)
