@@ -2,6 +2,77 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+function compressImage(file: File, maxBytes: number = MAX_SIZE): Promise<File> {
+  return new Promise((resolve, reject) => {
+    if (file.size <= maxBytes) {
+      resolve(file);
+      return;
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = async () => {
+      URL.revokeObjectURL(url);
+
+      let { width, height } = img;
+
+      // Scale down large dimensions proportionally
+      const maxDim = 2048;
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Binary search for best quality that fits under maxBytes
+      let lo = 0.1, hi = 0.95, bestBlob: Blob | null = null;
+
+      for (let i = 0; i < 7; i++) {
+        const mid = (lo + hi) / 2;
+        const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', mid));
+        if (!blob) break;
+
+        if (blob.size <= maxBytes) {
+          bestBlob = blob;
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+
+      if (!bestBlob) {
+        // Fallback: lowest quality
+        bestBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.1));
+      }
+
+      if (!bestBlob || bestBlob.size > maxBytes) {
+        reject(new Error('Não foi possível comprimir a imagem abaixo de 5MB'));
+        return;
+      }
+
+      const ext = 'jpg';
+      const name = file.name.replace(/\.[^.]+$/, '') + '.' + ext;
+      resolve(new File([bestBlob], name, { type: 'image/jpeg' }));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Erro ao carregar imagem para compressão'));
+    };
+
+    img.src = url;
+  });
+}
+
 export function useImageUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -17,22 +88,26 @@ export function useImageUpload() {
         return null;
       }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024;
-      if (file.size > maxSize) {
-        toast.error('Imagem muito grande. Máximo: 5MB');
-        return null;
+      // Compress if needed instead of rejecting
+      let processedFile = file;
+      if (file.size > MAX_SIZE) {
+        try {
+          processedFile = await compressImage(file);
+          toast.info('Imagem comprimida automaticamente');
+        } catch {
+          toast.error('Imagem muito grande e não pôde ser comprimida. Máximo: 5MB');
+          return null;
+        }
       }
 
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop();
+      const fileExt = processedFile.name.split('.').pop();
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       setProgress(30);
 
       const { data, error } = await supabase.storage
         .from('location-images')
-        .upload(fileName, file, {
+        .upload(fileName, processedFile, {
           cacheControl: '3600',
           upsert: false,
         });
