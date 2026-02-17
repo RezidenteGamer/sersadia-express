@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,12 +9,15 @@ import { toast } from 'sonner';
 import { Camera, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { toPng } from 'html-to-image';
+import mbrfLogo from '@/assets/mbrf-logo.png';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
   const { data: membership } = useUserMembership(user?.id);
   const { uploadImage, isUploading } = useImageUpload();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const displayAvatarUrl = avatarUrl || profile?.avatar_url;
 
@@ -40,6 +43,24 @@ export default function MembershipCard() {
     }
   };
 
+  const handleDownload = useCallback(async () => {
+    if (!cardRef.current) return;
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = `carteirinha-${membership?.mbrf_id || 'socio'}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success('Carteirinha salva!');
+    } catch {
+      toast.error('Erro ao gerar imagem');
+    }
+  }, [membership?.mbrf_id]);
+
   if (!membership) {
     return (
       <AppLayout>
@@ -59,22 +80,12 @@ export default function MembershipCard() {
     <AppLayout>
       <PageHeader title="Carteirinha Digital" description="Sua carteirinha de sócio digital" />
 
-      <div className="flex justify-center py-8">
+      <div className="flex flex-col items-center gap-4 py-8">
         {/* Card container */}
-        <div className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
-          {/* Header with MBRF */}
-          <div className="bg-white px-6 pt-6 pb-3 text-center">
-            <h1 className="text-3xl font-extrabold tracking-tight text-[hsl(210,80%,30%)]">
-              MBRF
-            </h1>
-            <div className="flex items-center justify-center gap-4 mt-1">
-              <span className="text-xs font-semibold text-[hsl(210,10%,40%)]">
-                ☆ Marfrig
-              </span>
-              <span className="text-xs font-bold text-[hsl(0,70%,50%)]">
-                🅱 brf
-              </span>
-            </div>
+        <div ref={cardRef} className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
+          {/* Header with MBRF logo */}
+          <div className="bg-white px-6 pt-5 pb-3 flex justify-center">
+            <img src={mbrfLogo} alt="MBRF - Marfrig BRF" className="h-20 w-auto object-contain" />
           </div>
 
           {/* Divider */}
@@ -109,10 +120,10 @@ export default function MembershipCard() {
 
           {/* Title */}
           <div className="text-center pb-3">
-            <p className="text-sm font-bold tracking-wide text-foreground">
+            <p className="text-sm font-bold tracking-wide text-[hsl(0,0%,9%)]">
               SÓCIO - SER SADIA
             </p>
-            <p className="text-xs font-semibold text-muted-foreground">
+            <p className="text-xs font-semibold text-[hsl(0,0%,40%)]">
               FRANCISCO BELTRÃO - PR
             </p>
           </div>
@@ -123,28 +134,34 @@ export default function MembershipCard() {
           {/* Info fields */}
           <div className="px-6 py-4 space-y-2">
             <div className="flex gap-2">
-              <span className="text-sm font-bold text-foreground min-w-[55px]">Nome:</span>
-              <span className="text-sm text-foreground">{memberName}</span>
+              <span className="text-sm font-bold text-[hsl(0,0%,9%)] min-w-[55px]">Nome:</span>
+              <span className="text-sm text-[hsl(0,0%,9%)]">{memberName}</span>
             </div>
             <div className="flex gap-2">
-              <span className="text-sm font-bold text-foreground min-w-[55px]">ID:</span>
-              <span className="text-sm text-foreground">{memberId}</span>
+              <span className="text-sm font-bold text-[hsl(0,0%,9%)] min-w-[55px]">ID:</span>
+              <span className="text-sm text-[hsl(0,0%,9%)]">{memberId}</span>
             </div>
           </div>
 
           {/* Signature */}
           <div className="px-6 pb-2">
-            <p className="text-sm font-bold text-foreground">Ass.:</p>
+            <p className="text-sm font-bold text-[hsl(0,0%,9%)]">Ass.:</p>
             <div className="h-8 border-b border-border mt-1" />
           </div>
 
           {/* Emission date */}
           <div className="px-6 py-3 text-right">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[hsl(0,0%,40%)]">
               Emissão: {today}
             </p>
           </div>
         </div>
+
+        {/* Download button */}
+        <Button onClick={handleDownload} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" />
+          Baixar Carteirinha
+        </Button>
       </div>
     </AppLayout>
   );
