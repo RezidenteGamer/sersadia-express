@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { toPng } from 'html-to-image';
+import { QRCodeSVG } from 'qrcode.react';
 import brandLogo from '@/assets/ser-sadia-express-logo.png';
 
 export default function MembershipCard() {
@@ -199,6 +200,17 @@ export default function MembershipCard() {
           <div className="px-6 pb-2">
             <p className="text-sm font-bold text-[hsl(0,0%,9%)]">Ass.:</p>
             <div className="h-8 border-b border-border mt-1" />
+          </div>
+
+          {/* QR Code */}
+          <div className="flex justify-center py-4">
+            <QRCodeSVG
+              value={memberId}
+              size={100}
+              level="M"
+              bgColor="#ffffff"
+              fgColor="#000000"
+            />
           </div>
 
           {/* Emission date */}

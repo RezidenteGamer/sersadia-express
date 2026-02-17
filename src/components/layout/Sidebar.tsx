@@ -1,7 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn, Headset, IdCard } from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn, Headset, IdCard, Sun, Moon } from 'lucide-react';
 import { useUserMembership } from '@/hooks/useMembers';
+import { useUnreadNotificationsCount } from '@/hooks/useNotifications';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useThemeToggle } from '@/hooks/useThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -53,6 +56,9 @@ export function Sidebar() {
     signOut
   } = useAuth();
   const { data: membership } = useUserMembership(user?.id);
+  const { data: unreadCount } = useUnreadNotificationsCount();
+  const { isDark, toggleTheme } = useThemeToggle();
+  useRealtimeNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -96,9 +102,15 @@ export function Sidebar() {
             {userNavItems.map(item => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
-            return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
+            const showBadge = item.href === '/notifications' && unreadCount && unreadCount > 0;
+            return <Link key={item.href} to={item.href} onClick={() => setIsMobileOpen(false)} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground relative", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent")}>
                   <Icon className="w-5 h-5 text-primary-foreground" />
                   <span className="font-medium text-primary-foreground">{item.label}</span>
+                  {showBadge && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </Link>;
           })}
             {/* Carteirinha Digital - only for members */}
@@ -138,6 +150,16 @@ export function Sidebar() {
 
       {/* Footer: Profile & Logout OR Login Button */}
       <div className="p-4 border-t border-sidebar-border">
+        {/* Dark Mode Toggle */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-white hover:bg-sidebar-accent hover:text-white mb-2"
+          onClick={toggleTheme}
+        >
+          {isDark ? <Sun className="w-5 h-5 mr-3 text-white" /> : <Moon className="w-5 h-5 mr-3 text-white" />}
+          <span className="text-white">{isDark ? 'Modo Claro' : 'Modo Escuro'}</span>
+        </Button>
+
         {user ? (
           <>
             <div className="flex items-center gap-3 px-3 py-2 mb-2">
