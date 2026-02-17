@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn, Headset } from 'lucide-react';
+import { LayoutDashboard, MapPin, Calendar, Bell, LogOut, Home, Menu, X, User, Monitor, LogIn, Headset, IdCard } from 'lucide-react';
+import { useUserMembership } from '@/hooks/useMembers';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ export function Sidebar() {
     permissions,
     signOut
   } = useAuth();
+  const { data: membership } = useUserMembership(user?.id);
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -99,6 +101,22 @@ export function Sidebar() {
                   <span className="font-medium text-primary-foreground">{item.label}</span>
                 </Link>;
           })}
+            {/* Carteirinha Digital - only for members */}
+            {membership && (
+              <Link
+                to="/carteirinha"
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-primary-foreground",
+                  location.pathname === '/carteirinha'
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                )}
+              >
+                <IdCard className="w-5 h-5 text-primary-foreground" />
+                <span className="font-medium text-primary-foreground">Carteirinha Digital</span>
+              </Link>
+            )}
           </div>
         )}
 

@@ -25,6 +25,7 @@ import AdminMembers from "./pages/admin/AdminMembers";
 import AdminBanners from "./pages/admin/AdminBanners";
 import Support from "./pages/Support";
 import AdminSupport from "./pages/admin/AdminSupport";
+import MembershipCard from "./pages/MembershipCard";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ function AppRoutes() {
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+      <Route path="/carteirinha" element={<ProtectedRoute><MembershipCard /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/locations" element={<ProtectedRoute><AdminLocations /></ProtectedRoute>} />
       <Route path="/admin/reservations" element={<ProtectedRoute><AdminReservations /></ProtectedRoute>} />

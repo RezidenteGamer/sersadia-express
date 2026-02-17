@@ -8,6 +8,7 @@ interface Profile {
   email: string;
   phone: string | null;
   avatar_url: string | null;
+  mbrf_id: string | null;
 }
 
 interface AuthContextType {
