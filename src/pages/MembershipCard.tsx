@@ -10,7 +10,7 @@ import { Camera, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { toPng } from 'html-to-image';
-import mbrfLogo from '@/assets/mbrf-logo.png';
+import brandLogo from '@/assets/ser-sadia-express-logo.png';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -85,7 +85,7 @@ export default function MembershipCard() {
         <div ref={cardRef} className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
           {/* Header with MBRF logo */}
           <div className="bg-white px-6 pt-5 pb-3 flex justify-center">
-            <img src={mbrfLogo} alt="MBRF - Marfrig BRF" className="h-20 w-auto object-contain" />
+            <img src={brandLogo} alt="Ser Sadia Express" className="h-20 w-auto object-contain" />
           </div>
 
           {/* Divider */}
