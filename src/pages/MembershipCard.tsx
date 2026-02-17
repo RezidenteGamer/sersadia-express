@@ -6,7 +6,8 @@ import { useUserMembership } from '@/hooks/useMembers';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, Download } from 'lucide-react';
+import { Camera, Download, Eye, ImagePlus } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { toPng } from 'html-to-image';
@@ -17,6 +18,9 @@ export default function MembershipCard() {
   const { data: membership } = useUserMembership(user?.id);
   const { uploadImage, isUploading } = useImageUpload();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const displayAvatarUrl = avatarUrl || profile?.avatar_url;
@@ -93,8 +97,11 @@ export default function MembershipCard() {
 
           {/* Photo */}
           <div className="flex justify-center py-4">
-            <div className="relative group">
-              <div className="w-28 h-32 bg-muted rounded-md overflow-hidden border-2 border-border flex items-center justify-center">
+            <div className="relative">
+              <div
+                className="w-28 h-32 bg-muted rounded-md overflow-hidden border-2 border-border flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+                onClick={() => setShowPhotoMenu(true)}
+              >
                 {displayAvatarUrl ? (
                   <img
                     src={displayAvatarUrl}
@@ -102,21 +109,66 @@ export default function MembershipCard() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Camera className="w-8 h-8 text-muted-foreground" />
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                    <Camera className="w-7 h-7" />
+                    <span className="text-[10px] font-medium">Toque aqui</span>
+                  </div>
                 )}
               </div>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-md">
-                <Camera className="w-6 h-6 text-white" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  disabled={isUploading}
-                />
-              </label>
+              {/* Floating hint badge */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow whitespace-nowrap">
+                {displayAvatarUrl ? 'Toque para opções' : 'Adicionar foto'}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+                disabled={isUploading}
+              />
             </div>
           </div>
+
+          {/* Photo action menu */}
+          <Dialog open={showPhotoMenu} onOpenChange={setShowPhotoMenu}>
+            <DialogContent className="max-w-[280px] p-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-semibold text-center mb-1">Foto do sócio</p>
+                {displayAvatarUrl && (
+                  <button
+                    className="flex items-center gap-3 w-full rounded-lg px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => {
+                      setShowPhotoMenu(false);
+                      setShowPhotoPreview(true);
+                    }}
+                  >
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                    Visualizar foto
+                  </button>
+                )}
+                <button
+                  className="flex items-center gap-3 w-full rounded-lg px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                  onClick={() => {
+                    setShowPhotoMenu(false);
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                  {displayAvatarUrl ? 'Trocar foto' : 'Adicionar foto'}
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Photo preview dialog */}
+          <Dialog open={showPhotoPreview} onOpenChange={setShowPhotoPreview}>
+            <DialogContent className="max-w-sm p-2">
+              {displayAvatarUrl && (
+                <img src={displayAvatarUrl} alt="Foto do sócio" className="w-full rounded-lg object-contain max-h-[70vh]" />
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Title */}
           <div className="text-center pb-3">
