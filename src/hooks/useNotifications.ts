@@ -81,14 +81,5 @@ export function useMarkAllAsRead() {
   });
 }
 
-export async function createNotification(
-  userId: string,
-  title: string,
-  message: string
-) {
-  const { error } = await supabase
-    .from('notifications')
-    .insert({ user_id: userId, title, message });
-  
-  if (error) throw error;
-}
+// Notifications are created server-side only (edge functions with service role key).
+// No client-side INSERT is allowed per RLS policy.
