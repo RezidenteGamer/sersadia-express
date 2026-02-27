@@ -59,7 +59,7 @@ export function useUserMembership(userId: string | undefined) {
       if (directError) throw directError;
       if (directMember) return directMember as Member;
       
-      // If not found, try to match by mbrf_id from user's profile
+      // If not found, try to match by mbrf_id using secure RPC
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('mbrf_id')
@@ -68,12 +68,9 @@ export function useUserMembership(userId: string | undefined) {
       
       if (profileError || !profile?.mbrf_id) return null;
       
-      // Find member with matching mbrf_id
+      // Use secure RPC function to find member by mbrf_id
       const { data: memberByMbrfId, error: memberError } = await supabase
-        .from('members')
-        .select('*')
-        .eq('mbrf_id', profile.mbrf_id)
-        .eq('is_active', true)
+        .rpc('get_membership_by_mbrf_id', { _mbrf_id: profile.mbrf_id })
         .maybeSingle();
       
       if (memberError) throw memberError;
