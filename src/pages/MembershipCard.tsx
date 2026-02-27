@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import { toPng } from 'html-to-image';
 import { QRCodeSVG } from 'qrcode.react';
 import brandLogo from '@/assets/ser-sadia-express-logo.png';
+import { DependentsList } from '@/components/membership/DependentsList';
+import { DependentsCardBack } from '@/components/membership/DependentsCardBack';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -23,6 +25,8 @@ export default function MembershipCard() {
   const [showPhotoPreview, setShowPhotoPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const cardBackRef = useRef<HTMLDivElement>(null);
+  const [showBack, setShowBack] = useState(false);
 
   const displayAvatarUrl = avatarUrl || profile?.avatar_url;
 
@@ -49,22 +53,24 @@ export default function MembershipCard() {
   };
 
   const handleDownload = useCallback(async () => {
-    if (!cardRef.current) return;
+    const ref = showBack ? cardBackRef.current : cardRef.current;
+    if (!ref) return;
     try {
-      const dataUrl = await toPng(cardRef.current, {
+      const dataUrl = await toPng(ref, {
         cacheBust: true,
         pixelRatio: 3,
         backgroundColor: '#ffffff',
       });
       const link = document.createElement('a');
-      link.download = `carteirinha-${membership?.mbrf_id || 'socio'}.png`;
+      const suffix = showBack ? 'verso' : 'frente';
+      link.download = `carteirinha-${membership?.mbrf_id || 'socio'}-${suffix}.png`;
       link.href = dataUrl;
       link.click();
       toast.success('Carteirinha salva!');
     } catch {
       toast.error('Erro ao gerar imagem');
     }
-  }, [membership?.mbrf_id]);
+  }, [membership?.mbrf_id, showBack]);
 
   if (!membership) {
     return (
@@ -221,11 +227,26 @@ export default function MembershipCard() {
           </div>
         </div>
 
-        {/* Download button */}
-        <Button onClick={handleDownload} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Baixar Carteirinha
-        </Button>
+        {/* Flip / Download buttons */}
+        <div className="flex gap-2">
+          <Button onClick={() => setShowBack(!showBack)} variant="outline" className="gap-2">
+            {showBack ? 'Ver Frente' : 'Ver Verso'}
+          </Button>
+          <Button onClick={handleDownload} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Baixar
+          </Button>
+        </div>
+
+        {/* Card Back (dependents) - for download */}
+        {showBack && (
+          <div ref={cardBackRef}>
+            <DependentsCardBack memberId={membership.id} />
+          </div>
+        )}
+
+        {/* Dependents management */}
+        <DependentsList memberId={membership.id} />
       </div>
     </AppLayout>
   );

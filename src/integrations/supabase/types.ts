@@ -205,6 +205,44 @@ export type Database = {
         }
         Relationships: []
       }
+      member_dependents: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          id: string
+          member_id: string
+          name: string
+          relationship: string
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          id?: string
+          member_id: string
+          name: string
+          relationship: string
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string
+          name?: string
+          relationship?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_dependents_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           cpf: string | null
