@@ -582,6 +582,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_membership_status: { Args: never; Returns: boolean }
+      get_membership_by_mbrf_id: {
+        Args: { _mbrf_id: string }
+        Returns: {
+          cpf: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          mbrf_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "members"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_permission: {
         Args: {
           _permission: Database["public"]["Enums"]["admin_permission"]
