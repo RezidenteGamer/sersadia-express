@@ -48,8 +48,8 @@ export default function MyReservations() {
 
       if (error) throw error;
 
-      if (data?.sandboxInitPoint || data?.initPoint) {
-        window.location.href = data.sandboxInitPoint || data.initPoint;
+      if (data?.initPoint || data?.sandboxInitPoint) {
+        window.location.href = data.initPoint || data.sandboxInitPoint;
       } else {
         throw new Error('URL de pagamento não retornada');
       }
