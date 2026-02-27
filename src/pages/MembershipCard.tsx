@@ -26,6 +26,7 @@ export default function MembershipCard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardBackRef = useRef<HTMLDivElement>(null);
+  const cardWrapperRef = useRef<HTMLDivElement>(null);
   const displayAvatarUrl = avatarUrl || profile?.avatar_url;
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,23 +52,17 @@ export default function MembershipCard() {
   };
 
   const handleDownload = useCallback(async () => {
-    const refs = [
-      { ref: cardRef.current, suffix: 'frente' },
-      { ref: cardBackRef.current, suffix: 'verso' },
-    ];
+    if (!cardWrapperRef.current) return;
     try {
-      for (const { ref, suffix } of refs) {
-        if (!ref) continue;
-        const dataUrl = await toPng(ref, {
-          cacheBust: true,
-          pixelRatio: 3,
-          backgroundColor: '#ffffff',
-        });
-        const link = document.createElement('a');
-        link.download = `carteirinha-${membership?.mbrf_id || 'socio'}-${suffix}.png`;
-        link.href = dataUrl;
-        link.click();
-      }
+      const dataUrl = await toPng(cardWrapperRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = `carteirinha-${membership?.mbrf_id || 'socio'}.png`;
+      link.href = dataUrl;
+      link.click();
       toast.success('Carteirinha salva!');
     } catch {
       toast.error('Erro ao gerar imagem');
@@ -94,7 +89,7 @@ export default function MembershipCard() {
       <PageHeader title="Carteirinha Digital" description="Sua carteirinha de sócio digital" />
 
       <div className="flex flex-col items-center gap-4 py-8">
-        <div className="flex flex-col lg:flex-row items-start justify-center gap-6">
+        <div ref={cardWrapperRef} className="flex flex-col lg:flex-row items-start justify-center gap-6">
         {/* Card container */}
         <div ref={cardRef} className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
           {/* Header with MBRF logo */}
