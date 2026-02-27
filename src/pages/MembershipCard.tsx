@@ -94,6 +94,7 @@ export default function MembershipCard() {
       <PageHeader title="Carteirinha Digital" description="Sua carteirinha de sócio digital" />
 
       <div className="flex flex-col items-center gap-4 py-8">
+        <div className="flex flex-col lg:flex-row items-start justify-center gap-6">
         {/* Card container */}
         <div ref={cardRef} className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
           {/* Header with MBRF logo */}
@@ -229,17 +230,18 @@ export default function MembershipCard() {
           </div>
         </div>
 
+        {/* Card Back (dependents) */}
+        <div ref={cardBackRef}>
+          <DependentsCardBack memberId={membership.id} />
+        </div>
+        </div>
+
         {/* Download button */}
         <div className="flex gap-2">
           <Button onClick={handleDownload} variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             Baixar Carteirinha
           </Button>
-        </div>
-
-        {/* Card Back (dependents) */}
-        <div ref={cardBackRef}>
-          <DependentsCardBack memberId={membership.id} />
         </div>
 
         {/* Dependents management */}
