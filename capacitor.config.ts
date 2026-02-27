@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.4e8b89cfc2f147db89e743b4deaebf54',
+  appId: 'com.sersadia.express',
   appName: 'Ser Sadia Express',
   server: {
     url: 'https://sersadiaexpress.lovable.app',
