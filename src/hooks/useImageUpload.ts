@@ -88,16 +88,17 @@ export function useImageUpload() {
         return null;
       }
 
-      // Compress if needed instead of rejecting
+      // Always compress images for optimal performance
       let processedFile = file;
-      if (file.size > MAX_SIZE) {
-        try {
-          processedFile = await compressImage(file);
-          toast.info('Imagem comprimida automaticamente');
-        } catch {
-          toast.error('Imagem muito grande e não pôde ser comprimida. Máximo: 5MB');
-          return null;
+      try {
+        processedFile = await compressImage(file, MAX_SIZE);
+        if (processedFile.size < file.size) {
+          const saved = ((1 - processedFile.size / file.size) * 100).toFixed(0);
+          toast.info(`Imagem otimizada (${saved}% menor)`);
         }
+      } catch {
+        toast.error('Imagem muito grande e não pôde ser comprimida. Máximo: 5MB');
+        return null;
       }
 
       const fileExt = processedFile.name.split('.').pop();
