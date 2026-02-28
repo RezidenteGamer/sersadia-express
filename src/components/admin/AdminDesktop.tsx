@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -34,6 +34,7 @@ import { AdminReportsContent } from '@/pages/admin/AdminReports';
 import { AdminMembersContent } from '@/pages/admin/AdminMembers';
 import { AdminBannersContent } from '@/pages/admin/AdminBanners';
 import { AdminSupportContent } from '@/pages/admin/AdminSupport';
+import { AdminDocsContent } from '@/pages/admin/AdminDocs';
 
 const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
@@ -46,6 +47,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, adminOnly: true },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
+  { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
