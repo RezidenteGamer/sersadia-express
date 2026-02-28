@@ -26,6 +26,7 @@ import AdminBanners from "./pages/admin/AdminBanners";
 import Support from "./pages/Support";
 import AdminSupport from "./pages/admin/AdminSupport";
 import MembershipCard from "./pages/MembershipCard";
+import AdminDocs from "./pages/admin/AdminDocs";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ function AppRoutes() {
       <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
       <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
       <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
+      <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
