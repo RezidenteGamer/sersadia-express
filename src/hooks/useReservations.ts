@@ -108,9 +108,12 @@ export function useCreateReservation() {
 
   return useMutation({
     mutationFn: async (data: Omit<TablesInsert<'reservations'>, 'user_id' | 'code'>) => {
+      // Set expiration to 30 minutes from now for pending reservations
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+      
       const { data: reservation, error } = await supabase
         .from('reservations')
-        .insert({ ...data, user_id: user!.id })
+        .insert({ ...data, user_id: user!.id, expires_at: expiresAt } as any)
         .select()
         .single();
       
