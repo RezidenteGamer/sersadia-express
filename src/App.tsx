@@ -27,6 +27,7 @@ import Support from "./pages/Support";
 import AdminSupport from "./pages/admin/AdminSupport";
 import MembershipCard from "./pages/MembershipCard";
 import AdminDocs from "./pages/admin/AdminDocs";
+import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  useAndroidBackButton();
+
   return (
     <Routes>
       <Route path="/" element={<Index />} />
