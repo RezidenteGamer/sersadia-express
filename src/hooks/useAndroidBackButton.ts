@@ -1,16 +1,25 @@
-import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
 /**
  * Handles the Android hardware/gesture back button.
  * - If there's browser history, go back.
- * - If at root routes, minimize the app instead of closing.
+ * - If at root routes, show exit confirmation dialog.
  */
 export function useAndroidBackButton() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const [showExitDialog, setShowExitDialog] = useState(false);
+
+  const confirmExit = useCallback(() => {
+    setShowExitDialog(false);
+    CapacitorApp.exitApp();
+  }, []);
+
+  const cancelExit = useCallback(() => {
+    setShowExitDialog(false);
+  }, []);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -22,8 +31,7 @@ export function useAndroidBackButton() {
       if (canGoBack && !isAtRoot) {
         window.history.back();
       } else {
-        // Minimize app instead of closing
-        CapacitorApp.minimizeApp();
+        setShowExitDialog(true);
       }
     });
 
@@ -31,4 +39,6 @@ export function useAndroidBackButton() {
       listener.then(l => l.remove());
     };
   }, [location.pathname]);
+
+  return { showExitDialog, confirmExit, cancelExit };
 }
