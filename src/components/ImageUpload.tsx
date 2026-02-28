@@ -72,6 +72,8 @@ export function ImageUpload({
               <img 
                 src={url} 
                 alt={`Imagem ${index + 1}`}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               <button

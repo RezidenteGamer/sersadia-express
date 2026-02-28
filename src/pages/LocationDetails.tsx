@@ -224,6 +224,8 @@ export default function LocationDetails() {
                         <img 
                           src={image} 
                           alt={`${location.name} - Imagem ${index + 1}`} 
+                          loading="lazy"
+                          decoding="async"
                           className="relative w-full h-full object-contain z-10" 
                         />
                       </div>
