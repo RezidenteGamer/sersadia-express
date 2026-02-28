@@ -1,7 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { App as CapacitorApp } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
 
 const ROOT_PATHS = new Set(['/', '/dashboard', '/locations']);
 
@@ -19,62 +17,59 @@ export function useAndroidBackButton() {
     currentPathRef.current = location.pathname;
   }, [location.pathname]);
 
-  const confirmExit = useCallback(() => {
+  const confirmExit = useCallback(async () => {
     setShowExitDialog(false);
-
-    if (Capacitor.isNativePlatform()) {
+    try {
+      const { App: CapacitorApp } = await import('@capacitor/app');
       CapacitorApp.exitApp();
-      return;
+    } catch {
+      window.close();
     }
-
-    window.close();
   }, []);
 
   const cancelExit = useCallback(() => {
     setShowExitDialog(false);
   }, []);
 
-  const handleBackAction = useCallback((canGoBack: boolean) => {
-    const isAtRoot = ROOT_PATHS.has(currentPathRef.current);
-
-    if (canGoBack && !isAtRoot) {
-      window.history.back();
-      return;
-    }
-
-    setShowExitDialog(true);
-  }, []);
-
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+    let disposed = false;
+    let cleanup: (() => void) | null = null;
 
-    let isDisposed = false;
-    let removeNativeListener: (() => void) | null = null;
+    const setup = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
+        if (disposed) return;
 
-    const onLegacyBackButton = (event: Event) => {
-      event.preventDefault();
-      handleBackAction(window.history.length > 1);
+        const { App: CapacitorApp } = await import('@capacitor/app');
+        if (disposed) return;
+
+        const listener = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+          const isAtRoot = ROOT_PATHS.has(currentPathRef.current);
+          if (canGoBack && !isAtRoot) {
+            window.history.back();
+          } else {
+            setShowExitDialog(true);
+          }
+        });
+
+        if (disposed) {
+          listener.remove();
+          return;
+        }
+        cleanup = () => listener.remove();
+      } catch {
+        // Not running in Capacitor environment
+      }
     };
 
-    document.addEventListener('backbutton', onLegacyBackButton, false);
-
-    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-      handleBackAction(canGoBack);
-    }).then((listener) => {
-      if (isDisposed) {
-        listener.remove();
-        return;
-      }
-      removeNativeListener = () => listener.remove();
-    });
+    setup();
 
     return () => {
-      isDisposed = true;
-      document.removeEventListener('backbutton', onLegacyBackButton, false);
-      removeNativeListener?.();
+      disposed = true;
+      cleanup?.();
     };
-  }, [handleBackAction]);
+  }, []);
 
   return { showExitDialog, confirmExit, cancelExit };
 }
-
