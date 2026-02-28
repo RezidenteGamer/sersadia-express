@@ -438,6 +438,7 @@ export type Database = {
           code: string
           created_at: string
           end_time: string
+          expires_at: string | null
           id: string
           location_id: string
           reservation_date: string
@@ -453,6 +454,7 @@ export type Database = {
           code?: string
           created_at?: string
           end_time: string
+          expires_at?: string | null
           id?: string
           location_id: string
           reservation_date: string
@@ -468,6 +470,7 @@ export type Database = {
           code?: string
           created_at?: string
           end_time?: string
+          expires_at?: string | null
           id?: string
           location_id?: string
           reservation_date?: string
@@ -583,6 +586,7 @@ export type Database = {
     }
     Functions: {
       check_membership_status: { Args: never; Returns: boolean }
+      expire_pending_reservations: { Args: never; Returns: number }
       get_membership_by_mbrf_id: {
         Args: { _mbrf_id: string }
         Returns: {
