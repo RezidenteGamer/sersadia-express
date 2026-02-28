@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { LucideIcon, ArrowLeft, Bell, Sun, Moon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LucideIcon, ArrowLeft, Bell, Sun, Moon, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +15,7 @@ interface AdminMobileViewProps {
 }
 
 export function AdminMobileView({ apps, unreadCount, onOpenNotifications, isDark, onToggleTheme }: AdminMobileViewProps) {
+  const navigate = useNavigate();
   const [activeApp, setActiveApp] = useState<DesktopApp | null>(null);
 
   if (activeApp) {
@@ -43,6 +45,9 @@ export function AdminMobileView({ apps, unreadCount, onOpenNotifications, isDark
       <div className="flex items-center justify-between px-4 py-3 bg-sidebar text-white shrink-0 safe-area-top">
         <h1 className="text-lg font-semibold">Administração</h1>
         <div className="flex items-center gap-1">
+          <button onClick={() => navigate('/dashboard')} className="p-2 rounded-lg hover:bg-white/15 transition-colors" title="Tela Inicial">
+            <Home className="w-4 h-4" />
+          </button>
           <button onClick={onToggleTheme} className="p-2 rounded-lg hover:bg-white/15 transition-colors">
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
