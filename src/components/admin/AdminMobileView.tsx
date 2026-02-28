@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LucideIcon, ArrowLeft, Bell, Sun, Moon, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,29 @@ export function AdminMobileView({ apps, unreadCount, onOpenNotifications, isDark
   const navigate = useNavigate();
   const [activeApp, setActiveApp] = useState<DesktopApp | null>(null);
 
+  // Open app and push a history entry so device back button works
+  const openApp = useCallback((app: DesktopApp) => {
+    setActiveApp(app);
+    window.history.pushState({ adminApp: true }, '');
+  }, []);
+
+  // Close app (used by UI back button)
+  const closeApp = useCallback(() => {
+    setActiveApp(null);
+  }, []);
+
+  // Listen for popstate (device back button) to close the active app
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (activeApp) {
+        e.preventDefault();
+        setActiveApp(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeApp]);
+
   if (activeApp) {
     const ContentComponent = activeApp.component;
     const Icon = activeApp.icon;
@@ -25,7 +48,7 @@ export function AdminMobileView({ apps, unreadCount, onOpenNotifications, isDark
       <div className="flex flex-col h-full bg-background">
         {/* Mobile App Header */}
         <div className="flex items-center gap-3 px-4 py-3 bg-sidebar text-white shrink-0 safe-area-top">
-          <button onClick={() => setActiveApp(null)} className="p-1.5 rounded-lg hover:bg-white/15 transition-colors">
+          <button onClick={closeApp} className="p-1.5 rounded-lg hover:bg-white/15 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <Icon className="w-4 h-4" />
@@ -70,7 +93,7 @@ export function AdminMobileView({ apps, unreadCount, onOpenNotifications, isDark
             return (
               <button
                 key={app.id}
-                onClick={() => setActiveApp(app)}
+                onClick={() => openApp(app)}
                 className={cn(
                   "flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors",
                   "bg-card border border-border hover:bg-accent active:scale-95"
