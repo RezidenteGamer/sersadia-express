@@ -1,8 +1,9 @@
-import { useDependents } from '@/hooks/useDependents';
+import { useDependents, type Dependent } from '@/hooks/useDependents';
 import brandLogo from '@/assets/ser-sadia-express-logo.png';
 
 interface DependentsCardBackProps {
   memberId: string;
+  offlineDependents?: Array<{ id: string; name: string; relationship: string; birth_date: string | null; member_id: string; created_at: string; updated_at: string }>;
 }
 
 const relationshipLabels: Record<string, string> = {
@@ -11,8 +12,9 @@ const relationshipLabels: Record<string, string> = {
   conjuge: 'Cônjuge',
 };
 
-export function DependentsCardBack({ memberId }: DependentsCardBackProps) {
-  const { data: dependents = [] } = useDependents(memberId);
+export function DependentsCardBack({ memberId, offlineDependents }: DependentsCardBackProps) {
+  const { data: onlineDependents = [] } = useDependents(offlineDependents ? undefined : memberId);
+  const dependents = offlineDependents || onlineDependents;
 
   return (
     <div className="w-[340px] min-h-[580px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden flex flex-col">
