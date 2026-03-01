@@ -3,10 +3,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
+import { useDependents } from '@/hooks/useDependents';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { useOfflineMembershipCard } from '@/hooks/useOfflineMembershipCard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, Download, Eye, ImagePlus } from 'lucide-react';
+import { Camera, Download, Eye, ImagePlus, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -18,7 +20,8 @@ import { DependentsCardBack } from '@/components/membership/DependentsCardBack';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
-  const { data: membership } = useUserMembership(user?.id);
+  const { data: membership, isLoading: membershipLoading, isError: membershipError } = useUserMembership(user?.id);
+  const { data: dependents, isError: dependentsError } = useDependents(membership?.id);
   const { uploadImage, isUploading } = useImageUpload();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
@@ -27,7 +30,17 @@ export default function MembershipCard() {
   const cardRef = useRef<HTMLDivElement>(null);
   const cardBackRef = useRef<HTMLDivElement>(null);
   const cardWrapperRef = useRef<HTMLDivElement>(null);
-  const displayAvatarUrl = avatarUrl || profile?.avatar_url;
+
+  const { cardData, isOffline, cacheAge } = useOfflineMembershipCard({
+    membership,
+    profile: profile ? { full_name: profile.full_name, email: profile.email, avatar_url: profile.avatar_url, mbrf_id: (profile as any).mbrf_id } : null,
+    dependents,
+    membershipLoading,
+    membershipError: !!membershipError,
+    dependentsError: !!dependentsError,
+  });
+
+  const displayAvatarUrl = isOffline ? cardData?.avatarUrl : (avatarUrl || profile?.avatar_url);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,28 +73,34 @@ export default function MembershipCard() {
         backgroundColor: '#ffffff',
       });
       const link = document.createElement('a');
-      link.download = `carteirinha-${membership?.mbrf_id || 'socio'}.png`;
+      link.download = `carteirinha-${cardData?.membership?.mbrf_id || 'socio'}.png`;
       link.href = dataUrl;
       link.click();
       toast.success('Carteirinha salva!');
     } catch {
       toast.error('Erro ao gerar imagem');
     }
-  }, [membership?.mbrf_id]);
+  }, [cardData?.membership?.mbrf_id]);
 
-  if (!membership) {
+  if (!cardData && !membershipLoading) {
     return (
       <AppLayout>
         <PageHeader title="Carteirinha Digital" description="Sua carteirinha de sócio digital" />
         <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground">Você não possui um vínculo de sócio ativo.</p>
+          <p className="text-muted-foreground">
+            {isOffline
+              ? 'Você está offline e não há dados salvos. Conecte-se à internet para carregar sua carteirinha.'
+              : 'Você não possui um vínculo de sócio ativo.'}
+          </p>
         </div>
       </AppLayout>
     );
   }
 
-  const memberName = membership.name || profile?.full_name || 'Sócio';
-  const memberId = membership.mbrf_id || (profile as any)?.mbrf_id || '------';
+  if (!cardData) return null;
+
+  const memberName = cardData.membership.name || cardData.profile.full_name || 'Sócio';
+  const memberId = cardData.membership.mbrf_id || cardData.profile.mbrf_id || '------';
   const today = format(new Date(), 'dd/MM/yyyy');
 
   return (
@@ -89,6 +108,14 @@ export default function MembershipCard() {
       <PageHeader title="Carteirinha Digital" description="Sua carteirinha de sócio digital" />
 
       <div className="flex flex-col items-center gap-4 py-8">
+        {/* Offline banner */}
+        {isOffline && cacheAge && (
+          <div className="w-[340px] flex items-center gap-2 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg px-4 py-2.5 text-sm text-yellow-800 dark:text-yellow-200">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>Modo offline — dados de {cacheAge} atrás</span>
+          </div>
+        )}
+
         <div ref={cardWrapperRef} className="flex flex-col lg:flex-row items-start justify-center gap-6">
         {/* Card container */}
         <div ref={cardRef} className="w-[340px] bg-white rounded-xl shadow-2xl border border-border overflow-hidden">
@@ -105,7 +132,7 @@ export default function MembershipCard() {
             <div className="relative">
               <div
                 className="w-28 h-32 bg-muted rounded-md overflow-hidden border-2 border-border flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
-                onClick={() => setShowPhotoMenu(true)}
+                onClick={() => !isOffline && setShowPhotoMenu(true)}
               >
                 {displayAvatarUrl ? (
                   <img
@@ -116,14 +143,16 @@ export default function MembershipCard() {
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-muted-foreground">
                     <Camera className="w-7 h-7" />
-                    <span className="text-[10px] font-medium">Toque aqui</span>
+                    <span className="text-[10px] font-medium">{isOffline ? 'Sem foto' : 'Toque aqui'}</span>
                   </div>
                 )}
               </div>
               {/* Floating hint badge */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow whitespace-nowrap">
-                {displayAvatarUrl ? 'Toque para opções' : 'Adicionar foto'}
-              </div>
+              {!isOffline && (
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-full shadow whitespace-nowrap">
+                  {displayAvatarUrl ? 'Toque para opções' : 'Adicionar foto'}
+                </div>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -227,7 +256,10 @@ export default function MembershipCard() {
 
         {/* Card Back (dependents) */}
         <div ref={cardBackRef}>
-          <DependentsCardBack memberId={membership.id} />
+          <DependentsCardBack
+            memberId={cardData.membership.id}
+            offlineDependents={isOffline ? cardData.dependents : undefined}
+          />
         </div>
         </div>
 
@@ -239,8 +271,10 @@ export default function MembershipCard() {
           </Button>
         </div>
 
-        {/* Dependents management */}
-        <DependentsList memberId={membership.id} />
+        {/* Dependents management - hidden when offline */}
+        {!isOffline && membership && (
+          <DependentsList memberId={membership.id} />
+        )}
       </div>
     </AppLayout>
   );
