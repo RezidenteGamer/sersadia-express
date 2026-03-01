@@ -11,7 +11,8 @@ import { usePayments } from '@/hooks/usePayments';
 import { useLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, Clock, X, Eye, CreditCard, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Clock, X, Eye, CreditCard, AlertTriangle, Copy } from 'lucide-react';
+import { copyToClipboard } from '@/lib/native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
@@ -254,7 +255,15 @@ export default function MyReservations() {
               
               {viewReservation.status === 'confirmed' && <div className="p-4 bg-primary/10 rounded-lg">
                   <p className="text-sm">
-                    <strong>Importante:</strong> Apresente o código <span className="font-mono font-bold">{viewReservation.code}</span> no momento do check-in.
+                    <strong>Importante:</strong> Apresente o código{' '}
+                    <button
+                      onClick={() => copyToClipboard(viewReservation.code, 'Código')}
+                      className="font-mono font-bold inline-flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      {viewReservation.code}
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    {' '}no momento do check-in.
                   </p>
                 </div>}
             </div>}
