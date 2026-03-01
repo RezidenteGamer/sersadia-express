@@ -8,7 +8,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { useOfflineMembershipCard } from '@/hooks/useOfflineMembershipCard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, Download, Eye, ImagePlus, WifiOff } from 'lucide-react';
+import { Camera, Download, Eye, ImagePlus, Share2, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -17,6 +17,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import brandLogo from '@/assets/ser-sadia-express-logo.png';
 import { DependentsList } from '@/components/membership/DependentsList';
 import { DependentsCardBack } from '@/components/membership/DependentsCardBack';
+import { shareContent } from '@/lib/native';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -263,11 +264,23 @@ export default function MembershipCard() {
         </div>
         </div>
 
-        {/* Download button */}
+        {/* Action buttons */}
         <div className="flex gap-2">
           <Button onClick={handleDownload} variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            Baixar Carteirinha
+            Baixar
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => shareContent(
+              'Carteirinha Ser Sadia',
+              `Carteirinha digital de ${memberName} — ID: ${memberId}`,
+              window.location.href
+            )}
+          >
+            <Share2 className="w-4 h-4" />
+            Compartilhar
           </Button>
         </div>
 
