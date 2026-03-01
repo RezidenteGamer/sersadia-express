@@ -19,6 +19,14 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true,
     },
+    StatusBar: {
+      backgroundColor: '#16a34a',
+      style: 'LIGHT',
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+    },
   },
 };
 
