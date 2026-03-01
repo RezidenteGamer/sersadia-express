@@ -1,78 +1,80 @@
 
-# Carteirinha Digital Offline
+# Preparar o APK com Todos os Recursos Nativos
 
-## Objetivo
-Permitir que a tela da Carteirinha Digital (/carteirinha) funcione sem internet no APK nativo, desde que o usuario tenha feito login nas ultimas 24 horas. Os dados do socio, perfil e dependentes serao salvos em localStorage e servidos como fallback quando nao houver conexao.
+## Resumo
+Implementar todos os plugins nativos do Capacitor que nao podem ser adicionados depois via deploy web. Isso inclui controle da barra de status, deteccao de rede, comportamento do teclado, compartilhamento nativo, navegador externo, safe areas e refresh automatico ao voltar ao app.
 
-## Como funciona
+## O que ja esta pronto
+- Splash Screen configurada
+- Botao voltar do Android com dialogo de saida
+- Carteirinha digital com modo offline (cache 24h)
 
-Toda vez que o usuario abre a carteirinha **com internet**, os dados sao buscados normalmente do banco e uma copia e salva no localStorage junto com um timestamp. Quando abre **sem internet** (ou a requisicao falha), o app verifica se existe cache local com menos de 24h. Se existir, renderiza a carteirinha com esses dados. Se nao existir ou estiver expirado, mostra mensagem pedindo que se conecte.
+## O que sera implementado
 
-A foto do socio tambem sera cacheada: convertida para base64 e salva junto no localStorage, para que apareca mesmo offline.
+### 1. Safe Area (index.html + index.css)
+Adicionar `viewport-fit=cover` na meta viewport do `index.html` e CSS com `env(safe-area-inset-*)` no `index.css` para garantir que o conteudo nao fique atras do notch ou barra de navegacao por gestos.
 
-## Arquivos a criar
+### 2. Configurar capacitor.config.ts
+Adicionar configuracoes dos plugins StatusBar e Keyboard:
+- StatusBar: cor verde da marca (#16a34a), estilo claro
+- Keyboard: modo de redimensionamento para evitar layout quebrado em formularios
 
-### 1. `src/lib/offlineCache.ts`
-Modulo utilitario com funcoes:
-- `saveCardCache(data)` -- salva dados + timestamp em localStorage com chave `membership-card-cache`
-- `getCardCache()` -- le do localStorage, retorna `null` se expirado (>24h) ou inexistente
-- `cacheAvatarAsBase64(url)` -- faz fetch da imagem, converte para base64 data URL e salva em localStorage
-- `getCachedAvatar()` -- retorna base64 do avatar ou null
-- `isCacheValid()` -- verifica se cache existe e tem menos de 24h
+### 3. Criar src/lib/native.ts
+Modulo utilitario com funcoes que usam import dinamico (funciona tanto no app nativo quanto no browser):
+- `configureStatusBar()` -- aplica cor e estilo da barra de status
+- `shareContent(title, text, url?)` -- abre menu de compartilhamento nativo do Android
+- `openExternalUrl(url)` -- abre link no navegador nativo (fora da WebView)
 
-### 2. `src/hooks/useOfflineMembershipCard.ts`
-Hook que encapsula a logica offline:
-- Recebe `membership`, `profile`, `dependents` como parametros
-- Quando os dados online estao disponiveis, salva no cache (incluindo avatar em base64)
-- Quando os dados online falham/estao ausentes, tenta carregar do cache
-- Retorna `{ cardData, isOffline, cacheAge }` onde `cardData` contem membership + profile + dependents unificados
+### 4. Criar src/hooks/useNetworkStatus.ts
+Hook que detecta quando o usuario perde conexao e mostra um toast/banner:
+- Ouve eventos `online`/`offline` do navegador
+- No app nativo, usa `@capacitor/network` para deteccao mais precisa
+- Mostra toast "Voce esta sem internet" ao ficar offline
 
-## Arquivos a modificar
+### 5. Criar src/hooks/useAppResume.ts
+Hook que invalida queries do React Query quando o app volta do background:
+- Usa evento `appStateChange` do `@capacitor/app` (ja instalado)
+- Ao retornar ao foreground, invalida todas as queries para buscar dados frescos
 
-### 3. `src/pages/MembershipCard.tsx`
-- Importar e usar `useOfflineMembershipCard`
-- Passar os dados de membership, profile e dependents para o hook
-- Quando offline, usar os dados do cache em vez dos dados da query
-- Mostrar um banner discreto "Modo offline -- dados de X horas atras" quando estiver usando cache
-- Esconder funcionalidades que precisam de internet (upload de foto, gerenciamento de dependentes)
-- Usar avatar cacheado (base64) quando offline
+### 6. Atualizar src/main.tsx
+Chamar `configureStatusBar()` na inicializacao do app para aplicar a cor da barra de status imediatamente ao abrir.
 
-### 4. `src/components/membership/DependentsCardBack.tsx`
-- Aceitar prop opcional `offlineDependents` para receber dependentes do cache
-- Quando offline, usar esses dados em vez de chamar `useDependents`
+### 7. Atualizar src/App.tsx
+Integrar os novos hooks `useNetworkStatus` e `useAppResume` no componente `AppRoutes`.
 
-### 5. `src/components/membership/DependentsList.tsx`
-- Aceitar prop `isOffline` para esconder botoes de adicionar/remover quando offline
+### 8. Adicionar botao de compartilhar na carteirinha
+No `MembershipCard.tsx`, adicionar um botao "Compartilhar" ao lado do "Baixar Carteirinha" que usa a funcao `shareContent` para abrir o menu nativo de compartilhamento.
+
+---
 
 ## Detalhes tecnicos
 
-**Estrutura do cache no localStorage:**
-```text
-Chave: "membership-card-cache"
-Valor: JSON com {
-  membership: { id, name, mbrf_id, ... },
-  profile: { full_name, email, avatar_url, mbrf_id },
-  dependents: [{ id, name, relationship, ... }],
-  cachedAt: timestamp ISO,
-  avatarBase64: "data:image/..." ou null
-}
+**Dependencias novas (npm install):**
+```
+@capacitor/status-bar
+@capacitor/keyboard
+@capacitor/network
+@capacitor/share
+@capacitor/browser
 ```
 
-**Deteccao de offline:**
-- Verificar `navigator.onLine` como primeira checagem
-- Usar falha nas queries do React Query (error state) como confirmacao
-- Ambos os sinais juntos determinam o modo offline
+**Arquivos a criar:**
+- `src/lib/native.ts`
+- `src/hooks/useNetworkStatus.ts`
+- `src/hooks/useAppResume.ts`
 
-**Limite de 24h:**
-- Compara `Date.now()` com o `cachedAt` do cache
-- Se diferenca > 24h, descarta o cache e pede reconexao
+**Arquivos a modificar:**
+- `index.html` -- adicionar `viewport-fit=cover`
+- `src/index.css` -- adicionar padding com safe-area-inset
+- `capacitor.config.ts` -- configs de StatusBar e Keyboard
+- `src/main.tsx` -- inicializar StatusBar
+- `src/App.tsx` -- usar hooks de network e resume
+- `src/pages/MembershipCard.tsx` -- botao compartilhar
 
-**Avatar em base64:**
-- Ao salvar cache, faz fetch da URL da foto e converte via canvas/FileReader para data URL
-- Isso garante que a foto aparece mesmo sem internet
-- Tamanho limitado (imagens ja sao comprimidas no upload)
+**Todas as funcoes nativas usam import dinamico** (`await import(...)`) com try/catch, entao funcionam no browser sem erro -- so ativam no app nativo.
 
-**Experiencia do usuario offline:**
-- Banner amarelo no topo: "Voce esta offline. Mostrando dados salvos de [horario]."
-- Botoes de upload de foto e gerenciamento de dependentes ficam desabilitados
-- Download da carteirinha como imagem continua funcionando (usa dados ja renderizados)
+**Apos aprovacao**, voce precisara rodar no projeto local:
+```bash
+npm install @capacitor/status-bar @capacitor/keyboard @capacitor/network @capacitor/share @capacitor/browser
+npx cap sync
+```
