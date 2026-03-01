@@ -8,7 +8,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { useOfflineMembershipCard } from '@/hooks/useOfflineMembershipCard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, Download, Eye, ImagePlus, Share2, WifiOff } from 'lucide-react';
+import { Camera, Copy, Download, Eye, ImagePlus, Share2, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -17,7 +17,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import brandLogo from '@/assets/ser-sadia-express-logo.png';
 import { DependentsList } from '@/components/membership/DependentsList';
 import { DependentsCardBack } from '@/components/membership/DependentsCardBack';
-import { shareContent } from '@/lib/native';
+import { shareContent, copyToClipboard } from '@/lib/native';
 
 export default function MembershipCard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -226,7 +226,13 @@ export default function MembershipCard() {
             </div>
             <div className="flex gap-2">
               <span className="text-sm font-bold text-[hsl(0,0%,9%)] min-w-[55px]">ID:</span>
-              <span className="text-sm text-[hsl(0,0%,9%)]">{memberId}</span>
+              <button
+                onClick={() => copyToClipboard(memberId, 'ID do sócio')}
+                className="text-sm text-[hsl(0,0%,9%)] inline-flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                {memberId}
+                <Copy className="w-3 h-3" />
+              </button>
             </div>
           </div>
 

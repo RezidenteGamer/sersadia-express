@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { hapticSuccess } from '@/lib/native';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +54,7 @@ export function AdminCheckinContent() {
         reservationId: checkinReservation.id,
         code: checkinCode,
       });
+      await hapticSuccess();
       setCheckinReservation(null);
       setCheckinCode('');
     } catch (error) {
