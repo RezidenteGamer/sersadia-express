@@ -30,8 +30,11 @@ export function useUserReservations() {
 
 export function useAllReservations(filters?: {
   status?: Enums<'reservation_status'>;
+  statuses?: Enums<'reservation_status'>[];
   locationId?: string;
   date?: string;
+  startDate?: string;
+  endDate?: string;
 }) {
   return useQuery({
     queryKey: ['reservations', 'all', filters],
@@ -41,7 +44,9 @@ export function useAllReservations(filters?: {
         .select('*, location:locations(name, images)')
         .order('reservation_date', { ascending: false });
       
-      if (filters?.status) {
+      if (filters?.statuses && filters.statuses.length > 0) {
+        query = query.in('status', filters.statuses);
+      } else if (filters?.status) {
         query = query.eq('status', filters.status);
       }
       if (filters?.locationId) {
@@ -50,12 +55,19 @@ export function useAllReservations(filters?: {
       if (filters?.date) {
         query = query.eq('reservation_date', filters.date);
       }
+      if (filters?.startDate) {
+        query = query.gte('reservation_date', filters.startDate);
+      }
+      if (filters?.endDate) {
+        query = query.lte('reservation_date', filters.endDate);
+      }
       
       const { data: reservations, error } = await query;
       if (error) throw error;
       
       // Fetch profiles separately
       const userIds = [...new Set(reservations.map(r => r.user_id))];
+      if (userIds.length === 0) return [] as Reservation[];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, email')
