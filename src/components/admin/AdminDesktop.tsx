@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -35,6 +35,7 @@ import { AdminMembersContent } from '@/pages/admin/AdminMembers';
 import { AdminBannersContent } from '@/pages/admin/AdminBanners';
 import { AdminSupportContent } from '@/pages/admin/AdminSupport';
 import { AdminDocsContent } from '@/pages/admin/AdminDocs';
+import { AdminFinancialReportsContent } from '@/pages/admin/AdminFinancialReports';
 
 const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
@@ -46,6 +47,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin' },
   { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, adminOnly: true },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
+  { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'manage_payments' },
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
 ];

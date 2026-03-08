@@ -28,6 +28,7 @@ import Support from "./pages/Support";
 import AdminSupport from "./pages/admin/AdminSupport";
 import MembershipCard from "./pages/MembershipCard";
 import AdminDocs from "./pages/admin/AdminDocs";
+import AdminFinancialReports from "./pages/admin/AdminFinancialReports";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useAppResume } from "./hooks/useAppResume";
@@ -111,6 +112,7 @@ function AppRoutes() {
         <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
         <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
         <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
+        <Route path="/admin/financial-reports" element={<AdminRoute><AdminFinancialReports /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

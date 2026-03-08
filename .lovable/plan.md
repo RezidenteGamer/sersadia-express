@@ -1,109 +1,80 @@
 
+# Preparar o APK com Todos os Recursos Nativos
 
-# Modulo de Relatórios Financeiros e Prestação de Contas
+## Resumo
+Implementar todos os plugins nativos do Capacitor que nao podem ser adicionados depois via deploy web. Isso inclui controle da barra de status, deteccao de rede, comportamento do teclado, compartilhamento nativo, navegador externo, safe areas e refresh automatico ao voltar ao app.
 
-## Visão Geral
+## O que ja esta pronto
+- Splash Screen configurada
+- Botao voltar do Android com dialogo de saida
+- Carteirinha digital com modo offline (cache 24h)
 
-Criar uma nova página `AdminFinancialReports` com dois modos principais:
-1. **Relatórios Prontos** - Templates pré-definidos de prestação de contas financeira
-2. **Montador Personalizado** - Interface drag-and-drop para construir relatórios customizados
+## O que sera implementado
 
-A página atual `AdminReports` continua focada em relatórios operacionais (reservas, check-in). O novo módulo é exclusivamente financeiro.
+### 1. Safe Area (index.html + index.css)
+Adicionar `viewport-fit=cover` na meta viewport do `index.html` e CSS com `env(safe-area-inset-*)` no `index.css` para garantir que o conteudo nao fique atras do notch ou barra de navegacao por gestos.
 
-## Estrutura
+### 2. Configurar capacitor.config.ts
+Adicionar configuracoes dos plugins StatusBar e Keyboard:
+- StatusBar: cor verde da marca (#16a34a), estilo claro
+- Keyboard: modo de redimensionamento para evitar layout quebrado em formularios
 
-### Relatórios Prontos (Templates)
+### 3. Criar src/lib/native.ts
+Modulo utilitario com funcoes que usam import dinamico (funciona tanto no app nativo quanto no browser):
+- `configureStatusBar()` -- aplica cor e estilo da barra de status
+- `shareContent(title, text, url?)` -- abre menu de compartilhamento nativo do Android
+- `openExternalUrl(url)` -- abre link no navegador nativo (fora da WebView)
 
-Cada template é filtrável por **período** (date range), **local**, **método de pagamento** e **status**:
+### 4. Criar src/hooks/useNetworkStatus.ts
+Hook que detecta quando o usuario perde conexao e mostra um toast/banner:
+- Ouve eventos `online`/`offline` do navegador
+- No app nativo, usa `@capacitor/network` para deteccao mais precisa
+- Mostra toast "Voce esta sem internet" ao ficar offline
 
-1. **Resumo Financeiro Geral** - Cards com: receita total, receita recebida, a receber, inadimplência, ticket médio. Gráfico de receita por mês.
-2. **Receita por Local** - Tabela e gráfico de barras com faturamento por local, comparando recebido vs pendente.
-3. **Receita por Método de Pagamento** - Pie chart mostrando distribuição PIX, dinheiro, cartão, etc.
-4. **Relatório de Inadimplência** - Lista de pagamentos pendentes com nome do usuário, valor, data da reserva. Totalizadores.
-5. **Fluxo de Caixa Diário** - Line chart de entradas por dia no período selecionado.
-6. **Relatório de Estornos** - Pagamentos estornados com valores e motivos (usa `refund-payment` edge function data).
+### 5. Criar src/hooks/useAppResume.ts
+Hook que invalida queries do React Query quando o app volta do background:
+- Usa evento `appStateChange` do `@capacitor/app` (ja instalado)
+- Ao retornar ao foreground, invalida todas as queries para buscar dados frescos
 
-### Montador de Relatório Personalizado
+### 6. Atualizar src/main.tsx
+Chamar `configureStatusBar()` na inicializacao do app para aplicar a cor da barra de status imediatamente ao abrir.
 
-Interface onde o admin seleciona:
-- **Métricas** (checkboxes): Receita total, Qtd pagamentos, Ticket médio, Inadimplência, Receita por local, Receita por método, Fluxo diário
-- **Filtros**: Período, Local, Método de pagamento, Status (pago/pendente)
-- **Visualização**: Tabela, Gráfico de barras, Gráfico de linha, Gráfico de pizza
-- **Agrupamento**: Por dia, semana, mês, local, método
+### 7. Atualizar src/App.tsx
+Integrar os novos hooks `useNetworkStatus` e `useAppResume` no componente `AppRoutes`.
 
-O relatório gerado pode ser **exportado como CSV** (usando `html-to-image` já instalado para screenshot ou gerando CSV puro).
+### 8. Adicionar botao de compartilhar na carteirinha
+No `MembershipCard.tsx`, adicionar um botao "Compartilhar" ao lado do "Baixar Carteirinha" que usa a funcao `shareContent` para abrir o menu nativo de compartilhamento.
 
-### Exportação
+---
 
-- Botão "Exportar CSV" em todos os relatórios (gera download do arquivo)
-- Botão "Imprimir / PDF" usando `window.print()` com CSS de impressão
+## Detalhes tecnicos
 
-## Arquivos a Criar/Modificar
-
-### Criar: `src/pages/admin/AdminFinancialReports.tsx`
-- Página principal com tabs: "Relatórios Prontos" e "Montador Personalizado"
-- Componentes internos para cada template de relatório
-- Lógica de filtros compartilhada
-- Montador com seleção de métricas + preview
-
-### Criar: `src/hooks/useFinancialReports.ts`
-- Hook com queries para cada tipo de relatório financeiro
-- Busca dados de `payments` + `reservations` + `locations` + `profiles`
-- Funções utilitárias de agrupamento e cálculo
-
-### Criar: `src/lib/exportReport.ts`
-- Função `exportToCSV(data, columns, filename)` para gerar download CSV
-
-### Modificar: `src/App.tsx`
-- Adicionar rota `/admin/financial-reports`
-
-### Modificar: `src/components/admin/AdminDesktop.tsx`
-- Adicionar app "Financeiro" na lista de apps do desktop admin
-
-### Modificar: `src/components/admin/AdminMobileView.tsx`
-- Adicionar item de menu "Financeiro" na view mobile
-
-## Layout Visual
-
-```text
-┌──────────────────────────────────────────────────┐
-│  Relatórios Financeiros          [Exportar CSV]  │
-├──────────────────────────────────────────────────┤
-│  [Relatórios Prontos]  [Montador Personalizado]  │
-├──────────────────────────────────────────────────┤
-│  Filtros:                                        │
-│  [De: ___] [Até: ___] [Local ▼] [Método ▼]      │
-├──────────────────────────────────────────────────┤
-│  📊 Cards de Resumo                              │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐    │
-│  │Receita │ │Recebido│ │Pendente│ │Ticket  │    │
-│  │Total   │ │        │ │        │ │Médio   │    │
-│  └────────┘ └────────┘ └────────┘ └────────┘    │
-├──────────────────────────────────────────────────┤
-│  [Resumo] [Por Local] [Por Método] [Inadimp.]   │
-│  [Fluxo Caixa] [Estornos]                       │
-├──────────────────────────────────────────────────┤
-│  Gráficos + Tabelas do relatório selecionado     │
-└──────────────────────────────────────────────────┘
+**Dependencias novas (npm install):**
+```
+@capacitor/status-bar
+@capacitor/keyboard
+@capacitor/network
+@capacitor/share
+@capacitor/browser
 ```
 
-```text
-Montador Personalizado:
-┌──────────────────────────────────────────────────┐
-│  Métricas (selecione):                           │
-│  ☑ Receita total  ☑ Qtd pagamentos               │
-│  ☐ Ticket médio   ☑ Receita por local            │
-│  ☐ Inadimplência  ☐ Fluxo diário                │
-├──────────────────────────────────────────────────┤
-│  Agrupar por: [Mês ▼]  Visualizar: [Tabela ▼]   │
-├──────────────────────────────────────────────────┤
-│  [Gerar Relatório]                               │
-├──────────────────────────────────────────────────┤
-│  Preview do relatório gerado                     │
-└──────────────────────────────────────────────────┘
+**Arquivos a criar:**
+- `src/lib/native.ts`
+- `src/hooks/useNetworkStatus.ts`
+- `src/hooks/useAppResume.ts`
+
+**Arquivos a modificar:**
+- `index.html` -- adicionar `viewport-fit=cover`
+- `src/index.css` -- adicionar padding com safe-area-inset
+- `capacitor.config.ts` -- configs de StatusBar e Keyboard
+- `src/main.tsx` -- inicializar StatusBar
+- `src/App.tsx` -- usar hooks de network e resume
+- `src/pages/MembershipCard.tsx` -- botao compartilhar
+
+**Todas as funcoes nativas usam import dinamico** (`await import(...)`) com try/catch, entao funcionam no browser sem erro -- so ativam no app nativo.
+
+**Apos aprovacao**, voce precisara rodar no projeto local:
+```bash
+npm install @capacitor/status-bar @capacitor/keyboard @capacitor/network @capacitor/share @capacitor/browser
+npx cap sync
 ```
-
-## Dados Utilizados
-
-Todas as queries usam as tabelas existentes (`payments`, `reservations`, `locations`, `profiles`). Não é necessário criar novas tabelas ou migrations.
-
