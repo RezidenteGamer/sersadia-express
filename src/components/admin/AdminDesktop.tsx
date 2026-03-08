@@ -47,6 +47,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin' },
   { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, adminOnly: true },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
+  { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'manage_payments' },
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
 ];
