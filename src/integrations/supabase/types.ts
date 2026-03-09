@@ -634,6 +634,9 @@ export type Database = {
         | "manage_checkin"
         | "view_reports"
         | "manage_support"
+        | "manage_banners"
+        | "manage_members"
+        | "view_financial_reports"
       app_role: "admin" | "user"
       reservation_status:
         | "pending"
@@ -779,6 +782,9 @@ export const Constants = {
         "manage_checkin",
         "view_reports",
         "manage_support",
+        "manage_banners",
+        "manage_members",
+        "view_financial_reports",
       ],
       app_role: ["admin", "user"],
       reservation_status: [
