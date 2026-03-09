@@ -170,14 +170,14 @@ export function AdminMembersContent() {
         title="Gerenciar Sócios"
         description="Cadastre e gerencie os sócios do clube"
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Adicionar Usuário
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setShowAddUserDialog(true)} className="flex-1 sm:flex-none" size="sm">
+              <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Adicionar </span>Usuário
             </Button>
-            <Button onClick={() => { resetForm(); setShowForm(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Sócio
+            <Button onClick={() => { resetForm(); setShowForm(true); }} className="flex-1 sm:flex-none" size="sm">
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Novo </span>Sócio
             </Button>
           </div>
         }
@@ -230,71 +230,48 @@ export function AdminMembersContent() {
         <div className="grid gap-4">
           {filteredMembers.map((member) => (
             <Card key={member.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{member.name}</h3>
-                      <Badge variant={member.is_active ? 'default' : 'secondary'}>
-                        {member.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                      {member.user_id && (
-                        <Badge variant="outline" className="text-success border-success">
-                          <Link className="w-3 h-3 mr-1" />
-                          Vinculado
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                        <h3 className="font-semibold truncate text-sm sm:text-base">{member.name}</h3>
+                        <Badge variant={member.is_active ? 'default' : 'secondary'} className="text-[10px] sm:text-xs">
+                          {member.is_active ? 'Ativo' : 'Inativo'}
                         </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      {member.email && <span>{member.email}</span>}
-                      {member.phone && <span>{member.phone}</span>}
-                      {member.cpf && <span>CPF: {member.cpf}</span>}
-                    </div>
-                    {member.user_id && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Conta: {getUserName(member.user_id)}
+                        {member.user_id && (
+                          <Badge variant="outline" className="text-success border-success text-[10px] sm:text-xs">
+                            <Link className="w-3 h-3 mr-0.5" />
+                            Vinc.
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                        {member.email && <span className="truncate max-w-[180px]">{member.email}</span>}
+                        {member.phone && <span>{member.phone}</span>}
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openLinkDialog(member)}
-                      title={member.user_id ? 'Gerenciar vínculo' : 'Vincular conta'}
-                    >
-                      {member.user_id ? <Unlink className="w-4 h-4" /> : <Link className="w-4 h-4" />}
+                  <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center">
+                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => openLinkDialog(member)} title={member.user_id ? 'Gerenciar vínculo' : 'Vincular conta'}>
+                      {member.user_id ? <Unlink className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Link className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => toggleStatus.mutate({ id: member.id, isActive: !member.is_active })}
-                      title={member.is_active ? 'Desativar' : 'Ativar'}
-                    >
-                      <Power className={`w-4 h-4 ${member.is_active ? 'text-success' : 'text-muted-foreground'}`} />
+                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => toggleStatus.mutate({ id: member.id, isActive: !member.is_active })} title={member.is_active ? 'Desativar' : 'Ativar'}>
+                      <Power className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${member.is_active ? 'text-success' : 'text-muted-foreground'}`} />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openEditForm(member)}
-                    >
-                      <Pencil className="w-4 h-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => openEditForm(member)}>
+                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(member)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive" onClick={() => handleDelete(member)}>
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </div>

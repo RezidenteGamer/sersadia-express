@@ -228,71 +228,61 @@ export function AdminLocationsContent() {
               }}
             >
               <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Drag Handle */}
-                  {!search && (
-                    <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-                      <GripVertical className="w-5 h-5" />
-                    </div>
-                  )}
-                  
-                  {/* Image */}
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    {location.images && location.images[0] ? (
-                      <img 
-                        src={location.images[0]} 
-                        alt={location.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <MapPin className="w-8 h-8 text-muted-foreground" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Drag Handle */}
+                    {!search && (
+                      <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground hidden sm:block">
+                        <GripVertical className="w-5 h-5" />
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{location.name}</h3>
-                      <Badge variant={location.is_active ? 'default' : 'secondary'}>
-                        {location.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                      {location.description || 'Sem descrição'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{location.capacity}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span className="truncate max-w-[200px]">{formatTimeSlots(location)}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-primary font-medium">
-                        <DollarSign className="w-4 h-4" />
-                        <span>
-                          {location.price_fixed 
-                            ? `R$ ${location.price_fixed.toFixed(2)} fixo`
-                            : `R$ ${location.price_per_hour.toFixed(2)}/h`
-                          }
-                        </span>
-                      </div>
-                      {((location as any).price_per_hour_member > 0 || (location as any).price_fixed_member) && (
-                        <Badge variant="outline" className="text-success border-success">
-                          Sócio: {(location as any).price_fixed_member 
-                            ? `R$ ${(location as any).price_fixed_member.toFixed(2)}`
-                            : `R$ ${((location as any).price_per_hour_member || 0).toFixed(2)}/h`
-                          }
-                        </Badge>
+                    
+                    {/* Image */}
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                      {location.images && location.images[0] ? (
+                        <img 
+                          src={location.images[0]} 
+                          alt={location.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
+                        </div>
                       )}
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate text-sm sm:text-base">{location.name}</h3>
+                        <Badge variant={location.is_active ? 'default' : 'secondary'} className="text-[10px] sm:text-xs">
+                          {location.is_active ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 mb-1 sm:mb-2">
+                        {location.description || 'Sem descrição'}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          <span>{location.capacity}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-primary font-medium">
+                          <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          <span>
+                            {location.price_fixed 
+                              ? `R$ ${location.price_fixed.toFixed(2)}`
+                              : `R$ ${location.price_per_hour.toFixed(2)}/h`
+                            }
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
                     <Button
                       variant="outline"
                       size="icon"
