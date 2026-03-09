@@ -6,7 +6,7 @@ import { SupportChat } from '@/components/support/SupportChat';
 import { useAdminTickets, useAcceptTicket, useResolveTicket, useSupportRealtime } from '@/hooks/useSupport';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { UserCheck, CheckCircle, MessageSquare, Star } from 'lucide-react';
+import { UserCheck, CheckCircle, MessageSquare, Star, ArrowLeft } from 'lucide-react';
 import type { SupportTicket } from '@/hooks/useSupport';
 import { AppLayout } from '@/components/layout/AppLayout';
 
