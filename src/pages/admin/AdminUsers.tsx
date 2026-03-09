@@ -123,43 +123,37 @@ export function AdminUsersContent() {
         <div className="space-y-4">
           {filteredUsers.map((user) => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                   {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary font-semibold text-lg">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-semibold text-base sm:text-lg">
                       {user.full_name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{user.full_name}</h3>
-                      <Badge variant={user.role?.role === 'admin' ? 'default' : 'secondary'}>
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                      <h3 className="font-semibold truncate text-sm sm:text-base">{user.full_name}</h3>
+                      <Badge variant={user.role?.role === 'admin' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs">
                         {user.role?.role === 'admin' ? 'Admin' : 'Usuário'}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <Mail className="w-4 h-4" />
-                        <span className="truncate">{user.email}</span>
+                        <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="truncate max-w-[150px] sm:max-w-none">{user.email}</span>
                       </div>
-                      {user.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-4 h-4" />
-                          <span>{user.phone}</span>
-                        </div>
-                      )}
                       <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>Desde {format(new Date(user.created_at), 'MM/yyyy')}</span>
+                        <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>{format(new Date(user.created_at), 'MM/yyyy')}</span>
                       </div>
                     </div>
                     {user.permissions && user.permissions.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-1.5 sm:mt-2">
                         {user.permissions.map(p => (
-                          <Badge key={p.id} variant="outline" className="text-xs">
+                          <Badge key={p.id} variant="outline" className="text-[10px] sm:text-xs">
                             {PERMISSION_LABELS[p.permission] || p.permission}
                           </Badge>
                         ))}
@@ -171,6 +165,7 @@ export function AdminUsersContent() {
                   <Button
                     variant="outline"
                     size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                     onClick={() => openEditDialog(user)}
                     title="Configurar permissões"
                   >

@@ -247,43 +247,34 @@ export function AdminBannersContent() {
         <div className="grid gap-4">
           {banners.map((banner) => (
             <Card key={banner.id} className={!banner.is_active ? 'opacity-60' : ''}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-32 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-full h-full object-contain"
-                    />
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-20 h-14 sm:w-32 sm:h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                      <img
+                        src={banner.image_url}
+                        alt={banner.title}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate text-sm sm:text-base">
+                        {banner.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                        Ordem: {banner.display_order} • {banner.is_active ? 'Ativo' : 'Inativo'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">
-                      {banner.title}
-                    </h3>
-                    {banner.redirect_url && (
-                      <a
-                        href={banner.redirect_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        {banner.redirect_url}
-                      </a>
-                    )}
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Ordem: {banner.display_order} • {banner.is_active ? 'Ativo' : 'Inativo'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
                     <Switch
                       checked={banner.is_active}
                       onCheckedChange={() => handleToggleActive(banner)}
                     />
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(banner)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleOpenDialog(banner)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(banner.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleDelete(banner.id)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>

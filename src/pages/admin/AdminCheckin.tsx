@@ -344,37 +344,37 @@ export function AdminCheckinContent() {
 
         {/* Stats - Finished */}
         <TabsContent value="finished" className="mt-0">
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10">
-                  <Check className="w-5 h-5 text-success" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-success/10">
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Presenças</p>
-                  <p className="text-2xl font-bold">{finishedStats.presences}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Presenças</p>
+                  <p className="text-lg sm:text-2xl font-bold">{finishedStats.presences}</p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BarChart3 className="w-5 h-5 text-primary" />
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Taxa</p>
-                  <p className="text-2xl font-bold">{finishedStats.rate}%</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Taxa</p>
+                  <p className="text-lg sm:text-2xl font-bold">{finishedStats.rate}%</p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-destructive/10">
-                  <XCircle className="w-5 h-5 text-destructive" />
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-destructive/10">
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Cancelamentos</p>
-                  <p className="text-2xl font-bold">{finishedStats.cancellations}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Cancelam.</p>
+                  <p className="text-lg sm:text-2xl font-bold">{finishedStats.cancellations}</p>
                 </div>
               </div>
             </Card>
