@@ -170,14 +170,14 @@ export function AdminMembersContent() {
         title="Gerenciar Sócios"
         description="Cadastre e gerencie os sócios do clube"
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Adicionar Usuário
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setShowAddUserDialog(true)} className="flex-1 sm:flex-none" size="sm">
+              <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Adicionar </span>Usuário
             </Button>
-            <Button onClick={() => { resetForm(); setShowForm(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Sócio
+            <Button onClick={() => { resetForm(); setShowForm(true); }} className="flex-1 sm:flex-none" size="sm">
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Novo </span>Sócio
             </Button>
           </div>
         }
