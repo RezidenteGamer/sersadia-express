@@ -87,14 +87,18 @@ export function AdminSupportContent() {
   );
 
   return (
-    <div className="p-4 space-y-4 flex-1 min-h-0 overflow-auto">
+    <div className="p-3 sm:p-4 space-y-4 flex-1 min-h-0 overflow-auto">
       <Tabs defaultValue="waiting">
-        <TabsList>
-          <TabsTrigger value="waiting">
-            Aguardando {waiting.length > 0 && <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">{waiting.length}</span>}
+        <TabsList className="w-full flex">
+          <TabsTrigger value="waiting" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+            Aguard. {waiting.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">{waiting.length}</span>}
           </TabsTrigger>
-          <TabsTrigger value="in_progress">Em Atendimento ({inProgress.length})</TabsTrigger>
-          <TabsTrigger value="resolved">Resolvidos ({resolved.length})</TabsTrigger>
+          <TabsTrigger value="in_progress" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+            Atend. ({inProgress.length})
+          </TabsTrigger>
+          <TabsTrigger value="resolved" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+            Resolv. ({resolved.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="waiting" className="space-y-2 mt-3">
