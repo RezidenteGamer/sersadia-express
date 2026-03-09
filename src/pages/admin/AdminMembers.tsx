@@ -270,7 +270,7 @@ export function AdminMembersContent() {
                     <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => openEditForm(member)}>
                       <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleDelete(member)} className="text-destructive hover:text-destructive">
+                    <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive" onClick={() => handleDelete(member)}>
                       <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
