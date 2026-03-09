@@ -19,9 +19,13 @@ const PERMISSION_LABELS: Record<string, string> = {
   manage_locations: 'Gerenciar Locais',
   manage_reservations: 'Gerenciar Reservas',
   manage_users: 'Gerenciar Usuários',
+  manage_members: 'Gerenciar Sócios',
   manage_payments: 'Gerenciar Pagamentos',
   manage_checkin: 'Gerenciar Check-in',
+  manage_banners: 'Gerenciar Banners',
   view_reports: 'Visualizar Relatórios',
+  view_financial_reports: 'Relatórios Financeiros',
+  manage_support: 'Gerenciar Suporte',
 };
 
 const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
