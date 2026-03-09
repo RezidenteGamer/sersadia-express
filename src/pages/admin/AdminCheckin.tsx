@@ -298,37 +298,37 @@ export function AdminCheckinContent() {
 
         {/* Stats - Waiting */}
         <TabsContent value="waiting" className="mt-0">
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warning/10">
-                  <Clock className="w-5 h-5 text-warning" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-warning/10">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Aguardando</p>
-                  <p className="text-2xl font-bold">{waitingStats.total}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Aguardando</p>
+                  <p className="text-lg sm:text-2xl font-bold">{waitingStats.total}</p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <CalendarIcon className="w-5 h-5 text-primary" />
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Próxima 1h</p>
-                  <p className="text-2xl font-bold">{waitingStats.nextHour}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Próx. 1h</p>
+                  <p className="text-lg sm:text-2xl font-bold">{waitingStats.nextHour}</p>
                 </div>
               </div>
             </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-destructive/10">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
+            <Card className="p-2.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-destructive/10">
+                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Atrasados</p>
-                  <p className="text-2xl font-bold">{waitingStats.late}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Atrasados</p>
+                  <p className="text-lg sm:text-2xl font-bold">{waitingStats.late}</p>
                 </div>
               </div>
             </Card>
