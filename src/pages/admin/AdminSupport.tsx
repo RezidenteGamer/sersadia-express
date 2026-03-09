@@ -24,16 +24,24 @@ export function AdminSupportContent() {
 
   if (selectedTicket) {
     return (
-      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between shrink-0">
-          <div className="min-w-0">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden h-full">
+        {/* Combined header with back button */}
+        <div className="px-3 py-2.5 border-b border-border flex items-center gap-3 shrink-0 bg-card">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSelectedTicket(null)}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold truncate">{selectedTicket.subject}</h3>
             <p className="text-xs text-muted-foreground truncate">
-              {selectedTicket.profiles?.full_name || 'Usuário'} • {selectedTicket.profiles?.email}
+              {selectedTicket.profiles?.full_name || 'Usuário'}
             </p>
-            <TicketStatusBadge status={selectedTicket.status} />
           </div>
-          <div className="flex gap-2 self-end sm:self-center">
+          <TicketStatusBadge status={selectedTicket.status} />
+        </div>
+        
+        {/* Action buttons */}
+        {(selectedTicket.status === 'waiting' || selectedTicket.status === 'in_progress') && (
+          <div className="px-3 py-2 border-b border-border flex justify-end gap-2 shrink-0 bg-muted/30">
             {selectedTicket.status === 'waiting' && (
               <Button size="sm" onClick={() => {
                 acceptTicket.mutate(selectedTicket.id, {
@@ -53,12 +61,12 @@ export function AdminSupportContent() {
               </Button>
             )}
           </div>
-        </div>
+        )}
+        
         <SupportChat
           ticketId={selectedTicket.id}
           ticketStatus={selectedTicket.status}
           isAdmin
-          onBack={() => setSelectedTicket(null)}
         />
       </div>
     );
