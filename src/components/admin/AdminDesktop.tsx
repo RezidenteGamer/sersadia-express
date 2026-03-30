@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode, RotateCcw
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
