@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
-import { useCreatePayment } from '@/hooks/usePayments';
+import { useCreatePayment, useUploadReceipt } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
