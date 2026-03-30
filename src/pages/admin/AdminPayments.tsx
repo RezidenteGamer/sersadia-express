@@ -220,6 +220,14 @@ export function AdminPaymentsContent() {
                 <p><strong>Usuário:</strong> {paymentDialog.user_profile?.full_name}</p>
                 <p><strong>Local:</strong> {paymentDialog.reservation?.location?.name}</p>
                 <p><strong>Valor:</strong> <span className="text-primary font-bold">R$ {paymentDialog.amount.toFixed(2)}</span></p>
+                {(paymentDialog as any).receipt_url && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-1">Comprovante:</p>
+                    <a href={(paymentDialog as any).receipt_url} target="_blank" rel="noopener noreferrer">
+                      <img src={(paymentDialog as any).receipt_url} alt="Comprovante" className="max-h-48 rounded border object-contain" />
+                    </a>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
