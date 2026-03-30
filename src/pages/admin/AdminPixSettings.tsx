@@ -11,7 +11,7 @@ import { usePixSettings, useUpdatePixSettings } from '@/hooks/usePixSettings';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { QrCode, Save, Upload, Trash2 } from 'lucide-react';
 
-export default function AdminPixSettings() {
+export function AdminPixSettingsContent() {
   const { data: settings, isLoading } = usePixSettings();
   const updateSettings = useUpdatePixSettings();
   const { uploadImage, isUploading } = useImageUpload();
@@ -47,12 +47,10 @@ export default function AdminPixSettings() {
     if (url) setQrCodeUrl(url);
   };
 
-  if (isLoading) {
-    return <AppLayout><LoadingSpinner /></AppLayout>;
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   return (
-    <AppLayout>
+    <div className="space-y-6">
       <PageHeader title="Configurações PIX" />
 
       <Card className="max-w-xl">
@@ -99,7 +97,7 @@ export default function AdminPixSettings() {
             <Label>QR Code (imagem)</Label>
             {qrCodeUrl ? (
               <div className="space-y-2">
-                <div className="border rounded-lg p-4 bg-white flex justify-center">
+                <div className="border rounded-lg p-4 bg-background flex justify-center">
                   <img src={qrCodeUrl} alt="QR Code PIX" className="w-48 h-48 object-contain" />
                 </div>
                 <Button
@@ -144,6 +142,14 @@ export default function AdminPixSettings() {
           </Button>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+export default function AdminPixSettings() {
+  return (
+    <AppLayout>
+      <AdminPixSettingsContent />
     </AppLayout>
   );
 }

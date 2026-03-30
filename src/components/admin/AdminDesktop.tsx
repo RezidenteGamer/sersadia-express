@@ -51,6 +51,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'view_financial_reports' },
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
+  { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
