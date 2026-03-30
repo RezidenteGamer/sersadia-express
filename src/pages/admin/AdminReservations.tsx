@@ -71,6 +71,7 @@ export function AdminReservationsContent() {
           id: reservation.id, 
           refundAmount: amount,
         });
+      }
       setActionReservation(null);
       setAdminNotes('');
       setRefundAmount('');
