@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePayments, useMarkPaymentAsPaid, Payment } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin } from 'lucide-react';
+import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin, Image as ImageIcon } from 'lucide-react';
 const PAYMENT_METHODS = [{
   value: 'pix',
   label: 'PIX'
@@ -115,6 +115,12 @@ export function AdminPaymentsContent() {
                 Pago em {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm")}
               </p>}
             {payment.notes && <p className="text-sm text-muted-foreground italic">{payment.notes}</p>}
+            {(payment as any).receipt_url && (
+              <a href={(payment as any).receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                <ImageIcon className="w-3 h-3" />
+                Ver comprovante
+              </a>
+            )}
           </div>
           
           {showPaidButton && !payment.is_paid && <Button variant="outline" className="text-success hover:text-success" onClick={() => setPaymentDialog(payment)}>
@@ -214,6 +220,14 @@ export function AdminPaymentsContent() {
                 <p><strong>Usuário:</strong> {paymentDialog.user_profile?.full_name}</p>
                 <p><strong>Local:</strong> {paymentDialog.reservation?.location?.name}</p>
                 <p><strong>Valor:</strong> <span className="text-primary font-bold">R$ {paymentDialog.amount.toFixed(2)}</span></p>
+                {(paymentDialog as any).receipt_url && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-1">Comprovante:</p>
+                    <a href={(paymentDialog as any).receipt_url} target="_blank" rel="noopener noreferrer">
+                      <img src={(paymentDialog as any).receipt_url} alt="Comprovante" className="max-h-48 rounded border object-contain" />
+                    </a>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">

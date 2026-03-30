@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
-import { useCreatePayment } from '@/hooks/usePayments';
+import { useCreatePayment, useUploadReceipt } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
@@ -65,6 +65,7 @@ export default function LocationDetails() {
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
   const createPayment = useCreatePayment();
+  const uploadReceipt = useUploadReceipt();
 
   // Sync carousel state
   useEffect(() => {
@@ -419,7 +420,10 @@ export default function LocationDetails() {
         onOpenChange={setShowPixDialog}
         amount={calculatePrice()}
         locationName={location.name}
-        onPaymentComplete={() => {
+        onPaymentComplete={async (receiptUrl) => {
+          if (createdReservationId) {
+            await uploadReceipt.mutateAsync({ reservationId: createdReservationId, receiptUrl });
+          }
           toast.success('Reserva criada! O pagamento será confirmado pelo administrador.');
           navigate('/my-reservations');
         }}

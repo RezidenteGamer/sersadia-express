@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
+import { useUploadReceipt } from '@/hooks/usePayments';
 
 export default function MyReservations() {
   const {
@@ -28,6 +29,7 @@ export default function MyReservations() {
   const { data: locations } = useLocations();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
+  const uploadReceipt = useUploadReceipt();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
@@ -257,8 +259,9 @@ export default function MyReservations() {
           onOpenChange={(open) => !open && setPixPaymentReservation(null)}
           amount={pixPaymentReservation.total_price}
           locationName={locations?.find(l => l.id === pixPaymentReservation.location_id)?.name || 'Local'}
-          onPaymentComplete={() => {
-            toast.success('Pagamento será confirmado pelo administrador.');
+          onPaymentComplete={async (receiptUrl) => {
+            await uploadReceipt.mutateAsync({ reservationId: pixPaymentReservation.id, receiptUrl });
+            toast.success('Comprovante enviado! O pagamento será confirmado pelo administrador.');
             setPixPaymentReservation(null);
           }}
         />
