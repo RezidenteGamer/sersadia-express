@@ -56,28 +56,35 @@ export default function MyReservations() {
   const confirmedReservations = reservations?.filter(r => ['confirmed', 'presence_confirmed'].includes(r.status)) || [];
   const pastReservations = reservations?.filter(r => ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)) || [];
   const handleOpenCancel = (reservation: NonNullable<typeof reservations>[0]) => {
-    const location = locations?.find(l => l.id === reservation.location_id);
-    const feeType = (location as any)?.cancellation_fee_type || 'percentage';
-    const feeValue = (location as any)?.cancellation_fee_value || 0;
-    const deadlineHours = (location as any)?.cancellation_deadline_hours ?? 24;
+    // Check if cancellation is 48h+ before reservation
+    const [year, month, day] = reservation.reservation_date.split('-').map(Number);
+    const [hours, minutes] = reservation.start_time.split(':').map(Number);
+    const reservationStart = new Date(year, month - 1, day, hours, minutes);
+    const diffMs = reservationStart.getTime() - Date.now();
+    const diffHours = diffMs / (1000 * 60 * 60);
     
-    const info = calculateCancellationFee(
-      reservation.total_price,
-      feeType,
-      feeValue,
-      deadlineHours,
-      reservation.reservation_date,
-      reservation.start_time,
-    );
-    setCancelFeeInfo(info);
+    setIsFullRefund(diffHours >= 48);
+    setCancelReservationData(reservation);
+    setCancelPixKey('');
+    setCancelPixName('');
     setCancelId(reservation.id);
   };
 
   const handleCancel = async () => {
     if (!cancelId) return;
-    await cancelReservation.mutateAsync({ id: cancelId, refundAmount: cancelFeeInfo?.refundAmount });
+    if (!cancelPixKey.trim() || !cancelPixName.trim()) {
+      toast.error('Informe a chave PIX e o nome do recebedor para prosseguir.');
+      return;
+    }
+    await cancelReservation.mutateAsync({ 
+      id: cancelId, 
+      refundPixKey: cancelPixKey.trim(),
+      refundPixName: cancelPixName.trim(),
+    });
     setCancelId(null);
-    setCancelFeeInfo(null);
+    setCancelReservationData(null);
+    setCancelPixKey('');
+    setCancelPixName('');
   };
   const ReservationCard = ({
     reservation
