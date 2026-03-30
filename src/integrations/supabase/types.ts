@@ -330,6 +330,7 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           payment_method: string | null
+          receipt_url: string | null
           reservation_id: string
         }
         Insert: {
@@ -341,6 +342,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          receipt_url?: string | null
           reservation_id: string
         }
         Update: {
@@ -352,6 +354,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          receipt_url?: string | null
           reservation_id?: string
         }
         Relationships: [
