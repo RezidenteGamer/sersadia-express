@@ -181,33 +181,67 @@ export default function MyReservations() {
       </Tabs>
       
       {/* Cancel Dialog */}
-      <Dialog open={!!cancelId} onOpenChange={() => { setCancelId(null); setCancelFeeInfo(null); }}>
+      <Dialog open={!!cancelId} onOpenChange={() => { setCancelId(null); setCancelReservationData(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancelar Reserva</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
+              Tem certeza que deseja cancelar esta reserva? Informe seus dados PIX para receber o reembolso.
             </DialogDescription>
           </DialogHeader>
-          {cancelFeeInfo && cancelFeeInfo.isWithinDeadline && cancelFeeInfo.fee > 0 && (
+          
+          {isFullRefund ? (
+            <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg text-sm">
+              <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-success">Reembolso total</p>
+                <p className="text-muted-foreground mt-1">
+                  O cancelamento está sendo feito com mais de 48 horas de antecedência. O reembolso será integral (R$ {cancelReservationData?.total_price.toFixed(2)}).
+                </p>
+              </div>
+            </div>
+          ) : (
             <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg text-sm">
               <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-warning">Multa por cancelamento</p>
+                <p className="font-medium text-warning">Cancelamento com menos de 48h</p>
                 <p className="text-muted-foreground mt-1">
-                  Como o cancelamento está dentro do prazo limite, uma multa de <strong>R$ {cancelFeeInfo.fee.toFixed(2)}</strong> será aplicada.
-                  {cancelFeeInfo.refundAmount > 0 && (
-                    <> O reembolso será de <strong>R$ {cancelFeeInfo.refundAmount.toFixed(2)}</strong>.</>
-                  )}
+                  O cancelamento está sendo feito com menos de 48 horas de antecedência. O valor do reembolso será definido pela administração.
                 </p>
               </div>
             </div>
           )}
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-pix-key">Chave PIX para reembolso *</Label>
+              <Input
+                id="cancel-pix-key"
+                value={cancelPixKey}
+                onChange={(e) => setCancelPixKey(e.target.value)}
+                placeholder="CPF, e-mail, telefone ou chave aleatória"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cancel-pix-name">Nome do recebedor *</Label>
+              <Input
+                id="cancel-pix-name"
+                value={cancelPixName}
+                onChange={(e) => setCancelPixName(e.target.value)}
+                placeholder="Nome completo do titular da conta"
+              />
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setCancelId(null); setCancelFeeInfo(null); }}>
+            <Button variant="outline" onClick={() => { setCancelId(null); setCancelReservationData(null); }}>
               Voltar
             </Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending}>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancel} 
+              disabled={cancelReservation.isPending || !cancelPixKey.trim() || !cancelPixName.trim()}
+            >
               {cancelReservation.isPending ? 'Cancelando...' : 'Confirmar Cancelamento'}
             </Button>
           </DialogFooter>
