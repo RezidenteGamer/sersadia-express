@@ -31,7 +31,10 @@ export default function MyReservations() {
   const navigate = useNavigate();
   const uploadReceipt = useUploadReceipt();
   const [cancelId, setCancelId] = useState<string | null>(null);
-  const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
+  const [cancelReservationData, setCancelReservationData] = useState<NonNullable<typeof reservations>[0] | null>(null);
+  const [cancelPixKey, setCancelPixKey] = useState('');
+  const [cancelPixName, setCancelPixName] = useState('');
+  const [isFullRefund, setIsFullRefund] = useState(false);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
   const [pixPaymentReservation, setPixPaymentReservation] = useState<NonNullable<typeof reservations>[0] | null>(null);
 

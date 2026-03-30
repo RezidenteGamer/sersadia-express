@@ -177,27 +177,31 @@ export function useCancelReservation() {
   const { isAdmin } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, refundAmount }: { id: string; refundAmount?: number }) => {
-      // Try to refund the payment
-      try {
-        const response = await supabase.functions.invoke('refund-payment', {
-          body: { reservationId: id, refundAmount },
-        });
-        
-        if (response.error) {
-          console.warn('Refund attempt warning:', response.error);
-        } else if (response.data?.refunded) {
-          const amt = response.data.refundedAmount;
-          toast.info(`Reembolso de R$ ${Number(amt).toFixed(2)} processado via Mercado Pago`);
-        }
-      } catch (refundError) {
-        console.warn('Refund attempt failed:', refundError);
-      }
-
+    mutationFn: async ({ id, refundAmount, refundPixKey, refundPixName }: { 
+      id: string; 
+      refundAmount?: number;
+      refundPixKey?: string;
+      refundPixName?: string;
+    }) => {
       const status = isAdmin ? 'cancelled_by_admin' : 'cancelled_by_user';
+      const updateData: Record<string, any> = { 
+        status, 
+        updated_at: new Date().toISOString(),
+        cancelled_at: new Date().toISOString(),
+      };
+      
+      if (refundPixKey) updateData.refund_pix_key = refundPixKey;
+      if (refundPixName) updateData.refund_pix_name = refundPixName;
+      if (isAdmin && refundAmount !== undefined) {
+        updateData.refund_amount = refundAmount;
+        updateData.refund_status = refundAmount > 0 ? 'approved' : 'none';
+      } else {
+        updateData.refund_status = 'pending';
+      }
+      
       const { error } = await supabase
         .from('reservations')
-        .update({ status: status as any, updated_at: new Date().toISOString() })
+        .update(updateData as any)
         .eq('id', id);
       
       if (error) throw error;
