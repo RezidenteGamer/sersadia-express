@@ -122,7 +122,7 @@ export default function MyReservations() {
                 <Button 
                   size="sm" 
                   onClick={() => handlePayment(reservation)}
-                  disabled={isProcessingPayment}
+                  disabled={false}
                 >
                   <CreditCard className="w-4 h-4" />
                 </Button>
