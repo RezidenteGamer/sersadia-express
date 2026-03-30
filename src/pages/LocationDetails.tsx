@@ -47,8 +47,10 @@ export default function LocationDetails() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPixDialog, setShowPixDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [createdReservationId, setCreatedReservationId] = useState<string | null>(null);
   const {
     data: location,
     isLoading
