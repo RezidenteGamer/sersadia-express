@@ -143,7 +143,6 @@ export default function LocationDetails() {
     setIsProcessingPayment(true);
     
     try {
-      // First create the reservation
       const reservation = await createReservation.mutateAsync({
         location_id: id!,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -153,37 +152,15 @@ export default function LocationDetails() {
         user_notes: notes || null
       });
 
-      // Then create Checkout preference
-      const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
-        body: {
-          reservationId: reservation.id,
-          amount: calculatePrice(),
-          locationName: location.name,
-          reservationDate: format(selectedDate, "dd/MM/yyyy"),
-          timeSlot: `${selectedSlot.start} - ${selectedSlot.end}`,
-        },
+      // Create payment record
+      await createPayment.mutateAsync({
+        reservationId: reservation.id,
+        amount: calculatePrice(),
       });
 
-      if (error) {
-        console.error('Checkout error:', error);
-        toast.error('Erro ao criar checkout. Você pode pagar depois em "Minhas Reservas".');
-        setShowConfirmDialog(false);
-        navigate('/my-reservations');
-        return;
-      }
-
-      // Redirect to Mercado Pago Checkout
-      // Use sandbox_init_point for test mode, init_point for production
-      const checkoutUrl = data?.initPoint || data?.sandboxInitPoint;
-      
-      if (checkoutUrl) {
-        toast.success('Redirecionando para o pagamento...');
-        window.location.href = checkoutUrl;
-      } else {
-        toast.error('Erro ao gerar link de pagamento. Você pode pagar depois em "Minhas Reservas".');
-        setShowConfirmDialog(false);
-        navigate('/my-reservations');
-      }
+      setCreatedReservationId(reservation.id);
+      setShowConfirmDialog(false);
+      setShowPixDialog(true);
     } catch (error) {
       console.error('Reservation error:', error);
       toast.error('Erro ao criar reserva.');
