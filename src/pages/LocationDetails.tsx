@@ -64,6 +64,7 @@ export default function LocationDetails() {
     data: bookedSlots
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
+  const createPayment = useCreatePayment();
 
   // Sync carousel state
   useEffect(() => {
