@@ -2,17 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
+import { useCreatePayment } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
 import { ImageLightbox } from '@/components/ImageLightbox';
+import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 
 interface TimeSlot {
   start: string;
