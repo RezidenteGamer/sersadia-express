@@ -116,6 +116,7 @@ function AppRoutes() {
         <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
         <Route path="/admin/financial-reports" element={<AdminRoute><AdminFinancialReports /></AdminRoute>} />
         <Route path="/admin/pix-settings" element={<AdminRoute><AdminPixSettings /></AdminRoute>} />
+        <Route path="/admin/refunds" element={<AdminRoute><AdminRefunds /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

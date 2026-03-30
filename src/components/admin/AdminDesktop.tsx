@@ -53,6 +53,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
   { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true },
+  { id: 'refunds', title: 'Reembolsos', icon: RotateCcw, component: AdminRefundsContent, permission: 'manage_payments' },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
