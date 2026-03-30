@@ -407,10 +407,22 @@ export default function LocationDetails() {
               onClick={handleReserve} 
               disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {isProcessingPayment ? 'Redirecionando...' : createReservation.isPending ? 'Enviando...' : 'Pagar Agora'}
+              {isProcessingPayment ? 'Processando...' : createReservation.isPending ? 'Enviando...' : 'Confirmar e Pagar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PIX Payment Dialog */}
+      <PixPaymentDialog
+        open={showPixDialog}
+        onOpenChange={setShowPixDialog}
+        amount={calculatePrice()}
+        locationName={location.name}
+        onPaymentComplete={() => {
+          toast.success('Reserva criada! O pagamento será confirmado pelo administrador.');
+          navigate('/my-reservations');
+        }}
+      />
     </AppLayout>;
 }

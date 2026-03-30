@@ -16,8 +16,9 @@ import { copyToClipboard } from '@/lib/native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PixPaymentDialog } from '@/components/PixPaymentDialog';
+
 export default function MyReservations() {
   const {
     data: reservations,
@@ -30,36 +31,15 @@ export default function MyReservations() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [pixPaymentReservation, setPixPaymentReservation] = useState<NonNullable<typeof reservations>[0] | null>(null);
 
   // Check if a reservation has been paid
   const isReservationPaid = (reservationId: string) => {
     return payments?.some(p => p.reservation_id === reservationId && p.is_paid);
   };
 
-  const handlePayment = async (reservation: NonNullable<typeof reservations>[0]) => {
-    setIsProcessingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
-        body: {
-          reservationId: reservation.id,
-          amount: reservation.total_price,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.initPoint || data?.sandboxInitPoint) {
-        window.location.href = data.initPoint || data.sandboxInitPoint;
-      } else {
-        throw new Error('URL de pagamento não retornada');
-      }
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error('Erro ao iniciar pagamento: ' + error.message);
-    } finally {
-      setIsProcessingPayment(false);
-    }
+  const handlePayment = (reservation: NonNullable<typeof reservations>[0]) => {
+    setPixPaymentReservation(reservation);
   };
 
   if (isLoading) {
