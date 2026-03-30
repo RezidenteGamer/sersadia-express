@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useUserReservations, useCancelReservation, calculateCancellationFee } from '@/hooks/useReservations';
+import { useUserReservations, useCancelReservation } from '@/hooks/useReservations';
 import { usePayments } from '@/hooks/usePayments';
 import { useLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, Clock, X, Eye, CreditCard, AlertTriangle, Copy } from 'lucide-react';
+import { Calendar, MapPin, Clock, X, Eye, CreditCard, AlertTriangle, Copy, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { copyToClipboard } from '@/lib/native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -31,7 +33,10 @@ export default function MyReservations() {
   const navigate = useNavigate();
   const uploadReceipt = useUploadReceipt();
   const [cancelId, setCancelId] = useState<string | null>(null);
-  const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
+  const [cancelReservationData, setCancelReservationData] = useState<NonNullable<typeof reservations>[0] | null>(null);
+  const [cancelPixKey, setCancelPixKey] = useState('');
+  const [cancelPixName, setCancelPixName] = useState('');
+  const [isFullRefund, setIsFullRefund] = useState(false);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
   const [pixPaymentReservation, setPixPaymentReservation] = useState<NonNullable<typeof reservations>[0] | null>(null);
 
@@ -53,28 +58,35 @@ export default function MyReservations() {
   const confirmedReservations = reservations?.filter(r => ['confirmed', 'presence_confirmed'].includes(r.status)) || [];
   const pastReservations = reservations?.filter(r => ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)) || [];
   const handleOpenCancel = (reservation: NonNullable<typeof reservations>[0]) => {
-    const location = locations?.find(l => l.id === reservation.location_id);
-    const feeType = (location as any)?.cancellation_fee_type || 'percentage';
-    const feeValue = (location as any)?.cancellation_fee_value || 0;
-    const deadlineHours = (location as any)?.cancellation_deadline_hours ?? 24;
+    // Check if cancellation is 48h+ before reservation
+    const [year, month, day] = reservation.reservation_date.split('-').map(Number);
+    const [hours, minutes] = reservation.start_time.split(':').map(Number);
+    const reservationStart = new Date(year, month - 1, day, hours, minutes);
+    const diffMs = reservationStart.getTime() - Date.now();
+    const diffHours = diffMs / (1000 * 60 * 60);
     
-    const info = calculateCancellationFee(
-      reservation.total_price,
-      feeType,
-      feeValue,
-      deadlineHours,
-      reservation.reservation_date,
-      reservation.start_time,
-    );
-    setCancelFeeInfo(info);
+    setIsFullRefund(diffHours >= 48);
+    setCancelReservationData(reservation);
+    setCancelPixKey('');
+    setCancelPixName('');
     setCancelId(reservation.id);
   };
 
   const handleCancel = async () => {
     if (!cancelId) return;
-    await cancelReservation.mutateAsync({ id: cancelId, refundAmount: cancelFeeInfo?.refundAmount });
+    if (!cancelPixKey.trim() || !cancelPixName.trim()) {
+      toast.error('Informe a chave PIX e o nome do recebedor para prosseguir.');
+      return;
+    }
+    await cancelReservation.mutateAsync({ 
+      id: cancelId, 
+      refundPixKey: cancelPixKey.trim(),
+      refundPixName: cancelPixName.trim(),
+    });
     setCancelId(null);
-    setCancelFeeInfo(null);
+    setCancelReservationData(null);
+    setCancelPixKey('');
+    setCancelPixName('');
   };
   const ReservationCard = ({
     reservation
@@ -171,33 +183,67 @@ export default function MyReservations() {
       </Tabs>
       
       {/* Cancel Dialog */}
-      <Dialog open={!!cancelId} onOpenChange={() => { setCancelId(null); setCancelFeeInfo(null); }}>
+      <Dialog open={!!cancelId} onOpenChange={() => { setCancelId(null); setCancelReservationData(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancelar Reserva</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.
+              Tem certeza que deseja cancelar esta reserva? Informe seus dados PIX para receber o reembolso.
             </DialogDescription>
           </DialogHeader>
-          {cancelFeeInfo && cancelFeeInfo.isWithinDeadline && cancelFeeInfo.fee > 0 && (
+          
+          {isFullRefund ? (
+            <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg text-sm">
+              <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-success">Reembolso total</p>
+                <p className="text-muted-foreground mt-1">
+                  O cancelamento está sendo feito com mais de 48 horas de antecedência. O reembolso será integral (R$ {cancelReservationData?.total_price.toFixed(2)}).
+                </p>
+              </div>
+            </div>
+          ) : (
             <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg text-sm">
               <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-warning">Multa por cancelamento</p>
+                <p className="font-medium text-warning">Cancelamento com menos de 48h</p>
                 <p className="text-muted-foreground mt-1">
-                  Como o cancelamento está dentro do prazo limite, uma multa de <strong>R$ {cancelFeeInfo.fee.toFixed(2)}</strong> será aplicada.
-                  {cancelFeeInfo.refundAmount > 0 && (
-                    <> O reembolso será de <strong>R$ {cancelFeeInfo.refundAmount.toFixed(2)}</strong>.</>
-                  )}
+                  O cancelamento está sendo feito com menos de 48 horas de antecedência. O valor do reembolso será definido pela administração.
                 </p>
               </div>
             </div>
           )}
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-pix-key">Chave PIX para reembolso *</Label>
+              <Input
+                id="cancel-pix-key"
+                value={cancelPixKey}
+                onChange={(e) => setCancelPixKey(e.target.value)}
+                placeholder="CPF, e-mail, telefone ou chave aleatória"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cancel-pix-name">Nome do recebedor *</Label>
+              <Input
+                id="cancel-pix-name"
+                value={cancelPixName}
+                onChange={(e) => setCancelPixName(e.target.value)}
+                placeholder="Nome completo do titular da conta"
+              />
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setCancelId(null); setCancelFeeInfo(null); }}>
+            <Button variant="outline" onClick={() => { setCancelId(null); setCancelReservationData(null); }}>
               Voltar
             </Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending}>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancel} 
+              disabled={cancelReservation.isPending || !cancelPixKey.trim() || !cancelPixName.trim()}
+            >
               {cancelReservation.isPending ? 'Cancelando...' : 'Confirmar Cancelamento'}
             </Button>
           </DialogFooter>

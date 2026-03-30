@@ -471,12 +471,17 @@ export type Database = {
       reservations: {
         Row: {
           admin_notes: string | null
+          cancelled_at: string | null
           code: string
           created_at: string
           end_time: string
           expires_at: string | null
           id: string
           location_id: string
+          refund_amount: number | null
+          refund_pix_key: string | null
+          refund_pix_name: string | null
+          refund_status: string
           reservation_date: string
           start_time: string
           status: Database["public"]["Enums"]["reservation_status"]
@@ -487,12 +492,17 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          cancelled_at?: string | null
           code?: string
           created_at?: string
           end_time: string
           expires_at?: string | null
           id?: string
           location_id: string
+          refund_amount?: number | null
+          refund_pix_key?: string | null
+          refund_pix_name?: string | null
+          refund_status?: string
           reservation_date: string
           start_time: string
           status?: Database["public"]["Enums"]["reservation_status"]
@@ -503,12 +513,17 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          cancelled_at?: string | null
           code?: string
           created_at?: string
           end_time?: string
           expires_at?: string | null
           id?: string
           location_id?: string
+          refund_amount?: number | null
+          refund_pix_key?: string | null
+          refund_pix_name?: string | null
+          refund_status?: string
           reservation_date?: string
           start_time?: string
           status?: Database["public"]["Enums"]["reservation_status"]

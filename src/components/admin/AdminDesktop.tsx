@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard, MapPin, Calendar, Users, Settings,
   CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode, RotateCcw
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -37,6 +37,7 @@ import { AdminSupportContent } from '@/pages/admin/AdminSupport';
 import { AdminDocsContent } from '@/pages/admin/AdminDocs';
 import { AdminFinancialReportsContent } from '@/pages/admin/AdminFinancialReports';
 import { AdminPixSettingsContent } from '@/pages/admin/AdminPixSettings';
+import { AdminRefundsContent } from '@/pages/admin/AdminRefunds';
 
 const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
@@ -52,6 +53,7 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
   { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true },
+  { id: 'refunds', title: 'Reembolsos', icon: RotateCcw, component: AdminRefundsContent, permission: 'manage_payments' },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
