@@ -67,8 +67,10 @@ export function AdminReservationsContent() {
         });
       } else if (action === 'cancel') {
         const amount = refundAmount ? parseFloat(refundAmount) : undefined;
-        await cancelReservation.mutateAsync({ id: reservation.id, refundAmount: amount });
-      }
+        await cancelReservation.mutateAsync({ 
+          id: reservation.id, 
+          refundAmount: amount,
+        });
       setActionReservation(null);
       setAdminNotes('');
       setRefundAmount('');
