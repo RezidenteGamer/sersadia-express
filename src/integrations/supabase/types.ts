@@ -364,6 +364,39 @@ export type Database = {
           },
         ]
       }
+      pix_settings: {
+        Row: {
+          beneficiary_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          pix_key: string
+          pix_key_type: string
+          qr_code_image_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          beneficiary_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pix_key?: string
+          pix_key_type?: string
+          qr_code_image_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          beneficiary_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pix_key?: string
+          pix_key_type?: string
+          qr_code_image_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

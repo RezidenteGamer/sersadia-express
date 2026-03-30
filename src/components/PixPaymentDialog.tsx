@@ -1,41 +1,38 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Copy, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
+import { Copy, CheckCircle2, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { usePixSettings } from '@/hooks/usePixSettings';
 
 interface PixPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pixData: {
-    qrCode: string;
-    qrCodeBase64: string;
-    ticketUrl?: string;
-    expirationDate?: string;
-    amount: number;
-    locationName: string;
-  } | null;
+  amount: number;
+  locationName: string;
   onPaymentComplete: () => void;
 }
 
 export function PixPaymentDialog({ 
   open, 
-  onOpenChange, 
-  pixData,
+  onOpenChange,
+  amount,
+  locationName,
   onPaymentComplete 
 }: PixPaymentDialogProps) {
   const [copied, setCopied] = useState(false);
+  const { data: pixSettings } = usePixSettings();
 
   const handleCopyCode = async () => {
-    if (!pixData?.qrCode) return;
+    if (!pixSettings?.pix_key) return;
     
     try {
-      await navigator.clipboard.writeText(pixData.qrCode);
+      await navigator.clipboard.writeText(pixSettings.pix_key);
       setCopied(true);
-      toast.success('Código PIX copiado!');
+      toast.success('Chave PIX copiada!');
       setTimeout(() => setCopied(false), 3000);
     } catch {
-      toast.error('Erro ao copiar código');
+      toast.error('Erro ao copiar chave');
     }
   };
 
@@ -44,7 +41,7 @@ export function PixPaymentDialog({
     onOpenChange(false);
   };
 
-  if (!pixData) return null;
+  if (!pixSettings) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,32 +52,48 @@ export function PixPaymentDialog({
             Pagamento via PIX
           </DialogTitle>
           <DialogDescription>
-            Escaneie o QR Code ou copie o código para pagar
+            Escaneie o QR Code ou copie a chave PIX para pagar
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Amount and Location */}
           <div className="p-3 rounded-lg bg-muted/50 text-center">
-            <p className="text-sm text-muted-foreground">{pixData.locationName}</p>
+            <p className="text-sm text-muted-foreground">{locationName}</p>
             <p className="text-2xl font-bold text-primary">
-              R$ {pixData.amount.toFixed(2)}
+              R$ {amount.toFixed(2)}
             </p>
           </div>
 
+          {/* Beneficiary */}
+          {pixSettings.beneficiary_name && (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Beneficiário</p>
+              <p className="font-medium">{pixSettings.beneficiary_name}</p>
+            </div>
+          )}
+
           {/* QR Code */}
           <div className="flex justify-center p-4 bg-white rounded-lg">
-            {pixData.qrCodeBase64 ? (
+            {pixSettings.qr_code_image_url ? (
               <img 
-                src={`data:image/png;base64,${pixData.qrCodeBase64}`}
+                src={pixSettings.qr_code_image_url}
                 alt="QR Code PIX"
-                className="w-48 h-48"
+                className="w-48 h-48 object-contain"
               />
             ) : (
               <div className="w-48 h-48 flex items-center justify-center bg-muted rounded">
-                <p className="text-sm text-muted-foreground">QR Code indisponível</p>
+                <p className="text-sm text-muted-foreground text-center px-4">
+                  QR Code não configurado. Use a chave PIX abaixo.
+                </p>
               </div>
             )}
+          </div>
+
+          {/* PIX Key display */}
+          <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Chave PIX (CPF/CNPJ)</p>
+            <p className="font-mono font-medium text-sm break-all">{pixSettings.pix_key}</p>
           </div>
 
           {/* Copy Code Button */}
@@ -91,37 +104,16 @@ export function PixPaymentDialog({
           >
             {copied ? (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
-                Código copiado!
+                <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                Chave copiada!
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4 mr-2" />
-                Copiar código PIX
+                Copiar chave PIX
               </>
             )}
           </Button>
-
-          {/* Ticket URL (for sandbox) */}
-          {pixData.ticketUrl && (
-            <Button 
-              variant="ghost" 
-              className="w-full text-sm" 
-              asChild
-            >
-              <a href={pixData.ticketUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Abrir página de pagamento
-              </a>
-            </Button>
-          )}
-
-          {/* Expiration notice */}
-          {pixData.expirationDate && (
-            <p className="text-xs text-center text-muted-foreground">
-              Este código expira em 30 minutos
-            </p>
-          )}
 
           {/* Action buttons */}
           <div className="flex gap-2 pt-2">

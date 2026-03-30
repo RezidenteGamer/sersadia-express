@@ -2,17 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
+import { useCreatePayment } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Users, Clock, DollarSign, ArrowLeft, Info, Tag, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
 import { ImageLightbox } from '@/components/ImageLightbox';
+import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 
 interface TimeSlot {
   start: string;
@@ -46,8 +47,10 @@ export default function LocationDetails() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPixDialog, setShowPixDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [createdReservationId, setCreatedReservationId] = useState<string | null>(null);
   const {
     data: location,
     isLoading
@@ -61,6 +64,7 @@ export default function LocationDetails() {
     data: bookedSlots
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
+  const createPayment = useCreatePayment();
 
   // Sync carousel state
   useEffect(() => {
@@ -139,7 +143,6 @@ export default function LocationDetails() {
     setIsProcessingPayment(true);
     
     try {
-      // First create the reservation
       const reservation = await createReservation.mutateAsync({
         location_id: id!,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -149,37 +152,15 @@ export default function LocationDetails() {
         user_notes: notes || null
       });
 
-      // Then create Checkout preference
-      const { data, error } = await supabase.functions.invoke('create-pix-checkout', {
-        body: {
-          reservationId: reservation.id,
-          amount: calculatePrice(),
-          locationName: location.name,
-          reservationDate: format(selectedDate, "dd/MM/yyyy"),
-          timeSlot: `${selectedSlot.start} - ${selectedSlot.end}`,
-        },
+      // Create payment record
+      await createPayment.mutateAsync({
+        reservationId: reservation.id,
+        amount: calculatePrice(),
       });
 
-      if (error) {
-        console.error('Checkout error:', error);
-        toast.error('Erro ao criar checkout. Você pode pagar depois em "Minhas Reservas".');
-        setShowConfirmDialog(false);
-        navigate('/my-reservations');
-        return;
-      }
-
-      // Redirect to Mercado Pago Checkout
-      // Use sandbox_init_point for test mode, init_point for production
-      const checkoutUrl = data?.initPoint || data?.sandboxInitPoint;
-      
-      if (checkoutUrl) {
-        toast.success('Redirecionando para o pagamento...');
-        window.location.href = checkoutUrl;
-      } else {
-        toast.error('Erro ao gerar link de pagamento. Você pode pagar depois em "Minhas Reservas".');
-        setShowConfirmDialog(false);
-        navigate('/my-reservations');
-      }
+      setCreatedReservationId(reservation.id);
+      setShowConfirmDialog(false);
+      setShowPixDialog(true);
     } catch (error) {
       console.error('Reservation error:', error);
       toast.error('Erro ao criar reserva.');
@@ -426,10 +407,22 @@ export default function LocationDetails() {
               onClick={handleReserve} 
               disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {isProcessingPayment ? 'Redirecionando...' : createReservation.isPending ? 'Enviando...' : 'Pagar Agora'}
+              {isProcessingPayment ? 'Processando...' : createReservation.isPending ? 'Enviando...' : 'Confirmar e Pagar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PIX Payment Dialog */}
+      <PixPaymentDialog
+        open={showPixDialog}
+        onOpenChange={setShowPixDialog}
+        amount={calculatePrice()}
+        locationName={location.name}
+        onPaymentComplete={() => {
+          toast.success('Reserva criada! O pagamento será confirmado pelo administrador.');
+          navigate('/my-reservations');
+        }}
+      />
     </AppLayout>;
 }
