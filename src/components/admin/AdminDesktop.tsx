@@ -37,6 +37,7 @@ import { AdminSupportContent } from '@/pages/admin/AdminSupport';
 import { AdminDocsContent } from '@/pages/admin/AdminDocs';
 import { AdminFinancialReportsContent } from '@/pages/admin/AdminFinancialReports';
 import { AdminPixSettingsContent } from '@/pages/admin/AdminPixSettings';
+import { AdminRefundsContent } from '@/pages/admin/AdminRefunds';
 
 const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
