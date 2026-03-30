@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useUserReservations, useCancelReservation, calculateCancellationFee } from '@/hooks/useReservations';
+import { useUserReservations, useCancelReservation } from '@/hooks/useReservations';
 import { usePayments } from '@/hooks/usePayments';
 import { useLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
