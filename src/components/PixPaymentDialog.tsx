@@ -1,16 +1,18 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Copy, CheckCircle2, Clock } from 'lucide-react';
+import { Copy, CheckCircle2, Clock, Upload, Image as ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { usePixSettings } from '@/hooks/usePixSettings';
+import { useImageUpload } from '@/hooks/useImageUpload';
 
 interface PixPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   amount: number;
   locationName: string;
-  onPaymentComplete: () => void;
+  reservationId?: string;
+  onPaymentComplete: (receiptUrl: string) => void;
 }
 
 export function PixPaymentDialog({ 
@@ -21,7 +23,9 @@ export function PixPaymentDialog({
   onPaymentComplete 
 }: PixPaymentDialogProps) {
   const [copied, setCopied] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const { data: pixSettings } = usePixSettings();
+  const { uploadImage, isUploading } = useImageUpload();
 
   const handleCopyCode = async () => {
     if (!pixSettings?.pix_key) return;
@@ -36,8 +40,23 @@ export function PixPaymentDialog({
     }
   };
 
+  const handleUploadReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImage(file, 'receipts');
+    if (url) {
+      setReceiptUrl(url);
+      toast.success('Comprovante enviado!');
+    }
+  };
+
   const handleFinish = () => {
-    onPaymentComplete();
+    if (!receiptUrl) {
+      toast.error('Por favor, envie o comprovante do PIX antes de confirmar.');
+      return;
+    }
+    onPaymentComplete(receiptUrl);
+    setReceiptUrl(null);
     onOpenChange(false);
   };
 
@@ -45,7 +64,7 @@ export function PixPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
@@ -74,7 +93,7 @@ export function PixPaymentDialog({
           )}
 
           {/* QR Code */}
-          <div className="flex justify-center p-4 bg-white rounded-lg">
+          <div className="flex justify-center p-4 bg-background border rounded-lg">
             {pixSettings.qr_code_image_url ? (
               <img 
                 src={pixSettings.qr_code_image_url}
@@ -104,7 +123,7 @@ export function PixPaymentDialog({
           >
             {copied ? (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-500" />
                 Chave copiada!
               </>
             ) : (
@@ -114,6 +133,46 @@ export function PixPaymentDialog({
               </>
             )}
           </Button>
+
+          {/* Receipt Upload */}
+          <div className="space-y-2 border-t pt-4">
+            <p className="text-sm font-medium text-center">Envie o comprovante do PIX</p>
+            {receiptUrl ? (
+              <div className="space-y-2">
+                <div className="border rounded-lg p-2 bg-muted/30 flex justify-center">
+                  <img src={receiptUrl} alt="Comprovante" className="max-h-40 object-contain rounded" />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setReceiptUrl(null)}
+                >
+                  Trocar comprovante
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="receipt-upload" className="cursor-pointer">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
+                    <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {isUploading ? 'Enviando...' : 'Toque para enviar o comprovante'}
+                    </p>
+                  </div>
+                </label>
+                <input
+                  id="receipt-upload"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleUploadReceipt}
+                  disabled={isUploading}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Action buttons */}
           <div className="flex gap-2 pt-2">
@@ -127,6 +186,7 @@ export function PixPaymentDialog({
             <Button 
               className="flex-1"
               onClick={handleFinish}
+              disabled={!receiptUrl || isUploading}
             >
               Já paguei
             </Button>
