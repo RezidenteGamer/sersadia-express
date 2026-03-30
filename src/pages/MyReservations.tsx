@@ -249,5 +249,19 @@ export default function MyReservations() {
             </div>}
         </DialogContent>
       </Dialog>
+
+      {/* PIX Payment Dialog */}
+      {pixPaymentReservation && (
+        <PixPaymentDialog
+          open={!!pixPaymentReservation}
+          onOpenChange={(open) => !open && setPixPaymentReservation(null)}
+          amount={pixPaymentReservation.total_price}
+          locationName={locations?.find(l => l.id === pixPaymentReservation.location_id)?.name || 'Local'}
+          onPaymentComplete={() => {
+            toast.success('Pagamento será confirmado pelo administrador.');
+            setPixPaymentReservation(null);
+          }}
+        />
+      )}
     </AppLayout>;
 }
