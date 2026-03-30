@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
+import { useUploadReceipt } from '@/hooks/usePayments';
 
 export default function MyReservations() {
   const {
