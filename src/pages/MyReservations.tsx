@@ -29,6 +29,7 @@ export default function MyReservations() {
   const { data: locations } = useLocations();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
+  const uploadReceipt = useUploadReceipt();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelFeeInfo, setCancelFeeInfo] = useState<{ fee: number; refundAmount: number; isWithinDeadline: boolean } | null>(null);
   const [viewReservation, setViewReservation] = useState<typeof reservations extends (infer T)[] ? T : never | null>(null);
