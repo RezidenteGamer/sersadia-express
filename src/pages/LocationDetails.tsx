@@ -65,6 +65,7 @@ export default function LocationDetails() {
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
   const createPayment = useCreatePayment();
+  const uploadReceipt = useUploadReceipt();
 
   // Sync carousel state
   useEffect(() => {
