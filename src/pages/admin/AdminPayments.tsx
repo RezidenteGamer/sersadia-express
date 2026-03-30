@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePayments, useMarkPaymentAsPaid, Payment } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin } from 'lucide-react';
+import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin, Image as ImageIcon } from 'lucide-react';
 const PAYMENT_METHODS = [{
   value: 'pix',
   label: 'PIX'
