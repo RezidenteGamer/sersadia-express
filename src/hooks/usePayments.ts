@@ -92,12 +92,36 @@ export function useCreatePayment() {
       reservationId: string;
       amount: number;
     }) => {
-      const { error } = await supabase
+      const { data: payment, error } = await supabase
         .from('payments')
         .insert({
           reservation_id: data.reservationId,
           amount: data.amount,
-        });
+        })
+        .select('id')
+        .single();
+      
+      if (error) throw error;
+      return payment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+    },
+    onError: (error) => {
+      toast.error('Erro ao criar pagamento: ' + error.message);
+    },
+  });
+}
+
+export function useUploadReceipt() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ reservationId, receiptUrl }: { reservationId: string; receiptUrl: string }) => {
+      const { error } = await supabase
+        .from('payments')
+        .update({ receipt_url: receiptUrl } as any)
+        .eq('reservation_id', reservationId);
       
       if (error) throw error;
     },
@@ -105,7 +129,7 @@ export function useCreatePayment() {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
     },
     onError: (error) => {
-      toast.error('Erro ao criar pagamento: ' + error.message);
+      toast.error('Erro ao salvar comprovante: ' + error.message);
     },
   });
 }

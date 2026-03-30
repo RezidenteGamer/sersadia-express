@@ -420,7 +420,10 @@ export default function LocationDetails() {
         onOpenChange={setShowPixDialog}
         amount={calculatePrice()}
         locationName={location.name}
-        onPaymentComplete={() => {
+        onPaymentComplete={async (receiptUrl) => {
+          if (createdReservationId) {
+            await uploadReceipt.mutateAsync({ reservationId: createdReservationId, receiptUrl });
+          }
           toast.success('Reserva criada! O pagamento será confirmado pelo administrador.');
           navigate('/my-reservations');
         }}

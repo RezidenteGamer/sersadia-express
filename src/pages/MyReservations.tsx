@@ -259,8 +259,9 @@ export default function MyReservations() {
           onOpenChange={(open) => !open && setPixPaymentReservation(null)}
           amount={pixPaymentReservation.total_price}
           locationName={locations?.find(l => l.id === pixPaymentReservation.location_id)?.name || 'Local'}
-          onPaymentComplete={() => {
-            toast.success('Pagamento será confirmado pelo administrador.');
+          onPaymentComplete={async (receiptUrl) => {
+            await uploadReceipt.mutateAsync({ reservationId: pixPaymentReservation.id, receiptUrl });
+            toast.success('Comprovante enviado! O pagamento será confirmado pelo administrador.');
             setPixPaymentReservation(null);
           }}
         />
