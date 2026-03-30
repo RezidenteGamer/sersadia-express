@@ -1,7 +1,4 @@
 project_id = "irvwzvuwkmkntwkbkuac"
 
-[functions.create-pix-checkout]
-verify_jwt = false
-
 [functions.expire-reservations]
 verify_jwt = false
