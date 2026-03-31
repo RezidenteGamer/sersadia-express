@@ -33,8 +33,8 @@ export function AdminCheckinContent() {
   const [activeTab, setActiveTab] = useState('waiting');
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [finishedStatusFilter, setFinishedStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
