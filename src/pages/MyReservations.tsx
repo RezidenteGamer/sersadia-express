@@ -108,6 +108,22 @@ export default function MyReservations() {
               </div>
               <div className="space-y-1">
                 <h3 className="font-semibold">{reservation.location?.name || 'Local'}</h3>
+                
+                {/* Código da reserva - destaque para reservas confirmadas */}
+                {['confirmed', 'presence_confirmed'].includes(reservation.status) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(reservation.code, 'Código da reserva');
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors group w-fit"
+                  >
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Código</span>
+                    <span className="font-mono font-bold text-primary text-base tracking-widest">{reservation.code}</span>
+                    <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
+                )}
+                
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", {
