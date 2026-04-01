@@ -402,7 +402,7 @@ export function AdminReservationsContent() {
             <Button
               variant={actionReservation?.action === 'confirm' ? 'default' : 'destructive'}
               onClick={handleAction}
-              disabled={updateStatus.isPending || cancelReservation.isPending}
+              disabled={updateStatus.isPending || cancelReservation.isPending || (actionReservation?.action === 'reject' && !adminNotes.trim())}
             >
               {updateStatus.isPending || cancelReservation.isPending ? 'Processando...' : 'Confirmar'}
             </Button>
