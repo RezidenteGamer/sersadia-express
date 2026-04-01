@@ -330,7 +330,7 @@ export function AdminReservationsContent() {
             </DialogDescription>
           </DialogHeader>
           
-          {actionReservation && actionReservation.action !== 'cancel' && (
+          {actionReservation && actionReservation.action === 'confirm' && (
             <div className="space-y-2">
               <Label htmlFor="admin-notes">Observações (opcional)</Label>
               <Textarea
@@ -338,6 +338,25 @@ export function AdminReservationsContent() {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Adicione uma observação para o usuário..."
+                rows={3}
+              />
+            </div>
+          )}
+
+          {actionReservation && actionReservation.action === 'reject' && (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg text-sm">
+                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-muted-foreground">
+                  O usuário será notificado da recusa com a justificativa abaixo.
+                </p>
+              </div>
+              <Label htmlFor="admin-notes">Justificativa (obrigatória) *</Label>
+              <Textarea
+                id="admin-notes"
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder="Informe o motivo da recusa..."
                 rows={3}
               />
             </div>
