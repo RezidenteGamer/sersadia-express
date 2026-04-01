@@ -187,15 +187,15 @@ export default function MyReservations() {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="pending" className="space-y-4">
-          {pendingReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva pendente" description="Suas reservas aguardando aprovação aparecerão aqui" action={{
+        <TabsContent value="confirmed" className="space-y-4">
+          {confirmedReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva confirmada" description="Suas reservas confirmadas aparecerão aqui" action={{
           label: 'Fazer Reserva',
           onClick: () => navigate('/locations')
-        }} /> : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
+        }} /> : confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
-        <TabsContent value="confirmed" className="space-y-4">
-          {confirmedReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva confirmada" description="Suas reservas confirmadas aparecerão aqui" /> : confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
+        <TabsContent value="pending" className="space-y-4">
+          {pendingReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva pendente" description="Suas reservas aguardando aprovação aparecerão aqui" /> : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
         <TabsContent value="history" className="space-y-4">
