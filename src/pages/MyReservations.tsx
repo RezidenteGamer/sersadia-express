@@ -169,13 +169,13 @@ export default function MyReservations() {
   return <AppLayout>
       <PageHeader title="Minhas Reservas" description="Acompanhe todas as suas reservas" />
       
-      <Tabs defaultValue="pending" className="space-y-4">
+      <Tabs defaultValue="confirmed" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending">
-            Pendentes ({pendingReservations.length})
-          </TabsTrigger>
           <TabsTrigger value="confirmed">
             Confirmadas ({confirmedReservations.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Pendentes ({pendingReservations.length})
           </TabsTrigger>
           <TabsTrigger value="history">
             Histórico ({pastReservations.length})
