@@ -109,18 +109,23 @@ export default function MyReservations() {
               <div className="space-y-1">
                 <h3 className="font-semibold">{reservation.location?.name || 'Local'}</h3>
                 
-                {/* Código da reserva - destaque para reservas confirmadas */}
+                {/* Código da reserva - super destaque para reservas confirmadas */}
                 {['confirmed', 'presence_confirmed'].includes(reservation.status) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       copyToClipboard(reservation.code, 'Código da reserva');
                     }}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors group w-fit"
+                    className="flex items-center gap-3 px-4 py-2.5 bg-primary/15 border-2 border-primary/30 rounded-xl hover:bg-primary/25 transition-colors group w-fit animate-pulse-once"
                   >
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Código</span>
-                    <span className="font-mono font-bold text-primary text-base tracking-widest">{reservation.code}</span>
-                    <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Código para Check-in</span>
+                      <span className="font-mono font-extrabold text-primary text-xl tracking-[0.25em]">{reservation.code}</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Copy className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-[9px] text-muted-foreground">Copiar</span>
+                    </div>
                   </button>
                 )}
                 
@@ -169,28 +174,28 @@ export default function MyReservations() {
   return <AppLayout>
       <PageHeader title="Minhas Reservas" description="Acompanhe todas as suas reservas" />
       
-      <Tabs defaultValue="pending" className="space-y-4">
+      <Tabs defaultValue="confirmed" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending">
-            Pendentes ({pendingReservations.length})
-          </TabsTrigger>
           <TabsTrigger value="confirmed">
             Confirmadas ({confirmedReservations.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Pendentes ({pendingReservations.length})
           </TabsTrigger>
           <TabsTrigger value="history">
             Histórico ({pastReservations.length})
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="pending" className="space-y-4">
-          {pendingReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva pendente" description="Suas reservas aguardando aprovação aparecerão aqui" action={{
+        <TabsContent value="confirmed" className="space-y-4">
+          {confirmedReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva confirmada" description="Suas reservas confirmadas aparecerão aqui" action={{
           label: 'Fazer Reserva',
           onClick: () => navigate('/locations')
-        }} /> : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
+        }} /> : confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
-        <TabsContent value="confirmed" className="space-y-4">
-          {confirmedReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva confirmada" description="Suas reservas confirmadas aparecerão aqui" /> : confirmedReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
+        <TabsContent value="pending" className="space-y-4">
+          {pendingReservations.length === 0 ? <EmptyState icon={Calendar} title="Nenhuma reserva pendente" description="Suas reservas aguardando aprovação aparecerão aqui" /> : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
         
         <TabsContent value="history" className="space-y-4">
