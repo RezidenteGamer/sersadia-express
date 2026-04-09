@@ -115,8 +115,8 @@ export function AdminPaymentsContent() {
                 Pago em {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm")}
               </p>}
             {payment.notes && <p className="text-sm text-muted-foreground italic">{payment.notes}</p>}
-            {(payment as any).receipt_url && (
-              <a href={(payment as any).receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+            {payment.receipt_url && (
+              <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                 <ImageIcon className="w-3 h-3" />
                 Ver comprovante
               </a>

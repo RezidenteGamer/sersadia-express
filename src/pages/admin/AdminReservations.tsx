@@ -297,6 +297,48 @@ export function AdminReservationsContent() {
                 </div>
               </div>
               
+              
+              {/* Payment Info */}
+              {(() => {
+                const payment = getPaymentForReservation(viewReservation.id);
+                return (
+                  <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+                    <p className="font-medium mb-1">Pagamento:</p>
+                    {payment ? (
+                      <>
+                        <p>Status: <span className="text-success font-medium">Pago</span> — R$ {payment.amount.toFixed(2)}</p>
+                        {payment.paid_at && <p>Pago em: {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm")}</p>}
+                        {payment.payment_method && <p>Método: {payment.payment_method.toUpperCase()}</p>}
+                        {payment.receipt_url && (
+                          <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            Ver comprovante
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <p>Status: <span className="text-warning font-medium">Pendente</span></p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Refund Info */}
+              {viewReservation.refund_status && viewReservation.refund_status !== 'none' && (
+                <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+                  <p className="font-medium mb-1">Reembolso:</p>
+                  <p>Status: {viewReservation.refund_status === 'pending' ? 'Aguardando' : viewReservation.refund_status === 'approved' ? 'Aprovado' : 'Concluído'}</p>
+                  {viewReservation.refund_amount != null && viewReservation.refund_amount > 0 && (
+                    <p>Valor: R$ {viewReservation.refund_amount.toFixed(2)}</p>
+                  )}
+                  {viewReservation.refund_pix_key && (
+                    <p>Chave PIX: <span className="font-mono">{viewReservation.refund_pix_key}</span></p>
+                  )}
+                  {viewReservation.refund_pix_name && (
+                    <p>Recebedor: {viewReservation.refund_pix_name}</p>
+                  )}
+                </div>
+              )}
+
               {viewReservation.user_notes && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">Observações do Usuário:</p>
