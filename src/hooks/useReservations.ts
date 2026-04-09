@@ -172,9 +172,8 @@ export function useUpdateReservationStatus() {
   });
 }
 
-export function useCancelReservation() {
+export function useCancelReservation({ asAdmin = false }: { asAdmin?: boolean } = {}) {
   const queryClient = useQueryClient();
-  const { isAdmin } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, refundAmount, refundPixKey, refundPixName }: { 
@@ -183,7 +182,7 @@ export function useCancelReservation() {
       refundPixKey?: string;
       refundPixName?: string;
     }) => {
-      const status = isAdmin ? 'cancelled_by_admin' : 'cancelled_by_user';
+      const status = asAdmin ? 'cancelled_by_admin' : 'cancelled_by_user';
       const updateData: Record<string, any> = { 
         status, 
         updated_at: new Date().toISOString(),
@@ -192,7 +191,7 @@ export function useCancelReservation() {
       
       if (refundPixKey) updateData.refund_pix_key = refundPixKey;
       if (refundPixName) updateData.refund_pix_name = refundPixName;
-      if (isAdmin && refundAmount !== undefined) {
+      if (asAdmin && refundAmount !== undefined) {
         updateData.refund_amount = refundAmount;
         updateData.refund_status = refundAmount > 0 ? 'approved' : 'none';
       } else {

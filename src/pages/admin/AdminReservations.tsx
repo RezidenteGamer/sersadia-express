@@ -41,7 +41,7 @@ export function AdminReservationsContent() {
   const { data: locations } = useLocations(true);
   const { data: payments } = usePayments();
   const updateStatus = useUpdateReservationStatus();
-  const cancelReservation = useCancelReservation();
+  const cancelReservation = useCancelReservation({ asAdmin: true });
 
   const getPaymentForReservation = (reservationId: string) => {
     return payments?.find(p => p.reservation_id === reservationId && p.is_paid);
