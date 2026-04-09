@@ -162,9 +162,11 @@ export default function MyReservations() {
                   <CreditCard className="w-4 h-4" />
                 </Button>
               )}
-              {reservation.status === 'pending' && <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleOpenCancel(reservation)}>
+              {['pending', 'confirmed'].includes(reservation.status) && (
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleOpenCancel(reservation)}>
                   <X className="w-4 h-4" />
-                </Button>}
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
