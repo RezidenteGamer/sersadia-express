@@ -105,6 +105,7 @@ export function AdminReservationsContent() {
     { value: 'cancelled_by_user', label: 'Canceladas (Usuário)' },
     { value: 'cancelled_by_admin', label: 'Canceladas (Admin)' },
     { value: 'presence_confirmed', label: 'Presença Confirmada' },
+    { value: 'expired', label: 'Expiradas' },
   ];
 
   return (
