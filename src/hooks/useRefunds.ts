@@ -49,7 +49,7 @@ export function useApproveRefund() {
           refund_status: 'approved',
           refund_amount: refundAmount,
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -75,7 +75,7 @@ export function useMarkRefundCompleted() {
         .update({
           refund_status: 'completed',
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', id);
 
       if (error) throw error;
