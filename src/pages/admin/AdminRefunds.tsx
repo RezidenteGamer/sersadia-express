@@ -34,12 +34,12 @@ export function AdminRefundsContent() {
       r.location?.name?.toLowerCase().includes(s);
   });
 
-  const pendingRefunds = filtered?.filter(r => (r as any).refund_status === 'none' || (r as any).refund_status === 'pending') || [];
-  const approvedRefunds = filtered?.filter(r => (r as any).refund_status === 'approved') || [];
-  const completedRefunds = filtered?.filter(r => (r as any).refund_status === 'completed') || [];
+  const pendingRefunds = filtered?.filter(r => r.refund_status === 'none' || r.refund_status === 'pending') || [];
+  const approvedRefunds = filtered?.filter(r => r.refund_status === 'approved') || [];
+  const completedRefunds = filtered?.filter(r => r.refund_status === 'completed') || [];
 
   const openApproveDialog = (r: NonNullable<typeof requests>[0]) => {
-    const within48 = isWithin48Hours(r.reservation_date, r.start_time, (r as any).cancelled_at);
+    const within48 = isWithin48Hours(r.reservation_date, r.start_time, r.cancelled_at);
     // If cancelled 48h+ before, suggest full refund
     setRefundAmount(within48 ? '0' : String(r.total_price));
     setApproveDialog(r);
@@ -64,10 +64,10 @@ export function AdminRefundsContent() {
   };
 
   const RequestCard = ({ request }: { request: NonNullable<typeof requests>[0] }) => {
-    const within48 = isWithin48Hours(request.reservation_date, request.start_time, (request as any).cancelled_at);
-    const refundStatus = (request as any).refund_status || 'none';
-    const pixKey = (request as any).refund_pix_key;
-    const pixName = (request as any).refund_pix_name;
+    const within48 = isWithin48Hours(request.reservation_date, request.start_time, request.cancelled_at);
+    const refundStatus = request.refund_status || 'none';
+    const pixKey = request.refund_pix_key;
+    const pixName = request.refund_pix_name;
 
     return (
       <Card className="hover:shadow-md transition-shadow">
@@ -133,13 +133,13 @@ export function AdminRefundsContent() {
               {refundStatus === 'approved' && (
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="w-4 h-4 text-success" />
-                  <span className="font-medium text-success">Reembolso aprovado: R$ {((request as any).refund_amount || 0).toFixed(2)}</span>
+                  <span className="font-medium text-success">Reembolso aprovado: R$ {(request.refund_amount || 0).toFixed(2)}</span>
                 </div>
               )}
 
-              {(request as any).cancelled_at && (
+              {request.cancelled_at && (
                 <p className="text-xs text-muted-foreground">
-                  Cancelado em {format(new Date((request as any).cancelled_at), "dd/MM/yyyy 'às' HH:mm")}
+                  Cancelado em {format(new Date(request.cancelled_at), "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
             </div>
@@ -255,15 +255,15 @@ export function AdminRefundsContent() {
                 <p><strong>Reserva:</strong> {approveDialog.code}</p>
                 <p><strong>Usuário:</strong> {approveDialog.user_profile?.full_name}</p>
                 <p><strong>Valor Total:</strong> R$ {approveDialog.total_price.toFixed(2)}</p>
-                {(approveDialog as any).refund_pix_key && (
+                {approveDialog.refund_pix_key && (
                   <>
-                    <p><strong>Chave PIX:</strong> {(approveDialog as any).refund_pix_key}</p>
-                    <p><strong>Recebedor:</strong> {(approveDialog as any).refund_pix_name || 'Não informado'}</p>
+                    <p><strong>Chave PIX:</strong> {approveDialog.refund_pix_key}</p>
+                    <p><strong>Recebedor:</strong> {approveDialog.refund_pix_name || 'Não informado'}</p>
                   </>
                 )}
               </div>
 
-              {isWithin48Hours(approveDialog.reservation_date, approveDialog.start_time, (approveDialog as any).cancelled_at) &&
+              {isWithin48Hours(approveDialog.reservation_date, approveDialog.start_time, approveDialog.cancelled_at) &&
                 approveDialog.status === 'cancelled_by_user' && (
                 <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg text-sm">
                   <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />

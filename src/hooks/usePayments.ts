@@ -120,7 +120,7 @@ export function useUploadReceipt() {
     mutationFn: async ({ reservationId, receiptUrl }: { reservationId: string; receiptUrl: string }) => {
       const { error } = await supabase
         .from('payments')
-        .update({ receipt_url: receiptUrl } as any)
+        .update({ receipt_url: receiptUrl })
         .eq('reservation_id', reservationId);
       
       if (error) throw error;
