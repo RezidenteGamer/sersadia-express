@@ -28,7 +28,7 @@ const statusConfig: Record<ReservationStatus, { label: string; className: string
     className: 'bg-destructive/10 text-destructive border-destructive/20',
   },
   cancelled_by_user: {
-    label: 'Cancelada',
+    label: 'Cancelada (Usuário)',
     className: 'bg-muted text-muted-foreground border-muted',
   },
   cancelled_by_admin: {
