@@ -16,7 +16,7 @@ export function ReservationCommandCenterContent() {
     statusFilter, setStatusFilter,
     quickFilter, setQuickFilter,
     locationFilter, setLocationFilter,
-    dateFilter, setDateFilter,
+    dateRange, setDateRange,
     selectedId, setSelectedId,
     filtered,
     stats,
@@ -45,17 +45,14 @@ export function ReservationCommandCenterContent() {
   const handleContextAction = useCallback((action: string) => {
     const r = contextMenu.reservation;
     if (!r) return;
-    // Select the reservation to show detail, and the detail panel handles actions
     setSelectedId(r.id);
     if (isNarrow || isMobile) setMobileShowDetail(true);
-    // For copy, just copy immediately
     if (action === 'view') return;
   }, [contextMenu.reservation, setSelectedId, isNarrow, isMobile]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if typing in an input
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
@@ -79,7 +76,6 @@ export function ReservationCommandCenterContent() {
         return;
       }
 
-      // Arrow navigation
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const idx = filtered.findIndex(r => r.id === selectedId);
@@ -95,11 +91,16 @@ export function ReservationCommandCenterContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedId, selectedReservation, filtered, setSelectedId]);
 
-  // Narrow/mobile: show either list or detail
   const showSinglePanel = isNarrow || isMobile;
 
   return (
-    <div className="flex flex-col h-full bg-background/50 overflow-hidden">
+    <div
+      className="flex flex-col h-full bg-background/50 overflow-hidden"
+      onContextMenu={(e) => {
+        // Prevent the desktop context menu from firing inside this module
+        e.stopPropagation();
+      }}
+    >
       {/* Toolbar */}
       <ReservationToolbar
         search={search}
@@ -110,8 +111,8 @@ export function ReservationCommandCenterContent() {
         onQuickFilterChange={setQuickFilter}
         locationFilter={locationFilter}
         onLocationChange={setLocationFilter}
-        dateFilter={dateFilter}
-        onDateChange={setDateFilter}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
         locations={locations}
         stats={stats}
         filtered={filtered}

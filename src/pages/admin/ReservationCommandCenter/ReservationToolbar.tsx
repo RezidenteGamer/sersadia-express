@@ -1,12 +1,18 @@
-import { Search, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Download, Calendar as CalendarIcon, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { StatusFilter, QuickFilter } from './types';
 import type { Tables } from '@/integrations/supabase/types';
 import { exportToCSV } from '@/lib/exportReport';
 import type { ReservationWithDetails } from './types';
+import type { DateRange } from 'react-day-picker';
 
 interface ToolbarProps {
   search: string;
@@ -17,8 +23,8 @@ interface ToolbarProps {
   onQuickFilterChange: (v: QuickFilter | null) => void;
   locationFilter: string;
   onLocationChange: (v: string) => void;
-  dateFilter: string;
-  onDateChange: (v: string) => void;
+  dateRange: DateRange | undefined;
+  onDateRangeChange: (range: DateRange | undefined) => void;
   locations: Pick<Tables<'locations'>, 'id' | 'name'>[] | undefined;
   stats: { total: number; pending: number; totalReceivable: number; refundPending: number };
   filtered: ReservationWithDetails[];
@@ -44,11 +50,13 @@ export function ReservationToolbar({
   statusFilter, onStatusChange,
   quickFilter, onQuickFilterChange,
   locationFilter, onLocationChange,
-  dateFilter, onDateChange,
+  dateRange, onDateRangeChange,
   locations,
   stats,
   filtered,
 }: ToolbarProps) {
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+
   const handleExport = () => {
     exportToCSV(
       filtered.map(r => ({
@@ -79,9 +87,15 @@ export function ReservationToolbar({
     );
   };
 
+  const dateLabel = dateRange?.from
+    ? dateRange.to
+      ? `${format(dateRange.from, 'dd/MM')} – ${format(dateRange.to, 'dd/MM')}`
+      : format(dateRange.from, 'dd/MM/yyyy')
+    : 'Período';
+
   return (
     <div className="space-y-3 p-4 border-b border-border/50">
-      {/* Row 1: Search + Location + Date + Export */}
+      {/* Row 1: Search + Location + Date Range + Export */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-[280px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -90,6 +104,7 @@ export function ReservationToolbar({
             className="pl-9 h-9 text-sm bg-background/50"
             value={search}
             onChange={e => onSearchChange(e.target.value)}
+            data-search-input
           />
         </div>
         <Select value={locationFilter} onValueChange={onLocationChange}>
@@ -103,12 +118,53 @@ export function ReservationToolbar({
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="date"
-          value={dateFilter}
-          onChange={e => onDateChange(e.target.value)}
-          className="w-[160px] h-9 text-sm"
-        />
+
+        {/* Date range picker */}
+        <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                'h-9 text-sm gap-2 font-normal min-w-[140px] justify-start',
+                !dateRange?.from && 'text-muted-foreground'
+              )}
+            >
+              <CalendarIcon className="w-4 h-4" />
+              {dateLabel}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={(range) => {
+                onDateRangeChange(range);
+                // Close popover when both dates are selected
+                if (range?.from && range?.to) {
+                  setTimeout(() => setDatePopoverOpen(false), 200);
+                }
+              }}
+              numberOfMonths={2}
+              locale={ptBR}
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+
+        {dateRange?.from && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => onDateRangeChange(undefined)}
+            title="Limpar período"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExport} title="Exportar CSV">
           <Download className="w-4 h-4" />
         </Button>
