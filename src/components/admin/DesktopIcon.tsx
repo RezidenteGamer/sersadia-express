@@ -14,9 +14,9 @@ interface DesktopIconProps {
   onContextMenu: (appId: string, x: number, y: number) => void;
 }
 
-const CELL_W = 96;
-const CELL_H = 100;
-const GAP = 8;
+const CELL_W = 112;
+const CELL_H = 116;
+const GAP = 10;
 
 export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onOpen, onPositionChange, occupiedCells, onContextMenu }: DesktopIconProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -98,21 +98,20 @@ export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onO
     >
       <div className="relative">
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-150",
+          "w-16 h-16 rounded-xl flex items-center justify-center transition-transform duration-150",
           "bg-white/10 backdrop-blur-sm border border-white/15",
           "shadow-[0_4px_12px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.4)]",
           "hover:scale-110 hover:shadow-[0_8px_24px_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.5)] hover:bg-white/15",
         )}>
-          <Icon className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" />
+          <Icon className="w-8 h-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" />
         </div>
-        {/* Notification badge */}
         {badge !== undefined && badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-lg border-2 border-transparent">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full bg-destructive text-white text-[11px] font-bold flex items-center justify-center px-1 shadow-lg border-2 border-transparent">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
       </div>
-      <span className="text-[11px] text-white font-semibold text-center leading-tight w-20 truncate" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
+      <span className="text-[13px] text-white font-semibold text-center leading-tight w-24 truncate" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
         {label}
       </span>
     </button>
