@@ -248,7 +248,7 @@ export function Sidebar() {
                 <div className="relative w-[22px] h-[22px]">
                   <Icon className={cn("w-[22px] h-[22px] transition-colors", isActive ? "text-primary" : "text-sidebar-foreground/70")} />
                   {showBadge && (
-                    <span className="absolute -top-1.5 -right-2.5 bg-destructive text-destructive-foreground text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5 pointer-events-none">
+                    <span className="absolute -top-2 -right-3 bg-destructive text-white text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5 pointer-events-none">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
