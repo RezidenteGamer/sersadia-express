@@ -179,7 +179,7 @@ export default function LocationDetails() {
         {/* Location Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image Carousel */}
-          <div className="relative rounded-xl overflow-hidden bg-muted">
+          <div className="relative rounded-2xl overflow-hidden bg-muted">
             {location.images && location.images.length > 0 ? (
               <Carousel 
                 className="w-full" 
@@ -219,7 +219,7 @@ export default function LocationDetails() {
                     <CarouselPrevious className="left-2" />
                     <CarouselNext className="right-2" />
                     {/* Image counter */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                    <div className="absolute bottom-3 right-3 z-20 bg-card/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-foreground shadow-sm">
                       {currentImageIndex + 1} / {imageCount}
                     </div>
                   </>
@@ -244,18 +244,18 @@ export default function LocationDetails() {
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{location.name}</CardTitle>
+              <CardTitle className="text-2xl font-serif">{location.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex flex-wrap gap-3 text-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-muted-foreground">
                   <Users className="w-4 h-4" />
-                  <span>Capacidade: {location.capacity} pessoas</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                  {location.capacity} pessoas
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-muted-foreground">
                   <Clock className="w-4 h-4" />
                   <span>{location.available_start_time.substring(0, 5)} - {location.available_end_time.substring(0, 5)}</span>
-                </div>
+                </span>
                 <div className="flex items-center gap-2 text-primary font-medium">
                   <DollarSign className="w-4 h-4" />
                   <div className="flex flex-col">
@@ -280,12 +280,19 @@ export default function LocationDetails() {
                   <p className="text-muted-foreground">{location.description}</p>
                 </div>}
               
-              {location.rules && <div className="p-4 rounded-lg bg-background">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4 text-primary" />
-                    <h4 className="font-medium">Regras do Local</h4>
+              {location.rules && <div className="p-4 rounded-xl bg-accent">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span>📋</span>
+                    <h4 className="font-semibold font-serif">Regras do Local</h4>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">{location.rules}</p>
+                  <ol className="space-y-2">
+                    {location.rules.split('\n').filter(Boolean).map((rule, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-foreground border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                        <span className="text-primary font-bold min-w-[20px]">{i + 1}.</span>
+                        <span>{rule.replace(/^\d+[\.\)]\s*/, '')}</span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>}
             </CardContent>
           </Card>
@@ -295,13 +302,13 @@ export default function LocationDetails() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fazer Reserva</CardTitle>
+              <CardTitle className="font-serif">Fazer Reserva</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Calendar */}
               <div>
                 <Label className="mb-2 block">Selecione a Data</Label>
-                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => date < new Date()} className="rounded-md border pointer-events-auto" locale={ptBR} />
+                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => date < new Date()} className="rounded-xl border pointer-events-auto" locale={ptBR} />
               </div>
               
               {/* Time Slots */}
@@ -311,17 +318,17 @@ export default function LocationDetails() {
                     {timeSlots.map(({
                   slot,
                   available
-                }) => <button key={`${slot.start}-${slot.end}`} onClick={() => available && setSelectedSlot(slot)} disabled={!available} className={cn("p-3 text-sm rounded-lg border transition-colors text-left", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50", available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end ? "bg-primary text-primary-foreground border-primary" : available && "hover:border-primary hover:bg-primary/5")}>
+                }) => <button key={`${slot.start}-${slot.end}`} onClick={() => available && setSelectedSlot(slot)} disabled={!available} className={cn("p-4 text-sm rounded-xl border-2 transition-all text-center font-medium", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50 line-through", available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end ? "bg-primary text-primary-foreground border-primary shadow-sm" : available && "bg-accent border-transparent hover:border-primary")}>
                         <span className="font-medium">{slot.start} - {slot.end}</span>
                       </button>)}
                   </div>
                 </div>}
               
               {/* Price Summary */}
-              {selectedSlot && <div className="p-4 rounded-lg space-y-2 bg-background">
+              {selectedSlot && <div className="p-4 rounded-xl space-y-2 bg-accent">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Valor Total</span>
-                    <span className="text-xl font-bold text-primary">
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Valor Total</span>
+                    <span className="text-2xl font-bold text-primary font-serif">
                       R$ {calculatePrice().toFixed(2)}
                     </span>
                   </div>
@@ -350,15 +357,15 @@ export default function LocationDetails() {
         setShowConfirmDialog(open);
         if (!open) setAcceptedRules(false);
       }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Confirmar Reserva</DialogTitle>
+            <DialogTitle className="font-serif">Confirmar Reserva</DialogTitle>
             <DialogDescription>
               Revise os detalhes da reserva e aceite as regras do local para continuar.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 rounded-lg space-y-2 bg-muted/50">
+            <div className="p-4 rounded-xl space-y-2 bg-accent">
               <p><strong>Local:</strong> {location.name}</p>
               <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", {
                 locale: ptBR
