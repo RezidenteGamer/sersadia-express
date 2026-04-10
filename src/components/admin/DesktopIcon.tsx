@@ -8,6 +8,7 @@ interface DesktopIconProps {
   appId: string;
   gridPosition: { col: number; row: number };
   badge?: number;
+  imageIcon?: string;
   onOpen: () => void;
   onPositionChange: (appId: string, pos: { col: number; row: number }) => void;
   occupiedCells: Map<string, string>;
@@ -18,7 +19,7 @@ const CELL_W = 112;
 const CELL_H = 116;
 const GAP = 10;
 
-export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onOpen, onPositionChange, occupiedCells, onContextMenu }: DesktopIconProps) {
+export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, imageIcon, onOpen, onPositionChange, occupiedCells, onContextMenu }: DesktopIconProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [tempPos, setTempPos] = useState<{ x: number; y: number } | null>(null);
@@ -30,7 +31,7 @@ export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onO
   const gridY = gridPosition.row * (CELL_H + GAP) + 24;
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 2) return; // skip right click
+    if (e.button === 2) return;
     e.preventDefault();
     startPos.current = { x: e.clientX, y: e.clientY };
     hasMoved.current = false;
@@ -97,14 +98,28 @@ export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onO
       )}
     >
       <div className="relative">
-        <div className={cn(
-          "w-16 h-16 rounded-xl flex items-center justify-center transition-transform duration-150",
-          "bg-white/10 backdrop-blur-sm border border-white/15",
-          "shadow-[0_4px_12px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.4)]",
-          "hover:scale-110 hover:shadow-[0_8px_24px_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.5)] hover:bg-white/15",
-        )}>
-          <Icon className="w-8 h-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" />
-        </div>
+        {imageIcon ? (
+          <div className={cn(
+            "w-16 h-16 flex items-center justify-center transition-transform duration-150",
+            "hover:scale-110",
+          )}>
+            <img
+              src={imageIcon}
+              alt={label}
+              className="w-16 h-16 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+              draggable={false}
+            />
+          </div>
+        ) : (
+          <div className={cn(
+            "w-16 h-16 rounded-xl flex items-center justify-center transition-transform duration-150",
+            "bg-white/10 backdrop-blur-sm border border-white/15",
+            "shadow-[0_4px_12px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.4)]",
+            "hover:scale-110 hover:shadow-[0_8px_24px_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.5)] hover:bg-white/15",
+          )}>
+            <Icon className="w-8 h-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" />
+          </div>
+        )}
         {badge !== undefined && badge > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] rounded-full bg-destructive text-white text-[11px] font-bold flex items-center justify-center px-1 shadow-lg border-2 border-transparent">
             {badge > 99 ? '99+' : badge}
