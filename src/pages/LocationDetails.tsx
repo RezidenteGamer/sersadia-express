@@ -377,7 +377,7 @@ export default function LocationDetails() {
             {/* Rules Section */}
             {location.rules && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+                <div className="flex items-center gap-2 text-warning">
                   <AlertTriangle className="w-4 h-4" />
                   <Label className="font-medium">Regras do Local</Label>
                 </div>
