@@ -6,6 +6,7 @@ export interface DesktopApp {
   title: string;
   icon: LucideIcon;
   component: React.ComponentType;
+  defaultSize?: { width: number; height: number };
 }
 
 export interface WindowState {
@@ -62,7 +63,7 @@ export function useDesktopManager() {
         isMaximized: false,
         isSnapped: null,
         position: { x: 60 + offset, y: 40 + offset },
-        size: { ...DEFAULT_SIZE },
+        size: app.defaultSize ? { ...app.defaultSize } : { ...DEFAULT_SIZE },
         zIndex: getNextZIndex(),
         isClosing: false,
       }];

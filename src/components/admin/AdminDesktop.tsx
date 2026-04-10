@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  LayoutDashboard, MapPin, Calendar, Users, Settings,
-  CreditCard, UserCheck, Image, BarChart3, FolderOpen, Trash2,
-  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode, RotateCcw
+  LayoutDashboard, MapPin, Users, Settings,
+  UserCheck, Image, BarChart3, FolderOpen, Trash2,
+  ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode, CalendarCheck2
 } from 'lucide-react';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
@@ -26,9 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import { AdminDashboardContent } from '@/pages/admin/AdminDashboard';
 import { AdminLocationsContent } from '@/pages/admin/AdminLocations';
-import { AdminReservationsContent } from '@/pages/admin/AdminReservations';
 import { AdminUsersContent } from '@/pages/admin/AdminUsers';
-import { AdminPaymentsContent } from '@/pages/admin/AdminPayments';
 import { AdminCheckinContent } from '@/pages/admin/AdminCheckin';
 import { AdminReportsContent } from '@/pages/admin/AdminReports';
 import { AdminMembersContent } from '@/pages/admin/AdminMembers';
@@ -37,15 +35,14 @@ import { AdminSupportContent } from '@/pages/admin/AdminSupport';
 import { AdminDocsContent } from '@/pages/admin/AdminDocs';
 import { AdminFinancialReportsContent } from '@/pages/admin/AdminFinancialReports';
 import { AdminPixSettingsContent } from '@/pages/admin/AdminPixSettings';
-import { AdminRefundsContent } from '@/pages/admin/AdminRefunds';
+import { ReservationCommandCenterContent } from '@/pages/admin/ReservationCommandCenter';
 
-const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = [
+const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean; defaultSize?: { width: number; height: number } })[] = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
   { id: 'locations', title: 'Locais', icon: MapPin, component: AdminLocationsContent, permission: 'manage_locations' },
-  { id: 'reservations', title: 'Reservas', icon: Calendar, component: AdminReservationsContent, permission: 'manage_reservations' },
+  { id: 'reservation-center', title: 'Central de Reservas', icon: CalendarCheck2, component: ReservationCommandCenterContent, permission: 'manage_reservations', defaultSize: { width: 1100, height: 680 } },
   { id: 'members', title: 'Sócios', icon: Users, component: AdminMembersContent, permission: 'manage_members' },
   { id: 'users', title: 'Usuários', icon: Settings, component: AdminUsersContent, permission: 'manage_users' },
-  { id: 'payments', title: 'Pagamentos', icon: CreditCard, component: AdminPaymentsContent, permission: 'manage_payments' },
   { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin' },
   { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, permission: 'manage_banners' },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
@@ -53,7 +50,6 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean })[] = 
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
   { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true },
-  { id: 'refunds', title: 'Reembolsos', icon: RotateCcw, component: AdminRefundsContent, permission: 'manage_payments' },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
