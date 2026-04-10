@@ -1,80 +1,26 @@
 
-# Preparar o APK com Todos os Recursos Nativos
 
-## Resumo
-Implementar todos os plugins nativos do Capacitor que nao podem ser adicionados depois via deploy web. Isso inclui controle da barra de status, deteccao de rede, comportamento do teclado, compartilhamento nativo, navegador externo, safe areas e refresh automatico ao voltar ao app.
+## Correções no Menu Mobile — Bottom Nav
 
-## O que ja esta pronto
-- Splash Screen configurada
-- Botao voltar do Android com dialogo de saida
-- Carteirinha digital com modo offline (cache 24h)
+### Problemas identificados
 
-## O que sera implementado
+1. **Badge de notificações desalinhado**: O badge de contagem no ícone do sino empurra o ícone para cima porque o `div` container com `relative` + badge absoluto não mantém altura consistente com os outros ícones.
 
-### 1. Safe Area (index.html + index.css)
-Adicionar `viewport-fit=cover` na meta viewport do `index.html` e CSS com `env(safe-area-inset-*)` no `index.css` para garantir que o conteudo nao fique atras do notch ou barra de navegacao por gestos.
+2. **Menu "Mais" não clicável**: O overlay (z-30) cobre o painel slide-up (z-35). O valor `z-35` não é um z-index padrão do Tailwind — ele não existe por default, então o painel fica **atrás** do overlay, tornando os botões não clicáveis.
 
-### 2. Configurar capacitor.config.ts
-Adicionar configuracoes dos plugins StatusBar e Keyboard:
-- StatusBar: cor verde da marca (#16a34a), estilo claro
-- Keyboard: modo de redimensionamento para evitar layout quebrado em formularios
+### Correções
 
-### 3. Criar src/lib/native.ts
-Modulo utilitario com funcoes que usam import dinamico (funciona tanto no app nativo quanto no browser):
-- `configureStatusBar()` -- aplica cor e estilo da barra de status
-- `shareContent(title, text, url?)` -- abre menu de compartilhamento nativo do Android
-- `openExternalUrl(url)` -- abre link no navegador nativo (fora da WebView)
+**Arquivo: `src/components/layout/Sidebar.tsx`**
 
-### 4. Criar src/hooks/useNetworkStatus.ts
-Hook que detecta quando o usuario perde conexao e mostra um toast/banner:
-- Ouve eventos `online`/`offline` do navegador
-- No app nativo, usa `@capacitor/network` para deteccao mais precisa
-- Mostra toast "Voce esta sem internet" ao ficar offline
+1. **Badge de notificações** (linhas 248-255): Garantir que o container do ícone tenha altura fixa para não ser empurrado pelo badge. Adicionar `h-[22px]` ao `div.relative` que envolve o ícone, para que o badge não afete o fluxo de layout.
 
-### 5. Criar src/hooks/useAppResume.ts
-Hook que invalida queries do React Query quando o app volta do background:
-- Usa evento `appStateChange` do `@capacitor/app` (ja instalado)
-- Ao retornar ao foreground, invalida todas as queries para buscar dados frescos
+2. **Z-index do menu slide-up** (linha 280): Trocar `z-35` por `z-50` (valor válido do Tailwind). O overlay na linha 279 deve ser `z-40` (ou manter `z-30` e o painel em `z-[45]`). A solução mais limpa:
+   - Overlay: `z-[60]` 
+   - Painel slide-up: `z-[70]`
+   - Isso garante que ambos fiquem acima do bottom nav (`z-40`) e que o painel fique acima do overlay.
 
-### 6. Atualizar src/main.tsx
-Chamar `configureStatusBar()` na inicializacao do app para aplicar a cor da barra de status imediatamente ao abrir.
+### Resumo das mudanças
+- 1 arquivo modificado: `src/components/layout/Sidebar.tsx`
+- ~4 linhas alteradas
+- Sem mudanças de lógica, apenas CSS/z-index
 
-### 7. Atualizar src/App.tsx
-Integrar os novos hooks `useNetworkStatus` e `useAppResume` no componente `AppRoutes`.
-
-### 8. Adicionar botao de compartilhar na carteirinha
-No `MembershipCard.tsx`, adicionar um botao "Compartilhar" ao lado do "Baixar Carteirinha" que usa a funcao `shareContent` para abrir o menu nativo de compartilhamento.
-
----
-
-## Detalhes tecnicos
-
-**Dependencias novas (npm install):**
-```
-@capacitor/status-bar
-@capacitor/keyboard
-@capacitor/network
-@capacitor/share
-@capacitor/browser
-```
-
-**Arquivos a criar:**
-- `src/lib/native.ts`
-- `src/hooks/useNetworkStatus.ts`
-- `src/hooks/useAppResume.ts`
-
-**Arquivos a modificar:**
-- `index.html` -- adicionar `viewport-fit=cover`
-- `src/index.css` -- adicionar padding com safe-area-inset
-- `capacitor.config.ts` -- configs de StatusBar e Keyboard
-- `src/main.tsx` -- inicializar StatusBar
-- `src/App.tsx` -- usar hooks de network e resume
-- `src/pages/MembershipCard.tsx` -- botao compartilhar
-
-**Todas as funcoes nativas usam import dinamico** (`await import(...)`) com try/catch, entao funcionam no browser sem erro -- so ativam no app nativo.
-
-**Apos aprovacao**, voce precisara rodar no projeto local:
-```bash
-npm install @capacitor/status-bar @capacitor/keyboard @capacitor/network @capacitor/share @capacitor/browser
-npx cap sync
-```
