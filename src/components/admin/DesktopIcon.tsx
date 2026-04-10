@@ -14,9 +14,9 @@ interface DesktopIconProps {
   onContextMenu: (appId: string, x: number, y: number) => void;
 }
 
-const CELL_W = 96;
-const CELL_H = 100;
-const GAP = 8;
+const CELL_W = 112;
+const CELL_H = 116;
+const GAP = 10;
 
 export function DesktopIcon({ icon: Icon, label, appId, gridPosition, badge, onOpen, onPositionChange, occupiedCells, onContextMenu }: DesktopIconProps) {
   const [isDragging, setIsDragging] = useState(false);
