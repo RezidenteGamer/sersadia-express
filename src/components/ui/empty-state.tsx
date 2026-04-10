@@ -1,6 +1,7 @@
 import { LucideIcon } from 'lucide-react';
 import { Button } from './button';
 import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -44,5 +45,3 @@ export function EmptyState({
     </div>
   );
 }
-
-import { cn } from '@/lib/utils';
