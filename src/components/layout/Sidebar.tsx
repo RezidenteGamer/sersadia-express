@@ -245,7 +245,7 @@ export function Sidebar() {
                 to={item.href}
                 className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2"
               >
-                <div className="relative">
+                <div className="relative h-[22px]">
                   <Icon className={cn("w-[22px] h-[22px] transition-colors", isActive ? "text-primary" : "text-sidebar-foreground/70")} />
                   {showBadge && (
                     <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5">
@@ -276,8 +276,8 @@ export function Sidebar() {
       {/* Mobile slide-up menu */}
       {isMobileOpen && (
         <>
-          <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setIsMobileOpen(false)} />
-          <div className="lg:hidden fixed bottom-16 left-0 right-0 z-35 bg-card rounded-t-2xl shadow-2xl p-4 space-y-1 animate-slide-up" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-[60]" onClick={() => setIsMobileOpen(false)} />
+          <div className="lg:hidden fixed bottom-16 left-0 right-0 z-[70] bg-card rounded-t-2xl shadow-2xl p-4 space-y-1 animate-slide-up" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
             <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
             
             {/* Support */}
