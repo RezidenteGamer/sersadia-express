@@ -302,6 +302,7 @@ export function AdminDesktop() {
             icon={app.icon}
             label={app.title}
             appId={app.id}
+            imageIcon={app.imageIcon}
             gridPosition={resolvedPositions[app.id] || { col: 0, row: 0 }}
             onOpen={() => handleOpenWindow(app)}
             onPositionChange={handleIconPositionChange}
