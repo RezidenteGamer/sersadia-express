@@ -1,19 +1,19 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAllReservations } from '@/hooks/useReservations';
 import { usePayments } from '@/hooks/usePayments';
 import { useLocations } from '@/hooks/useLocations';
-import type { Reservation } from '@/hooks/useReservations';
 import type { Payment } from '@/hooks/usePayments';
 import type { StatusFilter, QuickFilter, ReservationWithDetails } from './types';
 import type { Enums } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
+import type { DateRange } from 'react-day-picker';
 
 export function useReservationCenter() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [quickFilter, setQuickFilter] = useState<QuickFilter | null>(null);
   const [locationFilter, setLocationFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Map status filter to actual DB statuses
@@ -25,10 +25,15 @@ export function useReservationCenter() {
     expired: ['expired'],
   };
 
+  // Convert dateRange to start/end date strings for the query
+  const startDate = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
+  const endDate = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
+
   const { data: reservations, isLoading: loadingReservations } = useAllReservations({
     statuses: statusFilter !== 'all' ? statusMap[statusFilter] : undefined,
     locationId: locationFilter !== 'all' ? locationFilter : undefined,
-    date: dateFilter || undefined,
+    startDate,
+    endDate,
   });
 
   const { data: allPayments } = usePayments();
@@ -38,7 +43,6 @@ export function useReservationCenter() {
   const paymentMap = useMemo(() => {
     const map = new Map<string, Payment>();
     allPayments?.forEach(p => {
-      // Keep the first (most relevant) payment per reservation
       if (!map.has(p.reservation_id)) {
         map.set(p.reservation_id, p);
       }
@@ -59,7 +63,6 @@ export function useReservationCenter() {
   const filtered = useMemo(() => {
     let result = enrichedReservations;
 
-    // Search
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(r =>
@@ -70,7 +73,6 @@ export function useReservationCenter() {
       );
     }
 
-    // Quick filters
     if (quickFilter === 'today') {
       const today = new Date().toISOString().split('T')[0];
       result = result.filter(r => r.reservation_date === today);
@@ -118,12 +120,8 @@ export function useReservationCenter() {
   useEffect(() => {
     const channel = supabase
       .channel('reservation-center')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
-        // React Query will handle refetching
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
-        // React Query will handle refetching
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {})
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {})
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -134,7 +132,7 @@ export function useReservationCenter() {
     statusFilter, setStatusFilter,
     quickFilter, setQuickFilter,
     locationFilter, setLocationFilter,
-    dateFilter, setDateFilter,
+    dateRange, setDateRange,
     selectedId, setSelectedId,
     filtered,
     stats,
