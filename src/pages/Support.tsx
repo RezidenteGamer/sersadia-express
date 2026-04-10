@@ -12,6 +12,7 @@ import { useUserTickets, useCreateTicket, useRateTicket, useSupportRealtime } fr
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { SupportTicket } from '@/hooks/useSupport';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function Support() {
   const { data: tickets = [], isLoading } = useUserTickets();
@@ -41,7 +42,6 @@ export default function Support() {
     });
   };
 
-  // If a ticket is selected, show the chat
   if (selectedTicket) {
     return (
       <AppLayout>
@@ -55,49 +55,45 @@ export default function Support() {
               </div>
             </div>
           </div>
-          <SupportChat
-            ticketId={selectedTicket.id}
-            ticketStatus={selectedTicket.status}
-            onBack={() => setSelectedTicket(null)}
-          />
+          <SupportChat ticketId={selectedTicket.id} ticketStatus={selectedTicket.status} onBack={() => setSelectedTicket(null)} />
           {selectedTicket.status === 'resolved' && !selectedTicket.rating && (
             <div className="p-3 border-t border-border flex justify-center">
-              <Button variant="outline" size="sm" onClick={() => setRatingTicket(selectedTicket)}>
-                ⭐ Avaliar atendimento
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => setRatingTicket(selectedTicket)}>⭐ Avaliar atendimento</Button>
             </div>
           )}
         </div>
-        <RatingDialog
-          open={!!ratingTicket}
-          onOpenChange={() => setRatingTicket(null)}
-          onRate={handleRate}
-          loading={rateTicket.isPending}
-        />
+        <RatingDialog open={!!ratingTicket} onOpenChange={() => setRatingTicket(null)} onRate={handleRate} loading={rateTicket.isPending} />
       </AppLayout>
     );
   }
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Headset className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold">Suporte</h1>
-          </div>
-          <Button onClick={() => setNewTicketOpen(true)} size="sm">
-            <Plus className="w-4 h-4 mr-1" /> Nova Solicitação
-          </Button>
-        </div>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title="Como podemos ajudar?"
+          description="Nossa equipe está pronta para responder suas dúvidas."
+          action={
+            <Button onClick={() => setNewTicketOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Nova Solicitação
+            </Button>
+          }
+        />
 
         {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
 
         {!isLoading && tickets.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>Nenhuma solicitação de suporte ainda.</p>
-            <p className="text-sm">Clique em "Nova Solicitação" para iniciar.</p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-5">
+              <Headset className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2 font-serif">Nenhuma solicitação</h3>
+            <p className="text-muted-foreground text-sm max-w-sm mb-6">
+              Você não tem solicitações de suporte ainda. Clique abaixo para abrir uma nova.
+            </p>
+            <Button onClick={() => setNewTicketOpen(true)} className="rounded-xl">
+              Abrir Solicitação
+            </Button>
           </div>
         )}
 
@@ -106,47 +102,35 @@ export default function Support() {
             <button
               key={ticket.id}
               onClick={() => setSelectedTicket(ticket)}
-              className="w-full text-left p-4 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
+              className="w-full text-left p-4 rounded-2xl bg-card shadow-sm hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-sm">{ticket.subject}</span>
+                <span className="font-semibold text-sm">{ticket.subject}</span>
                 <TicketStatusBadge status={ticket.status} />
               </div>
               <p className="text-xs text-muted-foreground">
                 {format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
               </p>
               {ticket.status === 'resolved' && !ticket.rating && (
-                <p className="text-xs text-amber-600 mt-1">⭐ Avalie este atendimento</p>
+                <p className="text-xs text-warning mt-1">⭐ Avalie este atendimento</p>
               )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* New Ticket Dialog */}
       <Dialog open={newTicketOpen} onOpenChange={setNewTicketOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Nova Solicitação de Suporte</DialogTitle>
+            <DialogTitle className="font-serif">Nova Solicitação</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Input
-              placeholder="Assunto"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-            />
-            <Textarea
-              placeholder="Descreva o que você precisa..."
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              rows={4}
-            />
+            <Input placeholder="Assunto" value={subject} onChange={e => setSubject(e.target.value)} />
+            <Textarea placeholder="Descreva o que você precisa..." value={message} onChange={e => setMessage(e.target.value)} rows={4} className="rounded-[10px] bg-accent border-input" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewTicketOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={!subject.trim() || !message.trim() || createTicket.isPending}>
-              Enviar
-            </Button>
+            <Button onClick={handleCreate} disabled={!subject.trim() || !message.trim() || createTicket.isPending}>Enviar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export default function Auth() {
     mbrfId: '',
   });
 
-const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
@@ -75,9 +75,7 @@ const [errors, setErrors] = useState<Record<string, string>>({});
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
           result.error.errors.forEach(err => {
-            if (err.path[0]) {
-              fieldErrors[err.path[0] as string] = err.message;
-            }
+            if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
           });
           setErrors(fieldErrors);
           setLoading(false);
@@ -101,9 +99,7 @@ const [errors, setErrors] = useState<Record<string, string>>({});
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
           result.error.errors.forEach(err => {
-            if (err.path[0]) {
-              fieldErrors[err.path[0] as string] = err.message;
-            }
+            if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
           });
           setErrors(fieldErrors);
           setLoading(false);
@@ -118,12 +114,8 @@ const [errors, setErrors] = useState<Record<string, string>>({});
             toast.error(error.message);
           }
         } else {
-          // Update profile with MBRF ID if provided
           if (data?.user && formData.mbrfId) {
-            await supabase
-              .from('profiles')
-              .update({ mbrf_id: formData.mbrfId })
-              .eq('id', data.user.id);
+            await supabase.from('profiles').update({ mbrf_id: formData.mbrfId }).eq('id', data.user.id);
           }
           toast.success('Conta criada com sucesso! Bem-vindo!');
           const redirectTo = searchParams.get('redirect') || '/locations';
@@ -138,27 +130,25 @@ const [errors, setErrors] = useState<Record<string, string>>({});
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-slide-up">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <BrandLogo className="h-14" alt="Ser Sadia Express" />
-          </div>
-          <h1 className="sr-only">Ser Sadia Express</h1>
-          <p className="text-muted-foreground mt-1">Sistema de Reservas</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Warm gradient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(30_25%_96%)_0%,_hsl(30_20%_90%)_100%)]" />
+      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl text-center">
-              {forgotPassword ? 'Recuperar Senha' : isLogin ? 'Entrar' : 'Criar Conta'}
+      <div className="w-full max-w-md animate-slide-up relative z-10">
+        <Card className="shadow-xl rounded-[20px] p-2">
+          <CardHeader className="space-y-1 pb-2 text-center">
+            <div className="flex justify-center mb-2">
+              <BrandLogo className="h-16" alt="Ser Sadia Express" />
+            </div>
+            <CardTitle className="text-2xl font-serif">
+              {forgotPassword ? 'Recuperar Senha' : isLogin ? 'Bem-vindo de volta' : 'Criar Conta'}
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription>
               {forgotPassword
                 ? 'Informe seu email para receber o link de recuperação'
                 : isLogin 
-                  ? 'Entre com suas credenciais para acessar' 
+                  ? 'Entre para gerenciar suas reservas' 
                   : 'Preencha os dados para criar sua conta'}
             </CardDescription>
           </CardHeader>
@@ -169,17 +159,10 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                   <Label htmlFor="resetEmail">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="resetEmail"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="pl-10"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                    />
+                    <Input id="resetEmail" type="email" placeholder="seu@email.com" className="pl-10" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
                   </div>
                 </div>
-                <Button type="submit" className="w-full h-11" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Enviando...' : 'Enviar Link de Recuperação'}
                 </Button>
               </form>
@@ -190,18 +173,9 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                     <Label htmlFor="fullName">Nome Completo</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        type="text"
-                        placeholder="Seu nome completo"
-                        className="pl-10"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      />
+                      <Input id="fullName" type="text" placeholder="Seu nome completo" className="pl-10" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
                     </div>
-                    {errors.fullName && (
-                      <p className="text-sm text-destructive">{errors.fullName}</p>
-                    )}
+                    {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
                   </div>
                 )}
 
@@ -210,22 +184,10 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                     <Label htmlFor="mbrfId">ID MBRF (6 dígitos)</Label>
                     <div className="relative">
                       <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="mbrfId"
-                        type="text"
-                        placeholder="000000"
-                        className="pl-10"
-                        maxLength={6}
-                        value={formData.mbrfId}
-                        onChange={(e) => setFormData({ ...formData, mbrfId: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                      />
+                      <Input id="mbrfId" type="text" placeholder="000000" className="pl-10" maxLength={6} value={formData.mbrfId} onChange={(e) => setFormData({ ...formData, mbrfId: e.target.value.replace(/\D/g, '').slice(0, 6) })} />
                     </div>
-                    {errors.mbrfId && (
-                      <p className="text-sm text-destructive">{errors.mbrfId}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Opcional. Se você é sócio, informe seu ID para ter desconto automaticamente.
-                    </p>
+                    {errors.mbrfId && <p className="text-sm text-destructive">{errors.mbrfId}</p>}
+                    <p className="text-xs text-muted-foreground">Opcional. Se você é sócio, informe seu ID para ter desconto automaticamente.</p>
                   </div>
                 )}
 
@@ -233,54 +195,28 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="pl-10"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
+                    <Input id="email" type="email" placeholder="seu@email.com" className="pl-10" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                   </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Senha</Label>
                     {isLogin && (
-                      <button
-                        type="button"
-                        onClick={() => setForgotPassword(true)}
-                        className="text-xs text-primary hover:underline"
-                      >
+                      <button type="button" onClick={() => setForgotPassword(true)} className="text-xs text-primary hover:underline">
                         Esqueceu a senha?
                       </button>
                     )}
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      className="pl-10 pr-10"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
+                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
+                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                 </div>
 
                 {!isLogin && (
@@ -288,48 +224,31 @@ const [errors, setErrors] = useState<Record<string, string>>({});
                     <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="confirmPassword"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        className="pl-10"
-                        value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      />
+                      <Input id="confirmPassword" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                    )}
+                    {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
                   </div>
                 )}
 
-                <Button type="submit" className="w-full h-11" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Carregando...' : isLogin ? 'Entrar' : 'Criar Conta'}
                 </Button>
               </form>
             )}
 
             <div className="mt-6 space-y-3 text-center">
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+                <div className="relative flex justify-center"><span className="bg-card px-3 text-xs text-muted-foreground">ou</span></div>
+              </div>
+
               <p className="text-sm text-muted-foreground">
                 {forgotPassword ? (
-                  <button
-                    type="button"
-                    onClick={() => setForgotPassword(false)}
-                    className="text-primary font-medium hover:underline"
-                  >
-                    Voltar ao login
-                  </button>
+                  <button type="button" onClick={() => setForgotPassword(false)} className="text-primary font-medium hover:underline">Voltar ao login</button>
                 ) : (
                   <>
                     {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsLogin(!isLogin);
-                        setErrors({});
-                      }}
-                      className="ml-1 text-primary font-medium hover:underline"
-                    >
+                    <button type="button" onClick={() => { setIsLogin(!isLogin); setErrors({}); }} className="ml-1 text-primary font-medium hover:underline">
                       {isLogin ? 'Criar conta' : 'Fazer login'}
                     </button>
                   </>
