@@ -245,10 +245,10 @@ export function Sidebar() {
                 to={item.href}
                 className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2"
               >
-                <div className="relative w-[22px] h-[22px]">
-                  <Icon className={cn("w-[22px] h-[22px] transition-colors", isActive ? "text-primary" : "text-sidebar-foreground/70")} />
+                <div className="relative w-[22px] h-[22px] flex-shrink-0">
+                  <Icon className={cn("w-[22px] h-[22px] absolute inset-0 transition-colors", isActive ? "text-primary" : "text-sidebar-foreground/70")} />
                   {showBadge && (
-                    <span className="absolute -top-2 -right-3 bg-destructive text-white text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5 pointer-events-none">
+                    <span className="absolute -top-1 -right-2 bg-destructive text-white text-[7px] font-bold min-w-[12px] h-[12px] rounded-full flex items-center justify-center px-0.5 pointer-events-none leading-none z-10">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
