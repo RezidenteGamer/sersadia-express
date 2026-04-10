@@ -91,7 +91,7 @@ export default function Locations() {
                   {location.name}
                 </h3>
                 {/* Capacity badge */}
-                <span className="absolute bottom-3 right-4 bg-white/90 text-foreground text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+                <span className="absolute bottom-3 right-4 bg-white/90 text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm" style={{ color: '#1C1410' }}>
                   👥 {location.capacity} pessoas
                 </span>
               </div>
