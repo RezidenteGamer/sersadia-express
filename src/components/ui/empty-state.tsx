@@ -1,6 +1,8 @@
 import { LucideIcon } from 'lucide-react';
 import { Button } from './button';
 import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+
 interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
@@ -10,23 +12,36 @@ interface EmptyStateProps {
     onClick: () => void;
   };
   children?: ReactNode;
+  tint?: 'green' | 'amber' | 'neutral';
 }
+
+const tintClasses = {
+  green: 'bg-success/10',
+  amber: 'bg-warning/10',
+  neutral: 'bg-accent',
+};
+
 export function EmptyState({
   icon: Icon,
   title,
   description,
   action,
-  children
+  children,
+  tint = 'neutral',
 }: EmptyStateProps) {
-  return <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary-foreground">
-        <Icon className="w-8 h-8 text-muted-foreground" />
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div className={cn("w-20 h-20 rounded-full flex items-center justify-center mb-5", tintClasses[tint])}>
+        <Icon className="w-10 h-10 text-muted-foreground" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground max-w-sm mb-6">{description}</p>
-      {action && <Button onClick={action.onClick}>
+      <h3 className="text-xl font-semibold text-foreground mb-2 font-serif">{title}</h3>
+      <p className="text-muted-foreground max-w-sm mb-6 text-sm">{description}</p>
+      {action && (
+        <Button onClick={action.onClick} className="rounded-xl">
           {action.label}
-        </Button>}
+        </Button>
+      )}
       {children}
-    </div>;
+    </div>
+  );
 }

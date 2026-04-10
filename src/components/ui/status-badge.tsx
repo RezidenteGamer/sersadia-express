@@ -14,34 +14,41 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<ReservationStatus, { label: string; className: string }> = {
+const statusConfig: Record<ReservationStatus, { label: string; icon: string; className: string }> = {
   pending: {
     label: 'Pendente',
+    icon: '⏱',
     className: 'bg-warning/10 text-warning border-warning/20',
   },
   confirmed: {
     label: 'Confirmada',
+    icon: '✓',
     className: 'bg-success/10 text-success border-success/20',
   },
   rejected: {
     label: 'Recusada',
+    icon: '✕',
     className: 'bg-destructive/10 text-destructive border-destructive/20',
   },
   cancelled_by_user: {
-    label: 'Cancelada (Usuário)',
-    className: 'bg-muted text-muted-foreground border-muted',
+    label: 'Cancelada',
+    icon: '✕',
+    className: 'bg-primary/8 text-primary border-primary/15',
   },
   cancelled_by_admin: {
     label: 'Cancelada (Admin)',
-    className: 'bg-muted text-muted-foreground border-muted',
+    icon: '✕',
+    className: 'bg-muted text-muted-foreground border-border',
   },
   expired: {
     label: 'Expirada',
-    className: 'bg-muted text-muted-foreground border-muted',
+    icon: '—',
+    className: 'bg-muted text-muted-foreground border-border',
   },
   presence_confirmed: {
     label: 'Presença Confirmada',
-    className: 'bg-primary/10 text-primary border-primary/20',
+    icon: '✓',
+    className: 'bg-success/10 text-success border-success/20',
   },
 };
 
@@ -51,11 +58,12 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span 
       className={cn(
-        "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border",
+        "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border",
         config.className,
         className
       )}
     >
+      <span>{config.icon}</span>
       {config.label}
     </span>
   );

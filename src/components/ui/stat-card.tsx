@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useRef, useState } from 'react';
 
 interface StatCardProps {
   title: string;
@@ -14,10 +15,10 @@ interface StatCardProps {
 
 const variantClasses = {
   default: 'bg-card',
-  primary: 'bg-primary/5 border-primary/20',
-  success: 'bg-success/5 border-success/20',
-  warning: 'bg-warning/5 border-warning/20',
-  destructive: 'bg-destructive/5 border-destructive/20',
+  primary: 'bg-card',
+  success: 'bg-card',
+  warning: 'bg-card',
+  destructive: 'bg-card',
 };
 
 const iconVariantClasses = {
@@ -28,16 +29,46 @@ const iconVariantClasses = {
   destructive: 'bg-destructive/10 text-destructive',
 };
 
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<number>(0);
+  
+  useEffect(() => {
+    const duration = 600;
+    const start = ref.current;
+    const diff = value - start;
+    const startTime = performance.now();
+    
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + diff * eased);
+      setDisplay(current);
+      ref.current = current;
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    
+    requestAnimationFrame(animate);
+  }, [value]);
+  
+  return <>{display}</>;
+}
+
 export function StatCard({ title, value, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+  const numericValue = typeof value === 'number' ? value : parseInt(value) || 0;
+  
   return (
     <div className={cn(
-      "rounded-xl border p-6 transition-all hover:shadow-md",
+      "rounded-2xl shadow-md p-5 transition-all hover:shadow-lg",
       variantClasses[variant]
     )}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">{title}</p>
-          <p className="text-3xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide font-medium">{title}</p>
+          <p className="text-3xl font-bold text-foreground font-serif">
+            {typeof value === 'number' ? <AnimatedNumber value={numericValue} /> : value}
+          </p>
           {trend && (
             <p className={cn(
               "text-sm mt-1",
@@ -48,10 +79,10 @@ export function StatCard({ title, value, icon: Icon, trend, variant = 'default' 
           )}
         </div>
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center",
+          "w-11 h-11 rounded-full flex items-center justify-center",
           iconVariantClasses[variant]
         )}>
-          <Icon className="w-6 h-6" />
+          <Icon className="w-5 h-5" />
         </div>
       </div>
     </div>
