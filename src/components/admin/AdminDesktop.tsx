@@ -45,15 +45,15 @@ import { AdminFinancialReportsContent } from '@/pages/admin/AdminFinancialReport
 import { AdminPixSettingsContent } from '@/pages/admin/AdminPixSettings';
 import { ReservationCommandCenterContent } from '@/pages/admin/ReservationCommandCenter';
 
-const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean; defaultSize?: { width: number; height: number } })[] = [
-  { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true },
-  { id: 'locations', title: 'Locais', icon: MapPin, component: AdminLocationsContent, permission: 'manage_locations' },
-  { id: 'reservation-center', title: 'Central de Reservas', icon: CalendarCheck2, component: ReservationCommandCenterContent, permission: 'manage_reservations', defaultSize: { width: 1100, height: 680 } },
-  { id: 'members', title: 'Sócios', icon: Users, component: AdminMembersContent, permission: 'manage_members' },
+const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean; defaultSize?: { width: number; height: number }; imageIcon?: string })[] = [
+  { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, component: AdminDashboardContent, adminOnly: true, imageIcon: iconDashboard },
+  { id: 'locations', title: 'Locais', icon: MapPin, component: AdminLocationsContent, permission: 'manage_locations', imageIcon: iconLocations },
+  { id: 'reservation-center', title: 'Central de Reservas', icon: CalendarCheck2, component: ReservationCommandCenterContent, permission: 'manage_reservations', defaultSize: { width: 1100, height: 680 }, imageIcon: iconReservations },
+  { id: 'members', title: 'Sócios', icon: Users, component: AdminMembersContent, permission: 'manage_members', imageIcon: iconMembers },
   { id: 'users', title: 'Usuários', icon: Settings, component: AdminUsersContent, permission: 'manage_users' },
-  { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin' },
-  { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, permission: 'manage_banners' },
-  { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports' },
+  { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin', imageIcon: iconCheckin },
+  { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, permission: 'manage_banners', imageIcon: iconBanners },
+  { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports', imageIcon: iconReports },
   { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'view_financial_reports' },
   { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
   { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
