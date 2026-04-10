@@ -5,6 +5,14 @@ import {
   UserCheck, Image, BarChart3, FolderOpen, Trash2,
   ExternalLink, Paintbrush, Volume2, VolumeX, Activity, Maximize, Sun, Moon, Headset, FileText, DollarSign, QrCode, CalendarCheck2
 } from 'lucide-react';
+
+import iconDashboard from '@/assets/admin-icons/dashboard.png';
+import iconLocations from '@/assets/admin-icons/locations.png';
+import iconReservations from '@/assets/admin-icons/reservations.png';
+import iconMembers from '@/assets/admin-icons/members.png';
+import iconCheckin from '@/assets/admin-icons/checkin.png';
+import iconReports from '@/assets/admin-icons/reports.png';
+import iconBanners from '@/assets/admin-icons/banners.png';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
 import { DesktopTaskbar } from './DesktopTaskbar';
