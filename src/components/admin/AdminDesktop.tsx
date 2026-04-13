@@ -13,6 +13,11 @@ import iconMembers from '@/assets/admin-icons/members.png';
 import iconCheckin from '@/assets/admin-icons/checkin.png';
 import iconReports from '@/assets/admin-icons/reports.png';
 import iconBanners from '@/assets/admin-icons/banners.png';
+import iconFinancial from '@/assets/admin-icons/financial.png';
+import iconSupport from '@/assets/admin-icons/support.png';
+import iconDocs from '@/assets/admin-icons/docs.png';
+import iconPix from '@/assets/admin-icons/pix.png';
+import iconUsers from '@/assets/admin-icons/users.png';
 import { useDesktopManager, DesktopApp } from './useDesktopManager';
 import { DesktopWindow } from './DesktopWindow';
 import { DesktopTaskbar } from './DesktopTaskbar';
@@ -50,14 +55,14 @@ const ALL_APPS: (DesktopApp & { permission?: string; adminOnly?: boolean; defaul
   { id: 'locations', title: 'Locais', icon: MapPin, component: AdminLocationsContent, permission: 'manage_locations', imageIcon: iconLocations },
   { id: 'reservation-center', title: 'Central de Reservas', icon: CalendarCheck2, component: ReservationCommandCenterContent, permission: 'manage_reservations', defaultSize: { width: 1100, height: 680 }, imageIcon: iconReservations },
   { id: 'members', title: 'Sócios', icon: Users, component: AdminMembersContent, permission: 'manage_members', imageIcon: iconMembers },
-  { id: 'users', title: 'Usuários', icon: Settings, component: AdminUsersContent, permission: 'manage_users' },
+  { id: 'users', title: 'Usuários', icon: Settings, component: AdminUsersContent, permission: 'manage_users', imageIcon: iconUsers },
   { id: 'checkin', title: 'Check-in', icon: UserCheck, component: AdminCheckinContent, permission: 'manage_checkin', imageIcon: iconCheckin },
   { id: 'banners', title: 'Banners', icon: Image, component: AdminBannersContent, permission: 'manage_banners', imageIcon: iconBanners },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, component: AdminReportsContent, permission: 'view_reports', imageIcon: iconReports },
-  { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'view_financial_reports' },
-  { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support' },
-  { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true },
-  { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true },
+  { id: 'financial-reports', title: 'Financeiro', icon: DollarSign, component: AdminFinancialReportsContent, permission: 'view_financial_reports', imageIcon: iconFinancial },
+  { id: 'support', title: 'Suporte', icon: Headset, component: AdminSupportContent, permission: 'manage_support', imageIcon: iconSupport },
+  { id: 'docs', title: 'Documentação', icon: FileText, component: AdminDocsContent, adminOnly: true, imageIcon: iconDocs },
+  { id: 'pix-settings', title: 'Config. PIX', icon: QrCode, component: AdminPixSettingsContent, adminOnly: true, imageIcon: iconPix },
 ];
 
 const STORAGE_KEY = 'admin-desktop-icon-positions';
