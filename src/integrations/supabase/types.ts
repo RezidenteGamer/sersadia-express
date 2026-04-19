@@ -688,6 +688,7 @@ export type Database = {
         | "manage_banners"
         | "manage_members"
         | "view_financial_reports"
+        | "manage_pix"
       app_role: "admin" | "user"
       reservation_status:
         | "pending"
@@ -836,6 +837,7 @@ export const Constants = {
         "manage_banners",
         "manage_members",
         "view_financial_reports",
+        "manage_pix",
       ],
       app_role: ["admin", "user"],
       reservation_status: [

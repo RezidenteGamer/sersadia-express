@@ -31,6 +31,7 @@ import AdminDocs from "./pages/admin/AdminDocs";
 import AdminFinancialReports from "./pages/admin/AdminFinancialReports";
 import AdminPixSettings from "./pages/admin/AdminPixSettings";
 import AdminRefunds from "./pages/admin/AdminRefunds";
+import AccessDenied from "./pages/AccessDenied";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useAppResume } from "./hooks/useAppResume";
@@ -67,7 +68,7 @@ function AdminRoute({ children, permission }: { children: React.ReactNode; permi
   }
 
   if (permission && !permissions.includes(permission)) {
-    return <Navigate to="/admin" replace />;
+    return <AccessDenied requiredPermission={permission} />;
   }
 
   return <>{children}</>;
@@ -119,7 +120,7 @@ function AppRoutes() {
         <Route path="/admin/support" element={<AdminRoute permission="manage_support"><AdminSupport /></AdminRoute>} />
         <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
         <Route path="/admin/financial-reports" element={<AdminRoute permission="view_financial_reports"><AdminFinancialReports /></AdminRoute>} />
-        <Route path="/admin/pix-settings" element={<AdminRoute><AdminPixSettings /></AdminRoute>} />
+        <Route path="/admin/pix-settings" element={<AdminRoute permission="manage_pix"><AdminPixSettings /></AdminRoute>} />
         <Route path="/admin/refunds" element={<AdminRoute permission="manage_payments"><AdminRefunds /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
