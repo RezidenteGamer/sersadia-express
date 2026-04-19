@@ -52,7 +52,7 @@ export function Sidebar() {
 
   const hasPermission = (permission?: string) => {
     if (!permission) return true;
-    return isAdmin || permissions.includes(permission);
+    return permissions.includes(permission);
   };
 
   const filteredAdminItems = adminNavItems.filter(item => {
