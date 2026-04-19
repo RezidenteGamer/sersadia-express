@@ -26,6 +26,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   view_reports: 'Visualizar Relatórios',
   view_financial_reports: 'Relatórios Financeiros',
   manage_support: 'Gerenciar Suporte',
+  manage_pix: 'Gerenciar PIX',
 };
 
 const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
