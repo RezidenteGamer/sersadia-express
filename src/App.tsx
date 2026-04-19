@@ -31,6 +31,7 @@ import AdminDocs from "./pages/admin/AdminDocs";
 import AdminFinancialReports from "./pages/admin/AdminFinancialReports";
 import AdminPixSettings from "./pages/admin/AdminPixSettings";
 import AdminRefunds from "./pages/admin/AdminRefunds";
+import AccessDenied from "./pages/AccessDenied";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useAppResume } from "./hooks/useAppResume";
