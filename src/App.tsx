@@ -51,8 +51,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, loading } = useAuth();
+function AdminRoute({ children, permission }: { children: React.ReactNode; permission?: string }) {
+  const { user, isAdmin, permissions, loading } = useAuth();
 
   if (loading) {
     return <LoadingPage />;
@@ -64,6 +64,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (permission && !permissions.includes(permission)) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
