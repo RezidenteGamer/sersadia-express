@@ -68,7 +68,7 @@ function AdminRoute({ children, permission }: { children: React.ReactNode; permi
   }
 
   if (permission && !permissions.includes(permission)) {
-    return <Navigate to="/admin" replace />;
+    return <AccessDenied requiredPermission={permission} />;
   }
 
   return <>{children}</>;
