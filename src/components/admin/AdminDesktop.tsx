@@ -143,7 +143,7 @@ export function AdminDesktop() {
   const availableApps = useMemo(() => {
     return ALL_APPS.filter(app => {
       if (app.adminOnly) return isAdmin;
-      if (app.permission) return isAdmin || permissions.includes(app.permission);
+      if (app.permission) return permissions.includes(app.permission);
       return true;
     });
   }, [isAdmin, permissions]);
