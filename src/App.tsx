@@ -120,7 +120,7 @@ function AppRoutes() {
         <Route path="/admin/support" element={<AdminRoute permission="manage_support"><AdminSupport /></AdminRoute>} />
         <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
         <Route path="/admin/financial-reports" element={<AdminRoute permission="view_financial_reports"><AdminFinancialReports /></AdminRoute>} />
-        <Route path="/admin/pix-settings" element={<AdminRoute><AdminPixSettings /></AdminRoute>} />
+        <Route path="/admin/pix-settings" element={<AdminRoute permission="manage_pix"><AdminPixSettings /></AdminRoute>} />
         <Route path="/admin/refunds" element={<AdminRoute permission="manage_payments"><AdminRefunds /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
