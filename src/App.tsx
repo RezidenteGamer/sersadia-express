@@ -51,8 +51,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, loading } = useAuth();
+function AdminRoute({ children, permission }: { children: React.ReactNode; permission?: string }) {
+  const { user, isAdmin, permissions, loading } = useAuth();
 
   if (loading) {
     return <LoadingPage />;
@@ -64,6 +64,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (permission && !permissions.includes(permission)) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
@@ -104,19 +108,19 @@ function AppRoutes() {
         <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
         <Route path="/carteirinha" element={<ProtectedRoute><MembershipCard /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/locations" element={<AdminRoute><AdminLocations /></AdminRoute>} />
-        <Route path="/admin/reservations" element={<AdminRoute><AdminReservations /></AdminRoute>} />
-        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-        <Route path="/admin/payments" element={<AdminRoute><AdminPayments /></AdminRoute>} />
-        <Route path="/admin/checkin" element={<AdminRoute><AdminCheckin /></AdminRoute>} />
-        <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
-        <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
-        <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
-        <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
+        <Route path="/admin/locations" element={<AdminRoute permission="manage_locations"><AdminLocations /></AdminRoute>} />
+        <Route path="/admin/reservations" element={<AdminRoute permission="manage_reservations"><AdminReservations /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute permission="manage_users"><AdminUsers /></AdminRoute>} />
+        <Route path="/admin/payments" element={<AdminRoute permission="manage_payments"><AdminPayments /></AdminRoute>} />
+        <Route path="/admin/checkin" element={<AdminRoute permission="manage_checkin"><AdminCheckin /></AdminRoute>} />
+        <Route path="/admin/reports" element={<AdminRoute permission="view_reports"><AdminReports /></AdminRoute>} />
+        <Route path="/admin/members" element={<AdminRoute permission="manage_members"><AdminMembers /></AdminRoute>} />
+        <Route path="/admin/banners" element={<AdminRoute permission="manage_banners"><AdminBanners /></AdminRoute>} />
+        <Route path="/admin/support" element={<AdminRoute permission="manage_support"><AdminSupport /></AdminRoute>} />
         <Route path="/admin/docs" element={<AdminRoute><AdminDocs /></AdminRoute>} />
-        <Route path="/admin/financial-reports" element={<AdminRoute><AdminFinancialReports /></AdminRoute>} />
+        <Route path="/admin/financial-reports" element={<AdminRoute permission="view_financial_reports"><AdminFinancialReports /></AdminRoute>} />
         <Route path="/admin/pix-settings" element={<AdminRoute><AdminPixSettings /></AdminRoute>} />
-        <Route path="/admin/refunds" element={<AdminRoute><AdminRefunds /></AdminRoute>} />
+        <Route path="/admin/refunds" element={<AdminRoute permission="manage_payments"><AdminRefunds /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
