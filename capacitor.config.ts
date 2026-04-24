@@ -27,6 +27,13 @@ const config: CapacitorConfig = {
       resize: 'body',
       resizeOnFullScreen: true,
     },
+    GoogleAuth: {
+      // Substitua pelo seu Web Client ID do Google Cloud Console (tipo: Web application).
+      // Deve ser o MESMO ID usado em VITE_GOOGLE_WEB_CLIENT_ID no .env e no strings.xml do Android.
+      scopes: ['profile', 'email'],
+      serverClientId: 'COLOQUE_SEU_WEB_CLIENT_ID_AQUI.apps.googleusercontent.com',
+      forceCodeForRefreshToken: true,
+    },
   },
 };
 
