@@ -10,6 +10,7 @@ import { Eye, EyeOff, Mail, Lock, User, IdCard, MapPin } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
+import { signInWithGoogleNative } from '@/lib/googleAuthNative';
 import { BrandLogo } from '@/components/BrandLogo';
 
 const loginSchema = z.object({
