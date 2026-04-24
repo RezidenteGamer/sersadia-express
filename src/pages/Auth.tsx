@@ -252,6 +252,20 @@ export default function Auth() {
                   disabled={loading}
                   onClick={async () => {
                     setLoading(true);
+                    // Try native Google Sign-In first (Capacitor on Android/iOS)
+                    const nativeResult = await signInWithGoogleNative();
+                    if (nativeResult.native) {
+                      if (nativeResult.ok) {
+                        toast.success('Login realizado com sucesso!');
+                        const redirectTo = searchParams.get('redirect') || '/locations';
+                        navigate(redirectTo);
+                      } else if (nativeResult.error !== 'cancelled') {
+                        toast.error('Erro ao entrar com Google: ' + nativeResult.error);
+                      }
+                      setLoading(false);
+                      return;
+                    }
+                    // Web fallback (browser)
                     const result = await lovable.auth.signInWithOAuth('google', {
                       redirect_uri: window.location.origin + (searchParams.get('redirect') || '/locations'),
                     });
