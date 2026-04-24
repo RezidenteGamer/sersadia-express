@@ -255,14 +255,12 @@ export default function Auth() {
                     // Try native Google Sign-In first (Capacitor on Android/iOS)
                     const nativeResult = await signInWithGoogleNative();
                     if (nativeResult.native) {
-                      if (nativeResult.ok) {
+                      if (nativeResult.ok === true) {
                         toast.success('Login realizado com sucesso!');
                         const redirectTo = searchParams.get('redirect') || '/locations';
                         navigate(redirectTo);
-                      } else {
-                        if (nativeResult.error !== 'cancelled') {
-                          toast.error('Erro ao entrar com Google: ' + nativeResult.error);
-                        }
+                      } else if (nativeResult.error !== 'cancelled') {
+                        toast.error('Erro ao entrar com Google: ' + nativeResult.error);
                       }
                       setLoading(false);
                       return;
