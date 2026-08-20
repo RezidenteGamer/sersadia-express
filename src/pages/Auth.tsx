@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, IdCard, MapPin } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
 import { signInWithGoogleNative } from '@/lib/googleAuthNative';
 import { BrandLogo } from '@/components/BrandLogo';
 
@@ -267,10 +266,15 @@ export default function Auth() {
                         return;
                       }
                       // Web fallback (browser)
-                      const result = await lovable.auth.signInWithOAuth('google', {
-                        redirect_uri: window.location.origin + (searchParams.get('redirect') || '/locations'),
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                          redirectTo:
+                            window.location.origin +
+                            (searchParams.get('redirect') || '/locations'),
+                        },
                       });
-                      if (result.error) {
+                      if (error) {
                         toast.error('Erro ao entrar com Google');
                         setLoading(false);
                       }
