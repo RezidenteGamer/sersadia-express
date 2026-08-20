@@ -18,6 +18,8 @@ interface AuthContextType {
   isAdmin: boolean;
   permissions: string[];
   loading: boolean;
+  passwordRecovery: boolean;
+  dismissPasswordRecovery: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null; data: { user: User | null } | null }>;
   signOut: () => Promise<void>;
@@ -33,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -76,6 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setPasswordRecovery(true);
+        }
 
         if (session?.user) {
           // Defer Supabase calls with setTimeout
@@ -140,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const dismissPasswordRecovery = () => setPasswordRecovery(false);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -148,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       permissions,
       loading,
+      passwordRecovery,
+      dismissPasswordRecovery,
       signIn,
       signUp,
       signOut,
