@@ -85,16 +85,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (session?.user) {
-          // Defer Supabase calls with setTimeout
+          // Defer Supabase calls with setTimeout; keep loading=true until
+          // profile/role data has actually been fetched, otherwise routes
+          // that gate on isAdmin can redirect before it's set.
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            fetchUserData(session.user.id).finally(() => setLoading(false));
           }, 0);
         } else {
           setProfile(null);
           setIsAdmin(false);
           setPermissions([]);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -103,9 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        fetchUserData(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
