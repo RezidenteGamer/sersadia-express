@@ -1,4 +1,4 @@
-project_id = "irvwzvuwkmkntwkbkuac"
+project_id = "rhdjgvhkalnarnzidmpq"
 
 [functions.expire-reservations]
 verify_jwt = false
