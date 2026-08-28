@@ -35,11 +35,15 @@ export function useUsers() {
       
       if (permissionsError) throw permissionsError;
       
-      return profiles.map(profile => ({
-        ...profile,
-        role: roles.find(r => r.user_id === profile.id),
-        permissions: permissions.filter(p => p.user_id === profile.id),
-      })) as UserWithRole[];
+      return profiles.map(profile => {
+        const userRoles = roles.filter(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          // A user can end up with more than one role row; admin should win.
+          role: userRoles.find(r => r.role === 'admin') || userRoles[0],
+          permissions: permissions.filter(p => p.user_id === profile.id),
+        };
+      }) as UserWithRole[];
     },
   });
 }
