@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,18 +11,21 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  useMembers, 
-  useCreateMember, 
-  useUpdateMember, 
+import {
+  useMembers,
+  useCreateMember,
+  useUpdateMember,
   useToggleMemberStatus,
   useDeleteMember,
-  useLinkMemberToUser 
+  useLinkMemberToUser,
+  useImportMembers,
 } from '@/hooks/useMembers';
 import { useUsers } from '@/hooks/useUsers';
-import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus } from 'lucide-react';
+import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus, Download, Upload } from 'lucide-react';
 import type { Member } from '@/hooks/useMembers';
 import { Tables } from '@/integrations/supabase/types';
+import { exportMembersXlsx, parseMembersXlsx, type MemberSheetRow } from '@/lib/membersSpreadsheet';
+import { toast } from 'sonner';
 
 export function AdminMembersContent() {
   const { data: members, isLoading } = useMembers(true);
@@ -32,7 +35,8 @@ export function AdminMembersContent() {
   const toggleStatus = useToggleMemberStatus();
   const deleteMember = useDeleteMember();
   const linkMember = useLinkMemberToUser();
-  
+  const importMembers = useImportMembers();
+
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -41,6 +45,9 @@ export function AdminMembersContent() {
   const [linkingMember, setLinkingMember] = useState<Member | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<string>('');
+  const [importRows, setImportRows] = useState<MemberSheetRow[] | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -126,6 +133,61 @@ export function AdminMembersContent() {
     }
   };
 
+  const handleExport = async () => {
+    if (!members) return;
+    setIsExporting(true);
+    try {
+      await exportMembersXlsx(
+        members
+          .filter((m) => (m as any).mbrf_id)
+          .map((m) => ({ mbrf_id: (m as any).mbrf_id as string, name: m.name }))
+      );
+    } catch (error) {
+      toast.error('Erro ao gerar planilha: ' + (error as Error).message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    try {
+      const rows = await parseMembersXlsx(file);
+      setImportRows(rows);
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  const importPreview = importRows
+    ? (() => {
+        const existingIds = new Set(
+          (members || []).map((m) => (m as any).mbrf_id).filter(Boolean)
+        );
+        const activeIds = new Set(
+          (members || []).filter((m) => m.is_active).map((m) => (m as any).mbrf_id).filter(Boolean)
+        );
+        const importedIds = new Set(importRows.map((r) => r.mbrf_id));
+        const created = importRows.filter((r) => !existingIds.has(r.mbrf_id)).length;
+        const updated = importRows.filter((r) => existingIds.has(r.mbrf_id)).length;
+        const deactivated = [...activeIds].filter((id) => !importedIds.has(id as string)).length;
+        return { total: importRows.length, created, updated, deactivated };
+      })()
+    : null;
+
+  const handleConfirmImport = async () => {
+    if (!importRows) return;
+    try {
+      await importMembers.mutateAsync(importRows);
+      setImportRows(null);
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
   const filteredMembers = members?.filter(member =>
     member.name.toLowerCase().includes(search.toLowerCase()) ||
     member.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -170,7 +232,34 @@ export function AdminMembersContent() {
         title="Gerenciar Sócios"
         description="Cadastre e gerencie os sócios do clube"
         action={
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={handleFileSelected}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 sm:flex-none"
+              size="sm"
+              disabled={importMembers.isPending}
+            >
+              <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+              Importar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              className="flex-1 sm:flex-none"
+              size="sm"
+              disabled={isExporting || !members?.length}
+            >
+              <Download className="w-4 h-4 mr-1 sm:mr-2" />
+              {isExporting ? 'Gerando...' : 'Exportar'}
+            </Button>
             <Button variant="outline" onClick={() => setShowAddUserDialog(true)} className="flex-1 sm:flex-none" size="sm">
               <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Adicionar </span>Usuário
@@ -425,6 +514,50 @@ export function AdminMembersContent() {
               disabled={linkMember.isPending}
             >
               {linkMember.isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Confirmation Dialog */}
+      <Dialog open={!!importRows} onOpenChange={(open) => { if (!open) setImportRows(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Importação</DialogTitle>
+          </DialogHeader>
+
+          {importPreview && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {importPreview.total} linha(s) lida(s) da planilha. Revise antes de aplicar:
+              </p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xl font-bold text-success">{importPreview.created}</div>
+                  <div className="text-xs text-muted-foreground">Novos sócios</div>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xl font-bold text-primary">{importPreview.updated}</div>
+                  <div className="text-xs text-muted-foreground">Nomes atualizados</div>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-xl font-bold text-destructive">{importPreview.deactivated}</div>
+                  <div className="text-xs text-muted-foreground">Serão desativados</div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sócios ativos que não aparecem nesta planilha serão marcados como inativos.
+                Novos sócios entram como inativos por padrão.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportRows(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmImport} disabled={importMembers.isPending}>
+              {importMembers.isPending ? 'Importando...' : 'Confirmar Importação'}
             </Button>
           </DialogFooter>
         </DialogContent>
