@@ -53,24 +53,20 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' }) => {
-      const { data: existing } = await supabase
+      // Delete-then-insert instead of select+single()+update: a user can end
+      // up with more than one row here (nothing enforces uniqueness on
+      // user_id alone), and .single() throws when more than one row matches,
+      // which surfaced as "Erro ao atualizar o papel" for affected accounts.
+      const { error: deleteError } = await supabase
         .from('user_roles')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
+        .delete()
+        .eq('user_id', userId);
+      if (deleteError) throw deleteError;
 
-      if (existing) {
-        const { error } = await supabase
-          .from('user_roles')
-          .update({ role })
-          .eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role });
-        if (error) throw error;
-      }
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role });
+      if (insertError) throw insertError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
