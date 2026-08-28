@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeMbrfId } from '@/lib/mbrfId';
 import { toast } from 'sonner';
 import { User, Mail, Phone, IdCard, Tag, Save, Camera, CheckCircle2 } from 'lucide-react';
 
@@ -42,7 +43,7 @@ export default function Profile() {
         .update({
           full_name: formData.full_name,
           phone: formData.phone || null,
-          mbrf_id: formData.mbrf_id || null,
+          mbrf_id: normalizeMbrfId(formData.mbrf_id),
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -142,10 +143,10 @@ export default function Profile() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="mbrf_id" className="text-xs uppercase tracking-wide text-muted-foreground font-medium">ID MBRF (6 dígitos)</Label>
+                <Label htmlFor="mbrf_id" className="text-xs uppercase tracking-wide text-muted-foreground font-medium">ID MBRF (8 dígitos)</Label>
                 <div className="relative">
                   <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input id="mbrf_id" type="text" placeholder="000000" className="pl-10" maxLength={6} value={formData.mbrf_id} onChange={(e) => setFormData({ ...formData, mbrf_id: e.target.value.replace(/\D/g, '').slice(0, 6) })} />
+                  <Input id="mbrf_id" type="text" placeholder="00000000" className="pl-10" maxLength={8} value={formData.mbrf_id} onChange={(e) => setFormData({ ...formData, mbrf_id: e.target.value.replace(/\D/g, '').slice(0, 8) })} />
                 </div>
                 <p className="text-xs text-muted-foreground">Seu ID de funcionário para identificação de sócio.</p>
               </div>

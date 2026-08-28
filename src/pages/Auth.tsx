@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, IdCard, MapPin } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeMbrfId } from '@/lib/mbrfId';
 import { signInWithGoogleNative } from '@/lib/googleAuthNative';
 import { BrandLogo } from '@/components/BrandLogo';
 
@@ -19,7 +20,7 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  mbrfId: z.string().regex(/^\d{6}$/, 'ID MBRF deve ter exatamente 6 dígitos').optional().or(z.literal('')),
+  mbrfId: z.string().regex(/^\d{1,8}$/, 'ID MBRF deve ter até 8 dígitos').optional().or(z.literal('')),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
@@ -116,7 +117,7 @@ export default function Auth() {
           }
         } else {
           if (data?.user && formData.mbrfId) {
-            await supabase.from('profiles').update({ mbrf_id: formData.mbrfId }).eq('id', data.user.id);
+            await supabase.from('profiles').update({ mbrf_id: normalizeMbrfId(formData.mbrfId) }).eq('id', data.user.id);
           }
           toast.success('Conta criada com sucesso! Bem-vindo!');
           const redirectTo = searchParams.get('redirect') || '/locations';
@@ -182,10 +183,10 @@ export default function Auth() {
 
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="mbrfId">ID MBRF (6 dígitos)</Label>
+                    <Label htmlFor="mbrfId">ID MBRF (8 dígitos)</Label>
                     <div className="relative">
                       <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="mbrfId" type="text" placeholder="000000" className="pl-10" maxLength={6} value={formData.mbrfId} onChange={(e) => setFormData({ ...formData, mbrfId: e.target.value.replace(/\D/g, '').slice(0, 6) })} />
+                      <Input id="mbrfId" type="text" placeholder="00000000" className="pl-10" maxLength={8} value={formData.mbrfId} onChange={(e) => setFormData({ ...formData, mbrfId: e.target.value.replace(/\D/g, '').slice(0, 8) })} />
                     </div>
                     {errors.mbrfId && <p className="text-sm text-destructive">{errors.mbrfId}</p>}
                     <p className="text-xs text-muted-foreground">Opcional. Se você é sócio, informe seu ID para ter desconto automaticamente.</p>

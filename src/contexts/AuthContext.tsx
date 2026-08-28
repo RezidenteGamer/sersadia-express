@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -36,6 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  // Show the password prompt at most once per page load, even if
+  // Supabase re-emits SIGNED_IN (e.g. on tab focus / session refresh).
+  const hasPromptedPasswordChange = useRef(false);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -80,8 +83,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (event === 'PASSWORD_RECOVERY' || session?.user?.user_metadata?.must_change_password) {
-          setPasswordRecovery(true);
+        // Only prompt once per page load — Supabase can re-emit SIGNED_IN
+        // (tab focus, session refresh) well after the user already
+        // dismissed the modal, which made it keep popping back up.
+        if (!hasPromptedPasswordChange.current) {
+          const shouldPrompt =
+            event === 'PASSWORD_RECOVERY' ||
+            (event === 'SIGNED_IN' && session?.user?.user_metadata?.must_change_password);
+          if (shouldPrompt) {
+            hasPromptedPasswordChange.current = true;
+            setPasswordRecovery(true);
+          }
         }
 
         if (session?.user) {
@@ -104,7 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user?.user_metadata?.must_change_password) {
+      if (!hasPromptedPasswordChange.current && session?.user?.user_metadata?.must_change_password) {
+        hasPromptedPasswordChange.current = true;
         setPasswordRecovery(true);
       }
       if (session?.user) {

@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { normalizeMbrfId } from './mbrfId';
 
 // Matches the layout of the HR-provided "Lista de Sócios" spreadsheet exactly:
 // same headers, column widths, font and fill colors, so files can round-trip
@@ -63,7 +64,7 @@ export async function parseMembersXlsx(file: File): Promise<MemberSheetRow[]> {
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // header
 
-    const mbrfId = String(row.getCell(1).value ?? '').trim();
+    const mbrfId = normalizeMbrfId(String(row.getCell(1).value ?? ''));
     const name = String(row.getCell(2).value ?? '').trim();
     if (!mbrfId || !name) return;
 
