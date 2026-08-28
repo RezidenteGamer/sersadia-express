@@ -250,6 +250,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          is_permanent: boolean
           mbrf_id: string | null
           name: string
           notes: string | null
@@ -263,6 +264,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_permanent?: boolean
           mbrf_id?: string | null
           name: string
           notes?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_permanent?: boolean
           mbrf_id?: string | null
           name?: string
           notes?: string | null

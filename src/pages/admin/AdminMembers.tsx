@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -16,15 +17,17 @@ import {
   useCreateMember,
   useUpdateMember,
   useToggleMemberStatus,
+  useToggleMemberPermanent,
   useDeleteMember,
   useLinkMemberToUser,
   useImportMembers,
 } from '@/hooks/useMembers';
 import { useUsers } from '@/hooks/useUsers';
-import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus, Download, Upload } from 'lucide-react';
+import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus, Download, Upload, ShieldCheck } from 'lucide-react';
 import type { Member } from '@/hooks/useMembers';
 import { Tables } from '@/integrations/supabase/types';
 import { exportMembersXlsx, parseMembersXlsx, type MemberSheetRow } from '@/lib/membersSpreadsheet';
+import { normalizeMbrfId } from '@/lib/mbrfId';
 import { toast } from 'sonner';
 
 export function AdminMembersContent() {
@@ -33,6 +36,7 @@ export function AdminMembersContent() {
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const toggleStatus = useToggleMemberStatus();
+  const togglePermanent = useToggleMemberPermanent();
   const deleteMember = useDeleteMember();
   const linkMember = useLinkMemberToUser();
   const importMembers = useImportMembers();
@@ -56,6 +60,7 @@ export function AdminMembersContent() {
     cpf: '',
     mbrf_id: '',
     notes: '',
+    is_permanent: false,
   });
 
   const resetForm = () => {
@@ -66,6 +71,7 @@ export function AdminMembersContent() {
       cpf: '',
       mbrf_id: '',
       notes: '',
+      is_permanent: false,
     });
     setEditingMember(null);
   };
@@ -79,6 +85,7 @@ export function AdminMembersContent() {
       cpf: member.cpf || '',
       mbrf_id: (member as any).mbrf_id || '',
       notes: member.notes || '',
+      is_permanent: (member as any).is_permanent || false,
     });
     setShowForm(true);
   };
@@ -95,8 +102,9 @@ export function AdminMembersContent() {
       email: formData.email || null,
       phone: formData.phone || null,
       cpf: formData.cpf || null,
-      mbrf_id: formData.mbrf_id || null,
+      mbrf_id: normalizeMbrfId(formData.mbrf_id),
       notes: formData.notes || null,
+      is_permanent: formData.is_permanent,
     };
 
     try {
@@ -168,7 +176,10 @@ export function AdminMembersContent() {
           (members || []).map((m) => (m as any).mbrf_id).filter(Boolean)
         );
         const activeIds = new Set(
-          (members || []).filter((m) => m.is_active).map((m) => (m as any).mbrf_id).filter(Boolean)
+          (members || [])
+            .filter((m) => m.is_active && !(m as any).is_permanent)
+            .map((m) => (m as any).mbrf_id)
+            .filter(Boolean)
         );
         const importedIds = new Set(importRows.map((r) => r.mbrf_id));
         const created = importRows.filter((r) => !existingIds.has(r.mbrf_id)).length;
@@ -340,6 +351,12 @@ export function AdminMembersContent() {
                             Vinc.
                           </Badge>
                         )}
+                        {(member as any).is_permanent && (
+                          <Badge variant="outline" className="text-accent border-accent text-[10px] sm:text-xs">
+                            <ShieldCheck className="w-3 h-3 mr-0.5" />
+                            Permanente
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         {member.email && <span className="truncate max-w-[180px]">{member.email}</span>}
@@ -355,6 +372,15 @@ export function AdminMembersContent() {
                     </Button>
                     <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => toggleStatus.mutate({ id: member.id, isActive: !member.is_active })} title={member.is_active ? 'Desativar' : 'Ativar'}>
                       <Power className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${member.is_active ? 'text-success' : 'text-muted-foreground'}`} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 sm:h-9 sm:w-9"
+                      onClick={() => togglePermanent.mutate({ id: member.id, isPermanent: !(member as any).is_permanent })}
+                      title={(member as any).is_permanent ? 'Remover status permanente' : 'Marcar como permanente'}
+                    >
+                      <ShieldCheck className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${(member as any).is_permanent ? 'text-accent' : 'text-muted-foreground'}`} />
                     </Button>
                     <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => openEditForm(member)}>
                       <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -431,13 +457,13 @@ export function AdminMembersContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mbrf_id">ID MBRF (6 dígitos)</Label>
+              <Label htmlFor="mbrf_id">ID MBRF / Nº pess. (8 dígitos)</Label>
               <Input
                 id="mbrf_id"
                 value={formData.mbrf_id}
-                onChange={(e) => setFormData({ ...formData, mbrf_id: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                placeholder="000000"
-                maxLength={6}
+                onChange={(e) => setFormData({ ...formData, mbrf_id: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                placeholder="00000000"
+                maxLength={8}
               />
             </div>
             
@@ -450,6 +476,23 @@ export function AdminMembersContent() {
                 placeholder="Observações sobre o sócio..."
                 rows={3}
               />
+            </div>
+
+            <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
+              <Checkbox
+                id="is_permanent"
+                checked={formData.is_permanent}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_permanent: !!checked })}
+              />
+              <div>
+                <label htmlFor="is_permanent" className="text-sm font-medium leading-none cursor-pointer">
+                  Sócio permanente
+                </label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Nunca é desativado por uma importação de planilha, mesmo que não apareça nela.
+                  Use para administradores e desenvolvedores.
+                </p>
+              </div>
             </div>
           </div>
           

@@ -155,6 +155,28 @@ export function useToggleMemberStatus() {
   });
 }
 
+export function useToggleMemberPermanent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isPermanent }: { id: string; isPermanent: boolean }) => {
+      const { error } = await supabase
+        .from('members')
+        .update({ is_permanent: isPermanent, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { isPermanent }) => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success(isPermanent ? 'Sócio marcado como permanente!' : 'Sócio deixou de ser permanente.');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar sócio: ' + error.message);
+    },
+  });
+}
+
 export function useDeleteMember() {
   const queryClient = useQueryClient();
 
@@ -184,7 +206,7 @@ export function useImportMembers() {
     mutationFn: async (rows: MemberSheetRow[]): Promise<ImportMembersResult> => {
       const { data: existing, error: fetchError } = await supabase
         .from('members')
-        .select('id, mbrf_id, is_active')
+        .select('id, mbrf_id, is_active, is_permanent')
         .not('mbrf_id', 'is', null);
       if (fetchError) throw fetchError;
 
@@ -193,7 +215,11 @@ export function useImportMembers() {
 
       const toCreate = rows.filter((r) => !existingByMbrfId.has(r.mbrf_id));
       const toUpdate = rows.filter((r) => existingByMbrfId.has(r.mbrf_id));
-      const toDeactivate = existing.filter((m) => m.is_active && !importedIds.has(m.mbrf_id as string));
+      // Permanent members (admins/developers) are never deactivated by an
+      // import, even if they're absent from the spreadsheet.
+      const toDeactivate = existing.filter(
+        (m) => m.is_active && !m.is_permanent && !importedIds.has(m.mbrf_id as string)
+      );
 
       if (toCreate.length > 0) {
         const { error } = await supabase.from('members').insert(
