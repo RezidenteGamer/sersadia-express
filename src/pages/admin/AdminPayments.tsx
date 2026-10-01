@@ -13,8 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePayments, useMarkPaymentAsPaid, Payment } from '@/hooks/usePayments';
+import { ReceiptLink } from '@/components/ReceiptLink';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseCalendarDate } from '@/lib/businessDate';
 import { CreditCard, Search, Check, DollarSign, Calendar, User, MapPin, Image as ImageIcon } from 'lucide-react';
 const PAYMENT_METHODS = [{
   value: 'pix',
@@ -104,7 +106,7 @@ export function AdminPaymentsContent() {
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>{payment.reservation?.reservation_date && format(new Date(payment.reservation.reservation_date), 'dd/MM/yyyy')}</span>
+                <span>{payment.reservation?.reservation_date && format(parseCalendarDate(payment.reservation.reservation_date), 'dd/MM/yyyy')}</span>
               </div>
               <div className="flex items-center gap-1 text-primary font-medium">
                 <DollarSign className="w-4 h-4" />
@@ -116,10 +118,7 @@ export function AdminPaymentsContent() {
               </p>}
             {payment.notes && <p className="text-sm text-muted-foreground italic">{payment.notes}</p>}
             {payment.receipt_url && (
-              <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                <ImageIcon className="w-3 h-3" />
-                Ver comprovante
-              </a>
+              <ReceiptLink receiptPath={payment.receipt_url} className="inline-flex items-center gap-1 text-xs text-primary hover:underline" />
             )}
           </div>
           
@@ -223,9 +222,7 @@ export function AdminPaymentsContent() {
                 {(paymentDialog as any).receipt_url && (
                   <div className="mt-2">
                     <p className="text-sm font-medium mb-1">Comprovante:</p>
-                    <a href={(paymentDialog as any).receipt_url} target="_blank" rel="noopener noreferrer">
-                      <img src={(paymentDialog as any).receipt_url} alt="Comprovante" className="max-h-48 rounded border object-contain" />
-                    </a>
+                    <ReceiptLink receiptPath={(paymentDialog as any).receipt_url} preview />
                   </div>
                 )}
               </div>

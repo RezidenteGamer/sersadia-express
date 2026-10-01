@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+import { businessDateKey } from '@/lib/businessDate';
 
 export type Checkin = Tables<'checkins'>;
 export type CheckinSettings = Tables<'checkin_settings'>;
@@ -80,7 +81,7 @@ export function usePerformCheckin() {
         throw new Error('Esta reserva não está confirmada');
       }
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = businessDateKey();
       if (reservation.reservation_date !== today) {
         throw new Error('Check-in só pode ser feito no dia da reserva');
       }

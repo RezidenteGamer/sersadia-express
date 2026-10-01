@@ -121,7 +121,9 @@ export function useUploadReceipt() {
       const { error } = await supabase
         .from('payments')
         .update({ receipt_url: receiptUrl })
-        .eq('reservation_id', reservationId);
+        .eq('reservation_id', reservationId)
+        .select('id')
+        .single();
       
       if (error) throw error;
     },

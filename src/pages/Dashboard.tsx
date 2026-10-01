@@ -15,6 +15,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BannerCarousel } from '@/components/BannerCarousel';
 import { formatReservationPeriods } from '@/lib/reservationPeriods';
+import { businessDateKey, parseCalendarDate } from '@/lib/businessDate';
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
@@ -51,7 +52,7 @@ export default function Dashboard() {
   });
 
   const upcomingReservations = reservations?.filter(
-    r => new Date(r.reservation_date) >= new Date() && ['confirmed', 'pending'].includes(r.status)
+    r => r.reservation_date >= businessDateKey() && ['confirmed', 'pending'].includes(r.status)
   );
 
   return (
@@ -129,7 +130,7 @@ export default function Dashboard() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-foreground truncate text-sm">{reservation.location?.name}</h4>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(reservation.reservation_date), "dd 'de' MMMM", { locale: ptBR })}
+                      {format(parseCalendarDate(reservation.reservation_date), "dd 'de' MMMM", { locale: ptBR })}
                       {' • '}
                       {formatReservationPeriods(reservation)}
                     </p>

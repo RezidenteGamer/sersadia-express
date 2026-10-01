@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { businessDateKey, calendarDateKey, parseCalendarDate } from '@/lib/businessDate';
 import { BarChart3, TrendingUp, Users, MapPin, Calendar, UserCheck, UserX } from 'lucide-react';
 
 const COLORS = ['hsl(173, 58%, 39%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(0, 72%, 51%)', 'hsl(210, 100%, 50%)'];
@@ -34,7 +35,7 @@ export function AdminReportsContent() {
   const { data: statusData, isLoading: loadingStatus } = useQuery({
     queryKey: ['report-status', period],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(period)).toISOString().split('T')[0];
+      const startDate = calendarDateKey(subDays(parseCalendarDate(businessDateKey()), parseInt(period)));
       
       const { data, error } = await supabase
         .from('reservations')
@@ -69,7 +70,7 @@ export function AdminReportsContent() {
   const { data: locationData, isLoading: loadingLocation } = useQuery({
     queryKey: ['report-location', period],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(period)).toISOString().split('T')[0];
+      const startDate = calendarDateKey(subDays(parseCalendarDate(businessDateKey()), parseInt(period)));
       
       const { data, error } = await supabase
         .from('reservations')
@@ -126,7 +127,7 @@ export function AdminReportsContent() {
       });
       
       return Object.entries(counts).map(([date, count]) => ({
-        date: format(new Date(date), 'dd/MM'),
+        date: format(parseCalendarDate(date), 'dd/MM'),
         reservas: count,
       }));
     },
@@ -136,7 +137,7 @@ export function AdminReportsContent() {
   const { data: topUsersData, isLoading: loadingUsers } = useQuery({
     queryKey: ['report-top-users', period],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(period)).toISOString().split('T')[0];
+      const startDate = calendarDateKey(subDays(parseCalendarDate(businessDateKey()), parseInt(period)));
       
       const { data, error } = await supabase
         .from('reservations')
@@ -176,8 +177,8 @@ export function AdminReportsContent() {
   const { data: noShowData, isLoading: loadingNoShow } = useQuery({
     queryKey: ['report-noshow', period],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(period)).toISOString().split('T')[0];
-      const today = new Date().toISOString().split('T')[0];
+      const startDate = calendarDateKey(subDays(parseCalendarDate(businessDateKey()), parseInt(period)));
+      const today = businessDateKey();
       
       // Get confirmed reservations from past dates
       const { data, error } = await supabase
@@ -210,7 +211,7 @@ export function AdminReportsContent() {
   const { data: timeSlotsData, isLoading: loadingTimeSlots } = useQuery({
     queryKey: ['report-timeslots', period],
     queryFn: async () => {
-      const startDate = subDays(new Date(), parseInt(period)).toISOString().split('T')[0];
+      const startDate = calendarDateKey(subDays(parseCalendarDate(businessDateKey()), parseInt(period)));
       
       const { data, error } = await supabase
         .from('reservations')

@@ -21,6 +21,7 @@ import {
   useDeleteMember,
   useLinkMemberToUser,
   useImportMembers,
+  useMemberImportPreview,
 } from '@/hooks/useMembers';
 import { useUsers } from '@/hooks/useUsers';
 import { Users, Plus, Pencil, Search, Power, Trash2, Link, Unlink, UserPlus, Download, Upload, ShieldCheck } from 'lucide-react';
@@ -50,6 +51,7 @@ export function AdminMembersContent() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<string>('');
   const [importRows, setImportRows] = useState<MemberSheetRow[] | null>(null);
+  const { data: importCounts, isLoading: isPreviewLoading, error: previewError } = useMemberImportPreview(importRows);
   const [isExporting, setIsExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -170,29 +172,12 @@ export function AdminMembersContent() {
     }
   };
 
-  const importPreview = importRows
-    ? (() => {
-        const existingIds = new Set(
-          (members || []).map((m) => (m as any).mbrf_id).filter(Boolean)
-        );
-        const activeIds = new Set(
-          (members || [])
-            .filter((m) => m.is_active && !(m as any).is_permanent)
-            .map((m) => (m as any).mbrf_id)
-            .filter(Boolean)
-        );
-        const importedIds = new Set(importRows.map((r) => r.mbrf_id));
-        const created = importRows.filter((r) => !existingIds.has(r.mbrf_id)).length;
-        const updated = importRows.filter((r) => existingIds.has(r.mbrf_id)).length;
-        const deactivated = [...activeIds].filter((id) => !importedIds.has(id as string)).length;
-        return { total: importRows.length, created, updated, deactivated };
-      })()
-    : null;
+  const importPreview = importRows && importCounts ? { total: importRows.length, ...importCounts } : null;
 
   const handleConfirmImport = async () => {
-    if (!importRows) return;
+    if (!importRows || !importPreview) return;
     try {
-      await importMembers.mutateAsync(importRows);
+      await importMembers.mutateAsync({ rows: importRows, expectedDeactivated: importPreview.deactivated });
       setImportRows(null);
     } catch (error) {
       // Error handled by mutation
@@ -594,12 +579,14 @@ export function AdminMembersContent() {
               </p>
             </div>
           )}
+          {isPreviewLoading && <p className="text-sm text-muted-foreground">Calculando prévia no banco...</p>}
+          {previewError && <p className="text-sm text-destructive">Não foi possível conferir a importação: {previewError.message}</p>}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportRows(null)}>
               Cancelar
             </Button>
-            <Button onClick={handleConfirmImport} disabled={importMembers.isPending}>
+            <Button onClick={handleConfirmImport} disabled={importMembers.isPending || !importPreview}>
               {importMembers.isPending ? 'Importando...' : 'Confirmar Importação'}
             </Button>
           </DialogFooter>

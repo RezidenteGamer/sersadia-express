@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
 import { ImageLightbox } from '@/components/ImageLightbox';
+import type { Json } from '@/integrations/supabase/types';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 
 interface TimeSlot {
@@ -100,9 +101,9 @@ export default function LocationDetails() {
   }[] => {
     // Try to get time_slots from location (stored as JSON)
     const locationTimeSlots = Array.isArray(location.time_slots)
-      ? location.time_slots.filter((slot): slot is TimeSlot =>
+      ? location.time_slots.filter((slot) =>
           slot !== null && typeof slot === 'object' && !Array.isArray(slot)
-          && typeof slot.start === 'string' && typeof slot.end === 'string')
+          && typeof slot.start === 'string' && typeof slot.end === 'string').map(slot => slot as unknown as TimeSlot)
       : null;
 
     // Default slots if none defined
@@ -169,13 +170,13 @@ export default function LocationDetails() {
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: selectedSlots[0].start,
         end_time: selectedSlots[selectedSlots.length - 1].end,
-        time_slots: selectedSlots,
+        time_slots: selectedSlots as unknown as Json,
         total_price: amount,
         user_notes: notes || null
       });
 
       setCreatedReservationId(reservation.id);
-      setCreatedAmount(amount);
+      setCreatedAmount(reservation.total_price);
       setShowConfirmDialog(false);
       setShowPixDialog(true);
     } catch (error) {
@@ -447,6 +448,7 @@ export default function LocationDetails() {
         onOpenChange={setShowPixDialog}
         amount={createdAmount}
         locationName={location.name}
+        reservationId={createdReservationId || ''}
         onPaymentComplete={async (receiptUrl) => {
           if (createdReservationId) {
             await uploadReceipt.mutateAsync({ reservationId: createdReservationId, receiptUrl });

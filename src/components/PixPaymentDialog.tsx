@@ -1,18 +1,18 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Copy, CheckCircle2, Clock, Upload, Image as ImageIcon } from 'lucide-react';
+import { Copy, CheckCircle2, Clock, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { usePixSettings } from '@/hooks/usePixSettings';
-import { useImageUpload } from '@/hooks/useImageUpload';
+import { useReceiptUpload } from '@/hooks/useReceiptUpload';
 
 interface PixPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   amount: number;
   locationName: string;
-  reservationId?: string;
-  onPaymentComplete: (receiptUrl: string) => void;
+  reservationId: string;
+  onPaymentComplete: (receiptPath: string) => Promise<void>;
 }
 
 export function PixPaymentDialog({ 
@@ -20,12 +20,14 @@ export function PixPaymentDialog({
   onOpenChange,
   amount,
   locationName,
-  onPaymentComplete 
+  reservationId,
+  onPaymentComplete
 }: PixPaymentDialogProps) {
   const [copied, setCopied] = useState(false);
-  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { data: pixSettings } = usePixSettings();
-  const { uploadImage, isUploading } = useImageUpload();
+  const { uploadReceipt, removeUnusedReceipt, isUploading } = useReceiptUpload();
 
   const handleCopyCode = async () => {
     if (!pixSettings?.pix_key) return;
@@ -43,21 +45,31 @@ export function PixPaymentDialog({
   const handleUploadReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = await uploadImage(file, 'receipts');
-    if (url) {
-      setReceiptUrl(url);
+    try {
+      const path = await uploadReceipt(reservationId, file);
+      if (receiptPath) await removeUnusedReceipt(receiptPath);
+      setReceiptPath(path);
       toast.success('Comprovante enviado!');
+    } catch (error) {
+      toast.error('Erro ao enviar comprovante: ' + (error as Error).message);
     }
   };
 
-  const handleFinish = () => {
-    if (!receiptUrl) {
+  const handleFinish = async () => {
+    if (!receiptPath) {
       toast.error('Por favor, envie o comprovante do PIX antes de confirmar.');
       return;
     }
-    onPaymentComplete(receiptUrl);
-    setReceiptUrl(null);
-    onOpenChange(false);
+    setIsSaving(true);
+    try {
+      await onPaymentComplete(receiptPath);
+      setReceiptPath(null);
+      onOpenChange(false);
+    } catch (error) {
+      toast.error('Erro ao salvar comprovante: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!pixSettings) return null;
@@ -137,21 +149,7 @@ export function PixPaymentDialog({
           {/* Receipt Upload */}
           <div className="space-y-2 border-t pt-4">
             <p className="text-sm font-medium text-center">Envie o comprovante do PIX</p>
-            {receiptUrl ? (
-              <div className="space-y-2">
-                <div className="border rounded-lg p-2 bg-muted/30 flex justify-center">
-                  <img src={receiptUrl} alt="Comprovante" className="max-h-40 object-contain rounded" />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setReceiptUrl(null)}
-                >
-                  Trocar comprovante
-                </Button>
-              </div>
-            ) : (
+            {receiptPath && <p className="text-xs text-success text-center">Comprovante anexado. Você pode selecionar outro arquivo para trocar.</p>}
               <div>
                 <label htmlFor="receipt-upload" className="cursor-pointer">
                   <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
@@ -164,14 +162,12 @@ export function PixPaymentDialog({
                 <input
                   id="receipt-upload"
                   type="file"
-                  accept="image/*"
-                  capture="environment"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
                   className="hidden"
                   onChange={handleUploadReceipt}
                   disabled={isUploading}
                 />
               </div>
-            )}
           </div>
 
           {/* Action buttons */}
@@ -186,9 +182,9 @@ export function PixPaymentDialog({
             <Button 
               className="flex-1"
               onClick={handleFinish}
-              disabled={!receiptUrl || isUploading}
+              disabled={!receiptPath || isUploading || isSaving}
             >
-              Já paguei
+              {isSaving ? 'Salvando...' : 'Já paguei'}
             </Button>
           </div>
         </div>

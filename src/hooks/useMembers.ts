@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import type { MemberSheetRow } from '@/lib/membersSpreadsheet';
 
 export type Member = Tables<'members'>;
@@ -19,15 +19,20 @@ export function useMembers(includeInactive = false) {
       let query = supabase
         .from('members')
         .select('*')
-        .order('name', { ascending: true });
+        .order('id', { ascending: true });
       
       if (!includeInactive) {
         query = query.eq('is_active', true);
       }
       
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Member[];
+      const allMembers: Member[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await query.range(offset, offset + 999);
+        if (error) throw error;
+        allMembers.push(...(data as Member[]));
+        if (!data || data.length < 1000) break;
+      }
+      return allMembers.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     },
   });
 }
@@ -199,53 +204,30 @@ export function useDeleteMember() {
   });
 }
 
+export function useMemberImportPreview(rows: MemberSheetRow[] | null) {
+  return useQuery({
+    queryKey: ['members-import-preview', rows],
+    enabled: !!rows,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('sync_members_from_sheet', {
+        _rows: rows! as unknown as Json, _dry_run: true,
+      });
+      if (error) throw error;
+      return data as unknown as ImportMembersResult;
+    },
+  });
+}
+
 export function useImportMembers() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (rows: MemberSheetRow[]): Promise<ImportMembersResult> => {
-      const { data: existing, error: fetchError } = await supabase
-        .from('members')
-        .select('id, mbrf_id, is_active, is_permanent')
-        .not('mbrf_id', 'is', null);
-      if (fetchError) throw fetchError;
-
-      const existingByMbrfId = new Map(existing.map((m) => [m.mbrf_id as string, m]));
-      const importedIds = new Set(rows.map((r) => r.mbrf_id));
-
-      const toCreate = rows.filter((r) => !existingByMbrfId.has(r.mbrf_id));
-      const toUpdate = rows.filter((r) => existingByMbrfId.has(r.mbrf_id));
-      // Permanent members (admins/developers) are never deactivated by an
-      // import, even if they're absent from the spreadsheet.
-      const toDeactivate = existing.filter(
-        (m) => m.is_active && !m.is_permanent && !importedIds.has(m.mbrf_id as string)
-      );
-
-      if (toCreate.length > 0) {
-        const { error } = await supabase.from('members').insert(
-          toCreate.map((r) => ({ mbrf_id: r.mbrf_id, name: r.name, is_active: false }))
-        );
-        if (error) throw error;
-      }
-
-      for (const r of toUpdate) {
-        const existingMember = existingByMbrfId.get(r.mbrf_id)!;
-        const { error } = await supabase
-          .from('members')
-          .update({ name: r.name, updated_at: new Date().toISOString() })
-          .eq('id', existingMember.id);
-        if (error) throw error;
-      }
-
-      if (toDeactivate.length > 0) {
-        const { error } = await supabase
-          .from('members')
-          .update({ is_active: false, updated_at: new Date().toISOString() })
-          .in('id', toDeactivate.map((m) => m.id));
-        if (error) throw error;
-      }
-
-      return { created: toCreate.length, updated: toUpdate.length, deactivated: toDeactivate.length };
+    mutationFn: async ({ rows, expectedDeactivated }: { rows: MemberSheetRow[]; expectedDeactivated: number }): Promise<ImportMembersResult> => {
+      const { data, error } = await supabase.rpc('sync_members_from_sheet', {
+        _rows: rows as unknown as Json, _dry_run: false, _expected_deactivated: expectedDeactivated,
+      });
+      if (error) throw error;
+      return data as unknown as ImportMembersResult;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['members'] });

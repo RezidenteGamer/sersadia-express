@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 import { useUploadReceipt } from '@/hooks/usePayments';
 import { formatReservationPeriods } from '@/lib/reservationPeriods';
+import { parseCalendarDate } from '@/lib/businessDate';
 import { motion } from 'framer-motion';
 
 export default function MyReservations() {
@@ -70,7 +71,7 @@ export default function MyReservations() {
 
   const handleCancel = async () => {
     if (!cancelId) return;
-    if (!cancelPixKey.trim() || !cancelPixName.trim()) {
+    if (isReservationPaid(cancelId) && (!cancelPixKey.trim() || !cancelPixName.trim())) {
       toast.error('Informe a chave PIX e o nome do recebedor para prosseguir.');
       return;
     }
@@ -122,7 +123,7 @@ export default function MyReservations() {
 
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>{format(new Date(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                    <span>{format(parseCalendarDate(reservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
@@ -193,10 +194,10 @@ export default function MyReservations() {
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif">Cancelar Reserva</DialogTitle>
-            <DialogDescription>Informe seus dados PIX para receber o reembolso.</DialogDescription>
+          <DialogDescription>{cancelId && isReservationPaid(cancelId) ? 'Informe seus dados PIX para receber o reembolso.' : 'Esta reserva ainda não foi paga; nenhum reembolso é necessário.'}</DialogDescription>
           </DialogHeader>
 
-          {isFullRefund ? (
+          {cancelId && !isReservationPaid(cancelId) ? null : isFullRefund ? (
             <div className="flex items-start gap-2 p-3 bg-success/10 rounded-xl text-sm">
               <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
               <div>
@@ -214,7 +215,7 @@ export default function MyReservations() {
             </div>
           )}
 
-          <div className="space-y-4">
+          {cancelId && isReservationPaid(cancelId) && <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="cancel-pix-key">Chave PIX para reembolso *</Label>
               <Input id="cancel-pix-key" value={cancelPixKey} onChange={(e) => setCancelPixKey(e.target.value)} placeholder="CPF, e-mail, telefone ou chave aleatória" />
@@ -223,11 +224,11 @@ export default function MyReservations() {
               <Label htmlFor="cancel-pix-name">Nome do recebedor *</Label>
               <Input id="cancel-pix-name" value={cancelPixName} onChange={(e) => setCancelPixName(e.target.value)} placeholder="Nome completo do titular da conta" />
             </div>
-          </div>
+          </div>}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => { setCancelId(null); setCancelReservationData(null); }}>Voltar</Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending || !cancelPixKey.trim() || !cancelPixName.trim()}>
+            <Button variant="destructive" onClick={handleCancel} disabled={cancelReservation.isPending || (!!cancelId && isReservationPaid(cancelId) && (!cancelPixKey.trim() || !cancelPixName.trim()))}>
               {cancelReservation.isPending ? 'Cancelando...' : 'Confirmar Cancelamento'}
             </Button>
           </DialogFooter>
@@ -245,7 +246,7 @@ export default function MyReservations() {
               <div className="p-4 rounded-xl space-y-2 bg-accent">
                 <p><strong>Código:</strong> {viewReservation.code}</p>
                 <p><strong>Local:</strong> {viewReservation.location?.name}</p>
-                <p><strong>Data:</strong> {format(new Date(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p><strong>Data:</strong> {format(parseCalendarDate(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
                 <p><strong>Horários:</strong> {formatReservationPeriods(viewReservation)}</p>
                 <p><strong>Valor:</strong> R$ {viewReservation.total_price.toFixed(2)}</p>
                 <div className="flex items-center gap-2">
@@ -286,6 +287,7 @@ export default function MyReservations() {
           onOpenChange={(open) => !open && setPixPaymentReservation(null)}
           amount={pixPaymentReservation.total_price}
           locationName={locations?.find(l => l.id === pixPaymentReservation.location_id)?.name || 'Local'}
+          reservationId={pixPaymentReservation.id}
           onPaymentComplete={async (receiptUrl) => {
             await uploadReceipt.mutateAsync({ reservationId: pixPaymentReservation.id, receiptUrl });
             toast.success('Comprovante enviado! O pagamento será confirmado pelo administrador.');

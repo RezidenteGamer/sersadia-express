@@ -23,6 +23,7 @@ import {
   LineChart as LineChartIcon, TableIcon, Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { businessDateKey, parseCalendarDate } from '@/lib/businessDate';
 import { exportToCSV } from '@/lib/exportReport';
 import {
   useFinancialSummary, useRevenueByLocation, useRevenueByMethod,
@@ -133,7 +134,7 @@ function FilterBar({
             variant="ghost"
             size="sm"
             className="text-xs h-7 px-2"
-            onClick={() => onFiltersChange({ ...filters, dateFrom: subDays(new Date(), p.days), dateTo: new Date() })}
+            onClick={() => onFiltersChange({ ...filters, dateFrom: subDays(parseCalendarDate(businessDateKey()), p.days), dateTo: parseCalendarDate(businessDateKey()) })}
           >
             {p.label}
           </Button>
@@ -647,8 +648,8 @@ function CustomReportBuilder({ filters }: { filters: FinancialFilters }) {
 // ── Main Component ──
 export function AdminFinancialReportsContent() {
   const [filters, setFilters] = useState<FinancialFilters>({
-    dateFrom: subDays(new Date(), 30),
-    dateTo: new Date(),
+    dateFrom: subDays(parseCalendarDate(businessDateKey()), 30),
+    dateTo: parseCalendarDate(businessDateKey()),
   });
   const [activeReport, setActiveReport] = useState('summary');
   const { data: locations = [] } = useLocationsForFilter();

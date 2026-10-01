@@ -61,12 +61,20 @@ export async function parseMembersXlsx(file: File): Promise<MemberSheetRow[]> {
   if (!sheet) throw new Error('A planilha está vazia ou em um formato inválido.');
 
   const rows: MemberSheetRow[] = [];
+  const seenIds = new Set<string>();
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // header
 
-    const mbrfId = normalizeMbrfId(String(row.getCell(1).value ?? ''));
+    const rawId = String(row.getCell(1).value ?? '').trim();
     const name = String(row.getCell(2).value ?? '').trim();
-    if (!mbrfId || !name) return;
+    if (!rawId && !name) return;
+    const digits = rawId.replace(/\D/g, '');
+    if (!digits || digits.length > 8 || !name) {
+      throw new Error(`Linha ${rowNumber}: informe um ID MBRF válido e o nome do sócio.`);
+    }
+    const mbrfId = normalizeMbrfId(rawId)!;
+    if (seenIds.has(mbrfId)) throw new Error(`Linha ${rowNumber}: ID MBRF duplicado (${mbrfId}).`);
+    seenIds.add(mbrfId);
 
     rows.push({ mbrf_id: mbrfId, name });
   });

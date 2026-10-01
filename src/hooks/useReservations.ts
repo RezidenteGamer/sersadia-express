@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Tables, TablesInsert, Enums } from '@/integrations/supabase/types';
+import { businessDateKey } from '@/lib/businessDate';
 
 export type Reservation = Tables<'reservations'> & {
   location?: Pick<Tables<'locations'>, 'name' | 'images'>;
@@ -84,7 +85,7 @@ export function useAllReservations(filters?: {
 }
 
 export function useTodayReservations() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = businessDateKey();
   
   return useQuery({
     queryKey: ['reservations', 'today'],
@@ -195,8 +196,6 @@ export function useCancelReservation({ asAdmin = false }: { asAdmin?: boolean } 
       if (asAdmin && refundAmount !== undefined) {
         updateData.refund_amount = refundAmount;
         updateData.refund_status = refundAmount > 0 ? 'approved' : 'none';
-      } else {
-        updateData.refund_status = 'pending';
       }
       
       const { error } = await supabase

@@ -7,6 +7,7 @@ import type { StatusFilter, QuickFilter, ReservationWithDetails } from './types'
 import type { Enums } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import type { DateRange } from 'react-day-picker';
+import { businessDateKey, calendarDateKey } from '@/lib/businessDate';
 
 export function useReservationCenter() {
   const [search, setSearch] = useState('');
@@ -26,8 +27,8 @@ export function useReservationCenter() {
   };
 
   // Convert dateRange to start/end date strings for the query
-  const startDate = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
-  const endDate = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
+  const startDate = dateRange?.from ? calendarDateKey(dateRange.from) : undefined;
+  const endDate = dateRange?.to ? calendarDateKey(dateRange.to) : dateRange?.from ? calendarDateKey(dateRange.from) : undefined;
 
   const { data: reservations, isLoading: loadingReservations } = useAllReservations({
     statuses: statusFilter !== 'all' ? statusMap[statusFilter] : undefined,
@@ -74,7 +75,7 @@ export function useReservationCenter() {
     }
 
     if (quickFilter === 'today') {
-      const today = new Date().toISOString().split('T')[0];
+      const today = businessDateKey();
       result = result.filter(r => r.reservation_date === today);
     } else if (quickFilter === 'this_week') {
       const now = new Date();
@@ -82,8 +83,8 @@ export function useReservationCenter() {
       startOfWeek.setDate(now.getDate() - now.getDay());
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
-      const start = startOfWeek.toISOString().split('T')[0];
-      const end = endOfWeek.toISOString().split('T')[0];
+      const start = calendarDateKey(startOfWeek);
+      const end = calendarDateKey(endOfWeek);
       result = result.filter(r => r.reservation_date >= start && r.reservation_date <= end);
     } else if (quickFilter === 'awaiting_receipt') {
       result = result.filter(r => r.status === 'pending' && !r.payment?.receipt_url);

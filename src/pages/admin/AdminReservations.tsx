@@ -15,9 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAllReservations, useUpdateReservationStatus, useCancelReservation, Reservation } from '@/hooks/useReservations';
 import { useLocations } from '@/hooks/useLocations';
 import { usePayments } from '@/hooks/usePayments';
+import { ReceiptLink } from '@/components/ReceiptLink';
 import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseCalendarDate } from '@/lib/businessDate';
 import { Calendar, Search, Check, X, Eye, Filter, MapPin, Clock, User, AlertTriangle } from 'lucide-react';
 
 export function AdminReservationsContent() {
@@ -186,7 +188,7 @@ export function AdminReservationsContent() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(reservation.reservation_date), 'dd/MM/yyyy')}</span>
+                        <span>{format(parseCalendarDate(reservation.reservation_date), 'dd/MM/yyyy')}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -282,7 +284,7 @@ export function AdminReservationsContent() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Data</p>
-                  <p className="font-medium">{format(new Date(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                  <p className="font-medium">{format(parseCalendarDate(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Horário</p>
@@ -311,9 +313,7 @@ export function AdminReservationsContent() {
                         {payment.paid_at && <p>Pago em: {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm")}</p>}
                         {payment.payment_method && <p>Método: {payment.payment_method.toUpperCase()}</p>}
                         {payment.receipt_url && (
-                          <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                            Ver comprovante
-                          </a>
+                          <ReceiptLink receiptPath={payment.receipt_url} />
                         )}
                       </>
                     ) : (

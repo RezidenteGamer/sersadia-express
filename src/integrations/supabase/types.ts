@@ -482,6 +482,7 @@ export type Database = {
           id: string
           location_id: string
           refund_amount: number | null
+          refund_completed_at: string | null
           refund_pix_key: string | null
           refund_pix_name: string | null
           refund_status: string
@@ -504,6 +505,7 @@ export type Database = {
           id?: string
           location_id: string
           refund_amount?: number | null
+          refund_completed_at?: string | null
           refund_pix_key?: string | null
           refund_pix_name?: string | null
           refund_status?: string
@@ -526,6 +528,7 @@ export type Database = {
           id?: string
           location_id?: string
           refund_amount?: number | null
+          refund_completed_at?: string | null
           refund_pix_key?: string | null
           refund_pix_name?: string | null
           refund_status?: string
@@ -642,6 +645,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      sync_members_from_sheet: {
+        Args: { _rows: Json; _dry_run?: boolean; _expected_deactivated?: number | null }
+        Returns: Json
+      }
       check_membership_status: { Args: never; Returns: boolean }
       expire_pending_reservations: { Args: never; Returns: number }
       get_location_booked_slots: {

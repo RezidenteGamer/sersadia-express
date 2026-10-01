@@ -13,6 +13,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { exportToCSV } from '@/lib/exportReport';
 import type { ReservationWithDetails } from './types';
 import type { DateRange } from 'react-day-picker';
+import { businessDateKey } from '@/lib/businessDate';
 
 interface ToolbarProps {
   search: string;
@@ -83,7 +84,7 @@ export function ReservationToolbar({
         { key: 'status', label: 'Status' },
         { key: 'refund_status', label: 'Reembolso' },
       ],
-      `reservas-${new Date().toISOString().split('T')[0]}`
+      `reservas-${businessDateKey()}`
     );
   };
 

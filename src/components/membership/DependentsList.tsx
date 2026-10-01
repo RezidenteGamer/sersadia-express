@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Trash2, Users, AlertTriangle } from 'lucide-react';
 import { differenceInYears, parse } from 'date-fns';
 import { toast } from 'sonner';
+import { businessDateKey } from '@/lib/businessDate';
 
 interface DependentsListProps {
   memberId: string;
@@ -161,7 +162,7 @@ export function DependentsList({ memberId }: DependentsListProps) {
                   type="date"
                   value={birthDate}
                   onChange={(e) => handleBirthDateChange(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
+                  max={businessDateKey()}
                 />
                 {ageWarning && (
                   <div className="flex items-start gap-2 mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">

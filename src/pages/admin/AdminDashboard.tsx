@@ -14,8 +14,9 @@ import { ptBR } from 'date-fns/locale';
 import { Calendar, MapPin, Users, DollarSign, Clock, ArrowRight, CheckCircle2, AlertCircle, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatReservationPeriods } from '@/lib/reservationPeriods';
+import { businessDateKey, parseCalendarDate } from '@/lib/businessDate';
 export function AdminDashboardContent() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = businessDateKey();
 
   // ... keep existing code (stats queries, pendingList, todayList)
   const {
@@ -150,7 +151,7 @@ export function AdminDashboardContent() {
                     <div className="space-y-1">
                       <p className="font-medium text-sm">{reservation.user_profile?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {reservation.location?.name} • {format(new Date(reservation.reservation_date), 'dd/MM/yyyy')}
+                        {reservation.location?.name} • {format(parseCalendarDate(reservation.reservation_date), 'dd/MM/yyyy')}
                       </p>
                     </div>
                     <Link to={`/admin/reservations?id=${reservation.id}`}>

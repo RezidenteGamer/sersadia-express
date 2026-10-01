@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { copyToClipboard } from '@/lib/native';
 import { useUpdateReservationStatus, useCancelReservation } from '@/hooks/useReservations';
 import { useMarkPaymentAsPaid } from '@/hooks/usePayments';
+import { ReceiptLink } from '@/components/ReceiptLink';
+import { businessDateKey } from '@/lib/businessDate';
 import { useApproveRefund, useMarkRefundCompleted, isWithin48Hours } from '@/hooks/useRefunds';
 import { usePerformCheckin } from '@/hooks/useCheckin';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,7 +60,7 @@ export function ReservationDetail({ reservation: r }: DetailProps) {
   const isCancelled = ['cancelled_by_user', 'cancelled_by_admin'].includes(r.status);
   const isRefundPending = isCancelled && (r.refund_status === 'pending' || r.refund_status === 'none');
   const isRefundApproved = isCancelled && r.refund_status === 'approved';
-  const today = new Date().toISOString().split('T')[0];
+  const today = businessDateKey();
   const isToday = r.reservation_date === today;
 
   const handleConfirmPayment = async () => {
@@ -179,9 +181,7 @@ export function ReservationDetail({ reservation: r }: DetailProps) {
                     {receiptOpen ? 'Ocultar comprovante' : 'Ver comprovante'}
                   </Button>
                   {receiptOpen && (
-                    <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="block mt-2">
-                      <img src={payment.receipt_url} alt="Comprovante" className="max-h-60 rounded-lg border object-contain" />
-                    </a>
+                    <ReceiptLink receiptPath={payment.receipt_url} preview className="block mt-2" />
                   )}
                 </div>
               )}
@@ -229,9 +229,7 @@ export function ReservationDetail({ reservation: r }: DetailProps) {
                 </Button>
               )}
               {receiptOpen && payment?.receipt_url && (
-                <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
-                  <img src={payment.receipt_url} alt="Comprovante" className="max-h-60 rounded-lg border object-contain" />
-                </a>
+                <ReceiptLink receiptPath={payment.receipt_url} preview className="block" />
               )}
             </>
           )}

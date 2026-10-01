@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Check, X, Ban, UserCheck, Image as ImageIcon, Clipboard, Eye, RefreshCw, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { copyToClipboard } from '@/lib/native';
+import { businessDateKey } from '@/lib/businessDate';
 import type { ReservationWithDetails } from './types';
 
 interface ContextMenuItem {
@@ -51,7 +52,7 @@ export function ReservationContextMenu({ open, x, y, reservation, onClose, onAct
   const isCancelled = ['cancelled_by_user', 'cancelled_by_admin'].includes(r.status);
   const isRefundPending = isCancelled && (r.refund_status === 'pending' || r.refund_status === 'none');
   const isExpired = r.status === 'expired';
-  const today = new Date().toISOString().split('T')[0];
+  const today = businessDateKey();
   const isToday = r.reservation_date === today;
 
   const items: (ContextMenuItem | 'separator')[] = [];

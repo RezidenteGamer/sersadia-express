@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCancellationRequests, useApproveRefund, useMarkRefundCompleted, isWithin48Hours } from '@/hooks/useRefunds';
+import { parseCalendarDate } from '@/lib/businessDate';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Calendar, Check, Clock, Copy, DollarSign, MapPin, Search, User, Key } from 'lucide-react';
@@ -98,7 +99,7 @@ export function AdminRefundsContent() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{format(new Date(request.reservation_date), 'dd/MM/yyyy')}</span>
+                  <span>{format(parseCalendarDate(request.reservation_date), 'dd/MM/yyyy')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
