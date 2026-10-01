@@ -34,10 +34,10 @@ export function useLocation(id: string) {
         .from('locations')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
-      return data as Location;
+      return data as Location | null;
     },
     enabled: !!id,
   });

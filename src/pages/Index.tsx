@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, Shield, ArrowRight, Star, CheckCircle2, Clock, Smartphone } from 'lucide-react';
+import { Calendar, MapPin, Users, Shield, ArrowRight, Star, CheckCircle2, Clock } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { motion } from 'framer-motion';
 
@@ -35,26 +35,20 @@ export default function Index() {
             <motion.div variants={fadeUp} custom={0} className="inline-flex items-center justify-center mb-10">
               <BrandLogo className="h-36 sm:h-44" alt="Ser Sadia Express" />
             </motion.div>
-            <h1 className="sr-only">Ser Sadia Express</h1>
-            <motion.p variants={fadeUp} custom={1} className="text-3xl sm:text-4xl font-bold text-foreground font-serif max-w-2xl mx-auto mb-4">
-              Seu clube, do seu jeito.
-            </motion.p>
+            <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl font-bold text-foreground font-serif max-w-2xl mx-auto mb-4">
+              Encontre seu espaço no Ser Sadia.
+            </motion.h1>
             <motion.p variants={fadeUp} custom={2} className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-              Reserve espaços, pague via PIX e faça check-in — tudo aqui.
+              Veja os espaços, confira os horários e escolha a melhor opção. Você só precisa entrar para concluir a reserva.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <Button size="lg" className="h-13 px-8 text-base shadow-lg" onClick={() => navigate('/auth?mode=signup')}>
-                Começar Agora
+              <Button size="lg" className="h-13 px-8 text-base shadow-lg" onClick={() => navigate('/locations')}>
+                Explorar espaços
                 <ArrowRight className="w-5 h-5 ml-1" />
               </Button>
               <Button size="lg" variant="outline" className="h-13 px-8 text-base" onClick={() => navigate('/auth')}>
-                Fazer Login
+                Entrar
               </Button>
-            </motion.div>
-            <motion.div variants={fadeUp} custom={4} className="mt-4">
-              <button onClick={() => navigate('/locations')} className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">
-                Ver Locais Disponíveis <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </motion.div>
           </motion.div>
         </div>
@@ -74,15 +68,15 @@ export default function Index() {
               Como funciona?
             </h2>
             <p className="text-muted-foreground">
-              Em apenas 3 passos simples
+              Escolha com calma, sem precisar criar uma conta para explorar.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { step: 1, icon: Smartphone, title: 'Cadastre-se', description: 'Crie sua conta gratuitamente em menos de 1 minuto' },
-              { step: 2, icon: Calendar, title: 'Reserve', description: 'Escolha o espaço, data e horário que desejar' },
-              { step: 3, icon: CheckCircle2, title: 'Aproveite', description: 'Compareça ao local e aproveite o espaço reservado' },
+              { step: 1, icon: MapPin, title: 'Explore', description: 'Compare espaços, capacidade, horários e preços' },
+              { step: 2, icon: Calendar, title: 'Escolha', description: 'Selecione uma data e um ou mais períodos no mesmo dia' },
+              { step: 3, icon: CheckCircle2, title: 'Confirme', description: 'Entre na sua conta para reservar e receber as instruções de pagamento' },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -118,19 +112,19 @@ export default function Index() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-serif mb-3">
-            Tudo que você precisa
+            Tudo claro antes de reservar
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Gerencie reservas, controle presenças e acompanhe pagamentos.
+            As informações importantes ficam reunidas em cada espaço.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: MapPin, title: 'Locais', description: 'Cadastre e gerencie múltiplos espaços' },
-            { icon: Calendar, title: 'Reservas', description: 'Sistema completo de agendamentos' },
-            { icon: Users, title: 'Check-in', description: 'Controle de presença simplificado' },
-            { icon: Shield, title: 'Segurança', description: 'Permissões e acessos configuráveis' },
+            { icon: MapPin, title: 'Espaços', description: 'Veja fotos, descrição e capacidade' },
+            { icon: Calendar, title: 'Horários', description: 'Consulte os períodos antes de escolher' },
+            { icon: Users, title: 'Preço de sócio', description: 'Compare o valor comum e o de sócio' },
+            { icon: Shield, title: 'Regras', description: 'Saiba as condições do espaço antes de confirmar' },
           ].map((feature, index) => (
             <motion.div
               key={index}
@@ -203,18 +197,18 @@ export default function Index() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
           <div className="relative">
             <h2 className="text-2xl sm:text-3xl font-bold text-primary-foreground font-serif mb-4">
-              Pronto para começar?
+              Pronto para escolher seu espaço?
             </h2>
             <p className="text-primary-foreground/80 max-w-lg mx-auto mb-8">
-              Crie sua conta agora e comece a reservar os melhores espaços do Ser Sadia.
+              Explore as opções e veja os horários. O cadastro fica para a hora de reservar.
             </p>
             <Button
               size="lg"
               variant="secondary"
               className="h-13 px-10 text-base font-semibold"
-              onClick={() => navigate('/auth?mode=signup')}
+              onClick={() => navigate('/locations')}
             >
-              Criar Conta Grátis
+              Ver espaços
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
           </div>

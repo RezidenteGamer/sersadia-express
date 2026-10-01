@@ -1,34 +1,19 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Users, Clock, Search, Calendar, Tag } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { MapPin, Users, Clock, Search, ArrowRight, Tag, AlertCircle, X } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BannerCarousel } from '@/components/BannerCarousel';
 import { motion } from 'framer-motion';
+import { useLocations } from '@/hooks/useLocations';
+import { formatCurrency, getLocationPeriods, getMemberPeriodPrice, getPeriodPrice } from '@/lib/locationPresentation';
 
 export default function Locations() {
   const [search, setSearch] = useState('');
-  const navigate = useNavigate();
-
-  const { data: locations, isLoading } = useQuery({
-    queryKey: ['locations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: locations, isLoading, isError, refetch } = useLocations();
 
   const filteredLocations = locations?.filter(location =>
     location.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,36 +26,54 @@ export default function Locations() {
 
       <PageHeader
         title="Nossos Espaços"
-        description="Escolha o espaço perfeito para o seu evento"
+        description="Compare espaços, valores e períodos antes de reservar"
       />
 
       {/* Search */}
       <div className="relative mb-8">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <label htmlFor="location-search" className="sr-only">Buscar espaços</label>
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
         <Input
-          placeholder="Buscar locais..."
-          className="pl-12 h-13 rounded-xl"
+          id="location-search"
+          placeholder="Buscar por nome ou descrição"
+          className="pl-12 pr-12 h-12 rounded-xl"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <button type="button" onClick={() => setSearch('')} aria-label="Limpar busca" className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
+      ) : isError ? (
+        <EmptyState
+          icon={AlertCircle}
+          title="Não foi possível carregar os espaços"
+          description="Confira sua conexão e tente novamente. Seus dados de busca foram mantidos."
+          action={{ label: 'Tentar novamente', onClick: () => { void refetch(); } }}
+        />
       ) : filteredLocations && filteredLocations.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+          <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+            {filteredLocations.length} {filteredLocations.length === 1 ? 'espaço encontrado' : 'espaços encontrados'}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredLocations.map((location, index) => (
-            <motion.div
+            <motion.article
               key={location.id}
-              className="rounded-[20px] bg-card shadow-md overflow-hidden cursor-pointer group"
-              onClick={() => navigate(`/locations/${location.id}`)}
+              className="rounded-2xl bg-card border border-border/70 shadow-sm overflow-hidden group"
               whileHover={{ y: -3, boxShadow: '0 8px 24px -4px hsl(30 20% 10% / 0.14)' }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.3 }}
             >
+              <Link to={`/locations/${location.id}`} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
               {/* Image */}
-              <div className="relative h-[220px] overflow-hidden">
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                 {location.images && location.images[0] ? (
                   <img
                     src={location.images[0]}
@@ -80,59 +83,60 @@ export default function Locations() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                    <MapPin className="w-12 h-12 text-muted-foreground/50" />
+                  <div className="w-full h-full flex flex-col gap-2 items-center justify-center bg-gradient-to-br from-accent to-muted">
+                    <MapPin className="w-10 h-10 text-muted-foreground/60" aria-hidden="true" />
+                    <span className="text-xs text-muted-foreground">Foto em breve</span>
                   </div>
                 )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent" />
-                {/* Title on image */}
-                <h3 className="absolute bottom-3 left-4 text-white font-serif text-lg font-bold drop-shadow-md">
-                  {location.name}
-                </h3>
-                {/* Capacity badge */}
-                <span className="absolute bottom-3 right-4 bg-white/90 text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm" style={{ color: '#1C1410' }}>
-                  👥 {location.capacity} pessoas
-                </span>
               </div>
 
               {/* Body */}
-              <div className="p-4 space-y-3">
+              <div className="p-5 flex flex-col gap-4 min-h-[240px]">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground font-serif">{location.name}</h2>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {location.description || 'Sem descrição disponível'}
                 </p>
-
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>{location.available_start_time.slice(0, 5)} – {location.available_end_time.slice(0, 5)}</span>
                 </div>
 
-                {/* Pricing */}
-                <div className="space-y-0.5">
-                  <p className="text-sm text-muted-foreground">
-                    R$ {location.price_fixed ? Number(location.price_fixed).toFixed(2) : Number(location.price_per_hour).toFixed(2)}{location.price_fixed ? ' (fixo)' : '/período'}
-                  </p>
-                  {(location.price_fixed_member || location.price_per_hour_member) && (
-                    <p className="text-sm font-semibold text-success flex items-center gap-1">
-                      <Tag className="w-3.5 h-3.5" />
-                      Sócio: R$ {location.price_fixed_member ? Number(location.price_fixed_member).toFixed(2) : Number(location.price_per_hour_member).toFixed(2)}{location.price_fixed_member ? '' : '/período'}
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>Até {location.capacity} pessoas</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>{getLocationPeriods(location).map(slot => `${slot.start}–${slot.end}`).join(' · ')}</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto border-t border-border pt-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">A partir de</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(getPeriodPrice(location))} <span className="text-xs font-normal text-muted-foreground">por período</span></p>
+                    {getMemberPeriodPrice(location) != null && (
+                    <p className="text-xs font-semibold text-success flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5" aria-hidden="true" />
+                      Sócio: {formatCurrency(getMemberPeriodPrice(location)!)} por período
                     </p>
                   )}
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary whitespace-nowrap">
+                    Ver horários <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </span>
                 </div>
-
-                <Button variant="outline" className="w-full">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Ver Disponibilidade
-                </Button>
               </div>
-            </motion.div>
+              </Link>
+            </motion.article>
           ))}
+          </div>
         </div>
       ) : (
         <EmptyState
           icon={MapPin}
-          title="Nenhum local encontrado"
-          description={search ? 'Tente buscar por outro termo' : 'Nenhum local disponível no momento'}
+          title={search ? 'Nenhum espaço corresponde à busca' : 'Ainda não há espaços disponíveis'}
+          description={search ? 'Tente outro nome ou limpe a busca.' : 'Volte mais tarde para conferir novas opções.'}
+          action={search ? { label: 'Limpar busca', onClick: () => setSearch('') } : undefined}
         />
       )}
     </AppLayout>

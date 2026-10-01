@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { usePixSettings } from '@/hooks/usePixSettings';
 import { useReceiptUpload } from '@/hooks/useReceiptUpload';
+import { formatCurrency } from '@/lib/locationPresentation';
 
 interface PixPaymentDialogProps {
   open: boolean;
@@ -26,7 +27,7 @@ export function PixPaymentDialog({
   const [copied, setCopied] = useState(false);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const { data: pixSettings } = usePixSettings();
+  const { data: pixSettings, isLoading: pixLoading, refetch: refetchPixSettings } = usePixSettings();
   const { uploadReceipt, removeUnusedReceipt, isUploading } = useReceiptUpload();
 
   const handleCopyCode = async () => {
@@ -49,7 +50,7 @@ export function PixPaymentDialog({
       const path = await uploadReceipt(reservationId, file);
       if (receiptPath) await removeUnusedReceipt(receiptPath);
       setReceiptPath(path);
-      toast.success('Comprovante enviado!');
+      toast.success('Comprovante anexado. Confirme o envio para análise.');
     } catch (error) {
       toast.error('Erro ao enviar comprovante: ' + (error as Error).message);
     }
@@ -57,7 +58,7 @@ export function PixPaymentDialog({
 
   const handleFinish = async () => {
     if (!receiptPath) {
-      toast.error('Por favor, envie o comprovante do PIX antes de confirmar.');
+      toast.error('Anexe o comprovante do PIX antes de enviar para análise.');
       return;
     }
     setIsSaving(true);
@@ -72,7 +73,24 @@ export function PixPaymentDialog({
     }
   };
 
-  if (!pixSettings) return null;
+  if (pixLoading || !pixSettings?.pix_key || !pixSettings.is_active) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reserva criada</DialogTitle>
+            <DialogDescription>
+              {pixLoading
+                ? 'Carregando os dados para pagamento via PIX...'
+                : 'Os dados de pagamento não estão disponíveis agora. Sua reserva permanece registrada; acompanhe-a em Minhas Reservas.'}
+            </DialogDescription>
+          </DialogHeader>
+          {!pixLoading && <Button variant="outline" onClick={() => { void refetchPixSettings(); }}>Tentar novamente</Button>}
+          <Button onClick={() => onOpenChange(false)}>Voltar às minhas reservas</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,10 +98,10 @@ export function PixPaymentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
-            Pagamento via PIX
+            Reserva criada · pagamento pendente
           </DialogTitle>
           <DialogDescription>
-            Escaneie o QR Code ou copie a chave PIX para pagar
+            Pague via PIX e envie o comprovante. A equipe confirmará o pagamento e a reserva.
           </DialogDescription>
         </DialogHeader>
 
@@ -92,7 +110,7 @@ export function PixPaymentDialog({
           <div className="p-3 rounded-lg bg-muted/50 text-center">
             <p className="text-sm text-muted-foreground">{locationName}</p>
             <p className="text-2xl font-bold text-primary">
-              R$ {amount.toFixed(2)}
+              {formatCurrency(amount)}
             </p>
           </div>
 
@@ -149,7 +167,7 @@ export function PixPaymentDialog({
           {/* Receipt Upload */}
           <div className="space-y-2 border-t pt-4">
             <p className="text-sm font-medium text-center">Envie o comprovante do PIX</p>
-            {receiptPath && <p className="text-xs text-success text-center">Comprovante anexado. Você pode selecionar outro arquivo para trocar.</p>}
+            {receiptPath && <p className="text-xs text-success text-center">Comprovante anexado. Confirme o envio abaixo ou selecione outro arquivo.</p>}
               <div>
                 <label htmlFor="receipt-upload" className="cursor-pointer">
                   <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
@@ -184,7 +202,7 @@ export function PixPaymentDialog({
               onClick={handleFinish}
               disabled={!receiptPath || isUploading || isSaving}
             >
-              {isSaving ? 'Salvando...' : 'Já paguei'}
+              {isSaving ? 'Enviando...' : 'Enviar comprovante'}
             </Button>
           </div>
         </div>

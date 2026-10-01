@@ -25,11 +25,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { ImageLightbox } from '@/components/ImageLightbox';
 import type { Json } from '@/integrations/supabase/types';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatCurrency, getLocationPeriods, getMemberPeriodPrice, getPeriodPrice, type LocationPeriod } from '@/lib/locationPresentation';
 
-interface TimeSlot {
-  start: string;
-  end: string;
-}
 export default function LocationDetails() {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -55,7 +53,9 @@ export default function LocationDetails() {
   const [createdAmount, setCreatedAmount] = useState(0);
   const {
     data: location,
-    isLoading
+    isLoading,
+    isError: locationError,
+    refetch: refetchLocation,
   } = useLocation(id!);
   const {
     data: membership
@@ -66,6 +66,7 @@ export default function LocationDetails() {
     data: bookedSlots,
     isLoading: availabilityLoading,
     isError: availabilityError,
+    refetch: refetchAvailability,
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
   const uploadReceipt = useUploadReceipt();
@@ -86,35 +87,23 @@ export default function LocationDetails() {
         <LoadingSpinner />
       </AppLayout>;
   }
+  if (locationError) {
+    return <AppLayout>
+      <EmptyState icon={AlertTriangle} title="Não foi possível carregar este espaço" description="Confira sua conexão e tente novamente." action={{ label: 'Tentar novamente', onClick: () => { void refetchLocation(); } }} />
+    </AppLayout>;
+  }
   if (!location) {
     return <AppLayout>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Local não encontrado</p>
-        </div>
+        <EmptyState icon={MapPin} title="Espaço não encontrado" description="Confira o endereço ou escolha outro espaço no catálogo." action={{ label: 'Ver espaços', onClick: () => navigate('/locations') }} />
       </AppLayout>;
   }
 
   // Get fixed time slots from location - use time_slots field or fallback to legacy fields
   const getFixedTimeSlots = (): {
-    slot: TimeSlot;
+    slot: LocationPeriod;
     available: boolean;
   }[] => {
-    // Try to get time_slots from location (stored as JSON)
-    const locationTimeSlots = Array.isArray(location.time_slots)
-      ? location.time_slots.filter((slot) =>
-          slot !== null && typeof slot === 'object' && !Array.isArray(slot)
-          && typeof slot.start === 'string' && typeof slot.end === 'string').map(slot => slot as unknown as TimeSlot)
-      : null;
-
-    // Default slots if none defined
-    const defaultSlots: TimeSlot[] = [{
-      start: '08:00',
-      end: '17:00'
-    }, {
-      start: '18:30',
-      end: '01:30'
-    }];
-    const slots = locationTimeSlots && locationTimeSlots.length > 0 ? locationTimeSlots : defaultSlots;
+    const slots = getLocationPeriods(location);
 
     // Check availability for each slot
     return slots.map(slot => {
@@ -131,14 +120,14 @@ export default function LocationDetails() {
     });
   };
   const timeSlots = getFixedTimeSlots();
-  const slotKey = (slot: TimeSlot) => `${slot.start}-${slot.end}`;
+  const slotKey = (slot: LocationPeriod) => `${slot.start}-${slot.end}`;
   const selectedSlots = timeSlots
     .filter(({ slot, available }) => available && selectedSlotKeys.includes(slotKey(slot)))
     .map(({ slot }) => slot);
   const allAvailable = timeSlots.length > 1 && timeSlots.every(({ available }) => available);
   const allSelected = allAvailable && selectedSlots.length === timeSlots.length;
 
-  const toggleSlot = (slot: TimeSlot) => {
+  const toggleSlot = (slot: LocationPeriod) => {
     const key = slotKey(slot);
     setSelectedSlotKeys(current => current.includes(key)
       ? current.filter(value => value !== key)
@@ -147,15 +136,7 @@ export default function LocationDetails() {
   const calculatePrice = () => {
     if (selectedSlots.length === 0) return 0;
 
-    // Use member prices if user is a member and member price is set
-    const fixedPrice = isMember && location.price_fixed_member != null ? location.price_fixed_member : location.price_fixed;
-    const hourlyPrice = isMember && location.price_per_hour_member != null ? location.price_per_hour_member : location.price_per_hour;
-
-    // If fixed price is set, use it directly
-    if (fixedPrice != null && fixedPrice > 0) return fixedPrice * selectedSlots.length;
-
-    // Return hourly price (for the period, not calculated by hours)
-    return hourlyPrice * selectedSlots.length;
+    return getPeriodPrice(location, isMember) * selectedSlots.length;
   };
 
   const handleReserve = async () => {
@@ -190,10 +171,16 @@ export default function LocationDetails() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Voltar
       </Button>
+
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-semibold font-serif">{location.name}</h1>
+        <p className="text-sm text-muted-foreground mt-1">Confira os períodos e o valor antes de criar a reserva.</p>
+      </div>
+
       
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Location Info */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
           {/* Image Carousel */}
           <div className="relative rounded-2xl overflow-hidden bg-muted">
             {location.images && location.images.length > 0 ? (
@@ -242,8 +229,9 @@ export default function LocationDetails() {
                 )}
               </Carousel>
             ) : (
-              <div className="aspect-video w-full flex items-center justify-center text-muted-foreground">
-                <MapPin className="w-16 h-16" />
+              <div className="aspect-video w-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <MapPin className="w-12 h-12" />
+                <span className="text-sm">Foto em breve</span>
               </div>
             )}
           </div>
@@ -260,7 +248,7 @@ export default function LocationDetails() {
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">{location.name}</CardTitle>
+              <CardTitle className="text-2xl font-serif">Sobre o espaço</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3 text-sm">
@@ -270,17 +258,17 @@ export default function LocationDetails() {
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  <span>{location.available_start_time.substring(0, 5)} - {location.available_end_time.substring(0, 5)}</span>
+                  <span>{getLocationPeriods(location).map(period => `${period.start}–${period.end}`).join(' · ')}</span>
                 </span>
                 <div className="flex items-center gap-2 text-primary font-medium">
                   <DollarSign className="w-4 h-4" />
                   <div className="flex flex-col">
                     <span>
-                      {location.price_fixed ? `R$ ${location.price_fixed.toFixed(2)} (fixo)` : `R$ ${location.price_per_hour.toFixed(2)}/período`}
+                      {formatCurrency(getPeriodPrice(location, isMember))} por período
                     </span>
-                    {!isMember && (location.price_fixed_member || location.price_per_hour_member) && (
+                    {!isMember && getMemberPeriodPrice(location) !== null && (
                       <span className="text-[11px] text-muted-foreground font-normal">
-                        Sócio: R$ {location.price_fixed_member ? location.price_fixed_member.toFixed(2) : location.price_per_hour_member?.toFixed(2)}{location.price_fixed_member ? '' : '/período'}
+                        Sócio: {formatCurrency(getMemberPeriodPrice(location)!)} por período
                       </span>
                     )}
                   </div>
@@ -315,10 +303,11 @@ export default function LocationDetails() {
         </div>
         
         {/* Booking Panel */}
-        <div className="space-y-4">
+        <div className="space-y-4 order-1 lg:order-2">
           <Card>
             <CardHeader>
               <CardTitle className="font-serif">Fazer Reserva</CardTitle>
+              <p className="text-sm text-muted-foreground">Escolha a data e os períodos. Depois, revise a reserva e pague via PIX.</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Calendar */}
@@ -330,13 +319,17 @@ export default function LocationDetails() {
               {/* Time Slots */}
               {selectedDate && <div>
                   <Label className="mb-2 block">Selecione um ou mais períodos</Label>
-                  {availabilityError && <p className="mb-2 text-sm text-destructive">Não foi possível consultar a disponibilidade. Tente novamente.</p>}
+                  {availabilityError && <div className="mb-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                    <p>Não foi possível consultar a disponibilidade.</p>
+                    <button type="button" className="font-semibold underline mt-1" onClick={() => { void refetchAvailability(); }}>Tentar novamente</button>
+                  </div>}
                   <div className="grid grid-cols-1 gap-2">
                     {timeSlots.map(({
                   slot,
                   available
-                }) => <button type="button" key={slotKey(slot)} onClick={() => toggleSlot(slot)} disabled={!available || availabilityLoading || availabilityError} aria-pressed={selectedSlotKeys.includes(slotKey(slot))} className={cn("p-4 text-sm rounded-xl border-2 transition-all text-center font-medium", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50 line-through", available && selectedSlotKeys.includes(slotKey(slot)) ? "bg-primary text-primary-foreground border-primary shadow-sm" : available && "bg-accent border-transparent hover:border-primary")}>
-                        <span className="font-medium">{slot.start} - {slot.end}</span>
+                }, index) => <button type="button" key={slotKey(slot)} onClick={() => toggleSlot(slot)} disabled={!available || availabilityLoading || availabilityError} aria-pressed={selectedSlotKeys.includes(slotKey(slot))} className={cn("p-4 text-sm rounded-xl border-2 transition-all text-left font-medium flex items-center justify-between gap-3", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50", available && selectedSlotKeys.includes(slotKey(slot)) ? "bg-primary text-primary-foreground border-primary shadow-sm" : available && "bg-accent border-transparent hover:border-primary")}>
+                        <span><span className="block text-xs opacity-80">Período {index + 1}</span><span className="font-semibold">{slot.start}–{slot.end}</span></span>
+                        <span className="text-xs">{availabilityLoading ? 'Consultando' : available ? 'Disponível' : 'Indisponível'}</span>
                       </button>)}
                   </div>
                   {allAvailable && <Button type="button" variant="outline" className="w-full mt-2" onClick={() => setSelectedSlotKeys(allSelected ? [] : timeSlots.map(({ slot }) => slotKey(slot)))}>
@@ -345,17 +338,19 @@ export default function LocationDetails() {
                 </div>}
               
               {/* Price Summary */}
-              {selectedSlots.length > 0 && <div className="p-4 rounded-xl space-y-2 bg-accent">
-                  <p className="text-sm">{selectedSlots.length} {selectedSlots.length === 1 ? 'período selecionado' : 'períodos selecionados'} · um pagamento</p>
+              {selectedSlots.length > 0 && <div className="p-4 rounded-xl space-y-2 bg-accent" aria-live="polite">
+                  <p className="text-sm font-semibold">Resumo da reserva</p>
+                  <p className="text-sm text-muted-foreground">{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} · {selectedSlots.map(slot => `${slot.start}–${slot.end}`).join(' e ')}</p>
+                  <p className="text-xs text-muted-foreground">{selectedSlots.length} {selectedSlots.length === 1 ? 'período' : 'períodos'} · uma reserva · um pagamento</p>
                   <div className="flex justify-between items-center">
                     <span className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Valor Total</span>
                     <span className="text-2xl font-bold text-primary font-serif">
-                      R$ {calculatePrice().toFixed(2)}
+                      {formatCurrency(calculatePrice())}
                     </span>
                   </div>
                   {isMember && <div className="text-xs text-success flex items-center gap-1">
                       <Tag className="w-3 h-3" />
-                      Desconto de sócio aplicado
+                      Valor para sócio aplicado
                     </div>}
                 </div>}
               
@@ -366,7 +361,7 @@ export default function LocationDetails() {
                 }
                 setShowConfirmDialog(true);
               }}>
-                {user ? 'Solicitar Reserva' : 'Entrar para Reservar'}
+                {user ? 'Revisar reserva' : 'Entrar para reservar'}
               </Button>
             </CardContent>
           </Card>
@@ -380,9 +375,9 @@ export default function LocationDetails() {
       }}>
         <DialogContent className="max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-serif">Confirmar Reserva</DialogTitle>
+            <DialogTitle className="font-serif">Revisar e criar reserva</DialogTitle>
             <DialogDescription>
-              Revise os detalhes da reserva e aceite as regras do local para continuar.
+              Ao continuar, a reserva será criada com pagamento pendente. Depois, você verá as instruções para pagar via PIX.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -392,7 +387,7 @@ export default function LocationDetails() {
                 locale: ptBR
               })}</p>
               <p><strong>Horários:</strong> {selectedSlots.map(slot => `${slot.start} - ${slot.end}`).join(' e ')}</p>
-              <p><strong>Valor:</strong> R$ {calculatePrice().toFixed(2)}</p>
+              <p><strong>Valor:</strong> {formatCurrency(calculatePrice())}</p>
             </div>
             
             {/* Rules Section */}
@@ -436,7 +431,7 @@ export default function LocationDetails() {
               onClick={handleReserve} 
               disabled={createReservation.isPending || isProcessingPayment || (location.rules && !acceptedRules)}
             >
-              {isProcessingPayment ? 'Processando...' : createReservation.isPending ? 'Enviando...' : 'Confirmar e Pagar'}
+              {isProcessingPayment ? 'Criando...' : createReservation.isPending ? 'Enviando...' : 'Criar reserva'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -445,7 +440,10 @@ export default function LocationDetails() {
       {/* PIX Payment Dialog */}
       <PixPaymentDialog
         open={showPixDialog}
-        onOpenChange={setShowPixDialog}
+        onOpenChange={(open) => {
+          setShowPixDialog(open);
+          if (!open && createdReservationId) navigate('/my-reservations');
+        }}
         amount={createdAmount}
         locationName={location.name}
         reservationId={createdReservationId || ''}
@@ -453,7 +451,7 @@ export default function LocationDetails() {
           if (createdReservationId) {
             await uploadReceipt.mutateAsync({ reservationId: createdReservationId, receiptUrl });
           }
-          toast.success('Reserva criada! O pagamento será confirmado pelo administrador.');
+          toast.success('Comprovante enviado. O pagamento será analisado pela equipe.');
           navigate('/my-reservations');
         }}
       />

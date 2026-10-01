@@ -24,10 +24,11 @@ import { useUploadReceipt } from '@/hooks/usePayments';
 import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { parseCalendarDate } from '@/lib/businessDate';
 import { motion } from 'framer-motion';
+import { formatCurrency } from '@/lib/locationPresentation';
 
 export default function MyReservations() {
-  const { data: reservations, isLoading } = useUserReservations();
-  const { data: payments } = usePayments();
+  const { data: reservations, isLoading, isError: reservationsError, refetch: refetchReservations } = useUserReservations();
+  const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
   const { data: locations } = useLocations();
   const cancelReservation = useCancelReservation();
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function MyReservations() {
   const [pixPaymentReservation, setPixPaymentReservation] = useState<NonNullable<typeof reservations>[0] | null>(null);
 
   const isReservationPaid = (reservationId: string) => {
+    if (paymentsLoading || paymentsError) return false;
     return payments?.some(p => p.reservation_id === reservationId && p.is_paid);
   };
 
@@ -52,11 +54,22 @@ export default function MyReservations() {
     return <AppLayout><LoadingSpinner /></AppLayout>;
   }
 
+  if (reservationsError) {
+    return <AppLayout>
+      <PageHeader title="Minhas Reservas" />
+      <EmptyState icon={AlertTriangle} title="Não foi possível carregar suas reservas" description="Confira sua conexão e tente novamente." action={{ label: 'Tentar novamente', onClick: () => { void refetchReservations(); } }} />
+    </AppLayout>;
+  }
+
   const pendingReservations = reservations?.filter(r => r.status === 'pending') || [];
   const confirmedReservations = reservations?.filter(r => ['confirmed', 'presence_confirmed'].includes(r.status)) || [];
   const pastReservations = reservations?.filter(r => ['rejected', 'cancelled_by_user', 'cancelled_by_admin', 'expired'].includes(r.status)) || [];
 
   const handleOpenCancel = (reservation: NonNullable<typeof reservations>[0]) => {
+    if (paymentsLoading || paymentsError) {
+      toast.error('Aguarde a consulta do pagamento antes de cancelar.');
+      return;
+    }
     const [year, month, day] = reservation.reservation_date.split('-').map(Number);
     const [hours, minutes] = reservation.start_time.split(':').map(Number);
     const reservationStart = new Date(year, month - 1, day, hours, minutes);
@@ -87,14 +100,21 @@ export default function MyReservations() {
   };
 
   const ReservationCard = ({ reservation }: { reservation: NonNullable<typeof reservations>[0] }) => {
-    const isPaid = isReservationPaid(reservation.id);
-    const showPayButton = ['pending', 'confirmed', 'presence_confirmed'].includes(reservation.status) && !isPaid;
+    const payment = payments?.find(item => item.reservation_id === reservation.id);
+    const isPaid = payment?.is_paid === true;
+    const receiptSubmitted = Boolean(payment?.receipt_url);
+    const showPayButton = ['pending', 'confirmed'].includes(reservation.status) && !isPaid && !paymentsLoading && !paymentsError;
+    const paymentLabel = paymentsError ? 'Pagamento indisponível'
+      : paymentsLoading ? 'Consultando pagamento'
+      : isPaid ? 'Pagamento confirmado'
+      : receiptSubmitted ? 'Comprovante em análise'
+      : 'Aguardando pagamento';
 
     return (
       <motion.div whileHover={{ y: -2 }}>
         <Card className="rounded-2xl">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
               <div className="flex gap-3 flex-1 min-w-0">
                 <div className="w-[72px] h-[72px] rounded-xl overflow-hidden bg-muted flex-shrink-0">
                   {reservation.location?.images?.[0] ? (
@@ -131,27 +151,25 @@ export default function MyReservations() {
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <StatusBadge status={reservation.status} />
-                    {isPaid && <span className="text-[11px] px-2 py-0.5 bg-success/10 text-success rounded-full font-medium">Pago</span>}
-                    {!isPaid && <span className="text-[11px] px-2 py-0.5 bg-warning/10 text-warning rounded-full font-medium">Pgto Pendente</span>}
-                    <span className="text-sm font-semibold text-primary">R$ {reservation.total_price.toFixed(2)}</span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${isPaid ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>{paymentLabel}</span>
+                    <span className="text-sm font-semibold text-primary">{formatCurrency(reservation.total_price)}</span>
                   </div>
+                  {reservation.status === 'pending' && !paymentsError && !paymentsLoading && (
+                    <p className="text-xs text-muted-foreground">
+                      {isPaid ? 'Pagamento registrado. Aguarde a confirmação da reserva.' : receiptSubmitted ? 'A equipe está conferindo seu comprovante.' : 'Pague via PIX para dar andamento à reserva.'}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReservation(reservation)}>
-                  <Eye className="w-4 h-4" />
-                </Button>
-                {showPayButton && (
-                  <Button size="icon" className="h-8 w-8" onClick={() => handlePayment(reservation)}>
-                    <CreditCard className="w-4 h-4" />
-                  </Button>
-                )}
-                {['pending', 'confirmed'].includes(reservation.status) && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleOpenCancel(reservation)}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-border flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => setViewReservation(reservation)}><Eye className="w-4 h-4 mr-1.5" />Ver detalhes</Button>
+              {showPayButton && (
+                <Button size="sm" onClick={() => handlePayment(reservation)}><CreditCard className="w-4 h-4 mr-1.5" />{receiptSubmitted ? 'Enviar novo comprovante' : 'Pagar via PIX'}</Button>
+              )}
+              {['pending', 'confirmed'].includes(reservation.status) && (
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={paymentsLoading || paymentsError} onClick={() => handleOpenCancel(reservation)}><X className="w-4 h-4 mr-1.5" />Cancelar</Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -161,12 +179,19 @@ export default function MyReservations() {
 
   return (
     <AppLayout>
-      <PageHeader title="Minhas Reservas" description="Acompanhe todas as suas reservas" />
+      <PageHeader title="Minhas Reservas" description="Acompanhe pagamento, confirmação e check-in" />
 
-      <Tabs defaultValue="confirmed" className="space-y-4">
-        <TabsList>
+      {paymentsError && (
+        <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <p>Não foi possível consultar os pagamentos. Tente novamente antes de pagar ou cancelar.</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => { void refetchPayments(); }}>Tentar novamente</Button>
+        </div>
+      )}
+
+      <Tabs defaultValue={pendingReservations.length > 0 ? 'pending' : 'confirmed'} className="space-y-4">
+        <TabsList className="h-auto flex flex-wrap justify-start">
+          <TabsTrigger value="pending">Em andamento ({pendingReservations.length})</TabsTrigger>
           <TabsTrigger value="confirmed">Confirmadas ({confirmedReservations.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pendentes ({pendingReservations.length})</TabsTrigger>
           <TabsTrigger value="history">Histórico ({pastReservations.length})</TabsTrigger>
         </TabsList>
 
@@ -178,7 +203,7 @@ export default function MyReservations() {
 
         <TabsContent value="pending" className="space-y-3">
           {pendingReservations.length === 0 ? (
-            <EmptyState icon={Calendar} title="Nenhum pagamento aguardando" description="Suas reservas aguardando aprovação aparecerão aqui" tint="amber" />
+            <EmptyState icon={Calendar} title="Nenhuma reserva em andamento" description="Reservas aguardando pagamento ou confirmação aparecerão aqui." tint="amber" />
           ) : pendingReservations.map(r => <ReservationCard key={r.id} reservation={r} />)}
         </TabsContent>
 
