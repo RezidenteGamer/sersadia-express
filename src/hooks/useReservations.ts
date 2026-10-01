@@ -134,6 +134,7 @@ export function useCreateReservation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['location-availability'] });
       toast.success('Reserva solicitada com sucesso!');
     },
     onError: (error) => {

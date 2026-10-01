@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useAllReservations, Reservation } from '@/hooks/useReservations';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { useLocations } from '@/hooks/useLocations';
 import { usePerformCheckin, useCheckinSettings, useUpdateCheckinSettings } from '@/hooks/useCheckin';
 import { format } from 'date-fns';
@@ -433,7 +434,7 @@ export function AdminCheckinContent() {
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <p><strong>Usuário:</strong> {checkinReservation.user_profile?.full_name}</p>
                 <p><strong>Local:</strong> {checkinReservation.location?.name}</p>
-                <p><strong>Horário:</strong> {checkinReservation.start_time.substring(0, 5)} - {checkinReservation.end_time.substring(0, 5)}</p>
+                <p><strong>Horários:</strong> {formatReservationPeriods(checkinReservation)}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="code">Código da Reserva</Label>
@@ -563,7 +564,7 @@ function ReservationList({
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    <span>{reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}</span>
+                    <span>{formatReservationPeriods(reservation)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <CalendarIcon className="w-4 h-4" />

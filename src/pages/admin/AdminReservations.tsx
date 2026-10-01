@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAllReservations, useUpdateReservationStatus, useCancelReservation, Reservation } from '@/hooks/useReservations';
 import { useLocations } from '@/hooks/useLocations';
 import { usePayments } from '@/hooks/usePayments';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Search, Check, X, Eye, Filter, MapPin, Clock, User, AlertTriangle } from 'lucide-react';
@@ -189,7 +190,7 @@ export function AdminReservationsContent() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>{reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}</span>
+                        <span>{formatReservationPeriods(reservation)}</span>
                       </div>
                       <span className="text-primary font-medium">
                         R$ {reservation.total_price.toFixed(2)}
@@ -285,7 +286,7 @@ export function AdminReservationsContent() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Horário</p>
-                  <p className="font-medium">{viewReservation.start_time.substring(0, 5)} - {viewReservation.end_time.substring(0, 5)}</p>
+                  <p className="font-medium">{formatReservationPeriods(viewReservation)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Valor</p>

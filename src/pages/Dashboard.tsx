@@ -14,6 +14,7 @@ import { ptBR } from 'date-fns/locale';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BannerCarousel } from '@/components/BannerCarousel';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
@@ -130,7 +131,7 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(reservation.reservation_date), "dd 'de' MMMM", { locale: ptBR })}
                       {' • '}
-                      {reservation.start_time.slice(0, 5)} - {reservation.end_time.slice(0, 5)}
+                      {formatReservationPeriods(reservation)}
                     </p>
                   </div>
                   <StatusBadge status={reservation.status} />

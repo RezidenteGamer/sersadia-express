@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Calendar } from 'lucide-react';
 import type { ReservationWithDetails } from './types';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'border-l-warning',
@@ -109,7 +110,7 @@ export function ReservationList({ reservations, selectedId, onSelect, isLoading,
                 {/* Date + Value */}
                 <div className="text-right shrink-0">
                   <p className="text-[12px] text-muted-foreground">
-                    {format(new Date(r.reservation_date + 'T00:00:00'), 'dd/MM')} · {r.start_time.substring(0, 5)}–{r.end_time.substring(0, 5)}
+                    {format(new Date(r.reservation_date + 'T00:00:00'), 'dd/MM')} · {formatReservationPeriods(r)}
                   </p>
                   <p className="text-[13px] font-semibold">R$ {r.total_price.toFixed(2)}</p>
                 </div>

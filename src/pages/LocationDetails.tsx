@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useLocation, useLocationAvailability } from '@/hooks/useLocations';
 import { useCreateReservation } from '@/hooks/useReservations';
-import { useCreatePayment, useUploadReceipt } from '@/hooks/usePayments';
+import { useUploadReceipt } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMembership } from '@/hooks/useMembers';
 import { format, addDays } from 'date-fns';
@@ -44,13 +44,14 @@ export default function LocationDetails() {
     user
   } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [selectedSlotKeys, setSelectedSlotKeys] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPixDialog, setShowPixDialog] = useState(false);
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [createdReservationId, setCreatedReservationId] = useState<string | null>(null);
+  const [createdAmount, setCreatedAmount] = useState(0);
   const {
     data: location,
     isLoading
@@ -61,10 +62,11 @@ export default function LocationDetails() {
   const isMember = !!membership;
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const {
-    data: bookedSlots
+    data: bookedSlots,
+    isLoading: availabilityLoading,
+    isError: availabilityError,
   } = useLocationAvailability(id!, dateStr);
   const createReservation = useCreateReservation();
-  const createPayment = useCreatePayment();
   const uploadReceipt = useUploadReceipt();
 
   // Sync carousel state
@@ -97,7 +99,11 @@ export default function LocationDetails() {
     available: boolean;
   }[] => {
     // Try to get time_slots from location (stored as JSON)
-    const locationTimeSlots = (location as any).time_slots as TimeSlot[] | null;
+    const locationTimeSlots = Array.isArray(location.time_slots)
+      ? location.time_slots.filter((slot): slot is TimeSlot =>
+          slot !== null && typeof slot === 'object' && !Array.isArray(slot)
+          && typeof slot.start === 'string' && typeof slot.end === 'string')
+      : null;
 
     // Default slots if none defined
     const defaultSlots: TimeSlot[] = [{
@@ -124,47 +130,56 @@ export default function LocationDetails() {
     });
   };
   const timeSlots = getFixedTimeSlots();
+  const slotKey = (slot: TimeSlot) => `${slot.start}-${slot.end}`;
+  const selectedSlots = timeSlots
+    .filter(({ slot, available }) => available && selectedSlotKeys.includes(slotKey(slot)))
+    .map(({ slot }) => slot);
+  const allAvailable = timeSlots.length > 1 && timeSlots.every(({ available }) => available);
+  const allSelected = allAvailable && selectedSlots.length === timeSlots.length;
+
+  const toggleSlot = (slot: TimeSlot) => {
+    const key = slotKey(slot);
+    setSelectedSlotKeys(current => current.includes(key)
+      ? current.filter(value => value !== key)
+      : [...current, key]);
+  };
   const calculatePrice = () => {
-    if (!selectedSlot) return 0;
+    if (selectedSlots.length === 0) return 0;
 
     // Use member prices if user is a member and member price is set
     const fixedPrice = isMember && location.price_fixed_member != null ? location.price_fixed_member : location.price_fixed;
     const hourlyPrice = isMember && location.price_per_hour_member != null ? location.price_per_hour_member : location.price_per_hour;
 
     // If fixed price is set, use it directly
-    if (fixedPrice != null && fixedPrice > 0) return fixedPrice;
+    if (fixedPrice != null && fixedPrice > 0) return fixedPrice * selectedSlots.length;
 
     // Return hourly price (for the period, not calculated by hours)
-    return hourlyPrice;
+    return hourlyPrice * selectedSlots.length;
   };
 
   const handleReserve = async () => {
-    if (!selectedDate || !selectedSlot || !user) return;
+    if (!selectedDate || selectedSlots.length === 0 || !user || availabilityLoading || availabilityError) return;
     
     setIsProcessingPayment(true);
     
     try {
+      const amount = calculatePrice();
       const reservation = await createReservation.mutateAsync({
         location_id: id!,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
-        start_time: selectedSlot.start,
-        end_time: selectedSlot.end,
-        total_price: calculatePrice(),
+        start_time: selectedSlots[0].start,
+        end_time: selectedSlots[selectedSlots.length - 1].end,
+        time_slots: selectedSlots,
+        total_price: amount,
         user_notes: notes || null
       });
 
-      // Create payment record
-      await createPayment.mutateAsync({
-        reservationId: reservation.id,
-        amount: calculatePrice(),
-      });
-
       setCreatedReservationId(reservation.id);
+      setCreatedAmount(amount);
       setShowConfirmDialog(false);
       setShowPixDialog(true);
     } catch (error) {
       console.error('Reservation error:', error);
-      toast.error('Erro ao criar reserva.');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -289,7 +304,7 @@ export default function LocationDetails() {
                     {location.rules.split('\n').filter(Boolean).map((rule, i) => (
                       <li key={i} className="flex gap-2 text-sm text-foreground border-b border-border/50 pb-2 last:border-0 last:pb-0">
                         <span className="text-primary font-bold min-w-[20px]">{i + 1}.</span>
-                        <span>{rule.replace(/^\d+[\.\)]\s*/, '')}</span>
+                        <span>{rule.replace(/^\d+[.)]\s*/, '')}</span>
                       </li>
                     ))}
                   </ol>
@@ -308,24 +323,29 @@ export default function LocationDetails() {
               {/* Calendar */}
               <div>
                 <Label className="mb-2 block">Selecione a Data</Label>
-                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => date < new Date()} className="rounded-xl border pointer-events-auto" locale={ptBR} />
+                <Calendar mode="single" selected={selectedDate} onSelect={date => { setSelectedDate(date); setSelectedSlotKeys([]); }} disabled={date => date < new Date()} className="rounded-xl border pointer-events-auto" locale={ptBR} />
               </div>
               
               {/* Time Slots */}
               {selectedDate && <div>
-                  <Label className="mb-2 block">Selecione o Período</Label>
+                  <Label className="mb-2 block">Selecione um ou mais períodos</Label>
+                  {availabilityError && <p className="mb-2 text-sm text-destructive">Não foi possível consultar a disponibilidade. Tente novamente.</p>}
                   <div className="grid grid-cols-1 gap-2">
                     {timeSlots.map(({
                   slot,
                   available
-                }) => <button key={`${slot.start}-${slot.end}`} onClick={() => available && setSelectedSlot(slot)} disabled={!available} className={cn("p-4 text-sm rounded-xl border-2 transition-all text-center font-medium", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50 line-through", available && selectedSlot?.start === slot.start && selectedSlot?.end === slot.end ? "bg-primary text-primary-foreground border-primary shadow-sm" : available && "bg-accent border-transparent hover:border-primary")}>
+                }) => <button type="button" key={slotKey(slot)} onClick={() => toggleSlot(slot)} disabled={!available || availabilityLoading || availabilityError} aria-pressed={selectedSlotKeys.includes(slotKey(slot))} className={cn("p-4 text-sm rounded-xl border-2 transition-all text-center font-medium", !available && "bg-muted text-muted-foreground cursor-not-allowed opacity-50 line-through", available && selectedSlotKeys.includes(slotKey(slot)) ? "bg-primary text-primary-foreground border-primary shadow-sm" : available && "bg-accent border-transparent hover:border-primary")}>
                         <span className="font-medium">{slot.start} - {slot.end}</span>
                       </button>)}
                   </div>
+                  {allAvailable && <Button type="button" variant="outline" className="w-full mt-2" onClick={() => setSelectedSlotKeys(allSelected ? [] : timeSlots.map(({ slot }) => slotKey(slot)))}>
+                    {allSelected ? 'Desmarcar todos os períodos' : 'Selecionar todos os períodos (1 reserva)'}
+                  </Button>}
                 </div>}
               
               {/* Price Summary */}
-              {selectedSlot && <div className="p-4 rounded-xl space-y-2 bg-accent">
+              {selectedSlots.length > 0 && <div className="p-4 rounded-xl space-y-2 bg-accent">
+                  <p className="text-sm">{selectedSlots.length} {selectedSlots.length === 1 ? 'período selecionado' : 'períodos selecionados'} · um pagamento</p>
                   <div className="flex justify-between items-center">
                     <span className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Valor Total</span>
                     <span className="text-2xl font-bold text-primary font-serif">
@@ -338,7 +358,7 @@ export default function LocationDetails() {
                     </div>}
                 </div>}
               
-              <Button className="w-full" size="lg" disabled={!selectedDate || !selectedSlot} onClick={() => {
+              <Button className="w-full" size="lg" disabled={!selectedDate || selectedSlots.length === 0 || availabilityLoading || availabilityError} onClick={() => {
                 if (!user) {
                   navigate(`/auth?redirect=/locations/${id}`);
                   return;
@@ -370,7 +390,7 @@ export default function LocationDetails() {
               <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", {
                 locale: ptBR
               })}</p>
-              <p><strong>Horário:</strong> {selectedSlot?.start} - {selectedSlot?.end}</p>
+              <p><strong>Horários:</strong> {selectedSlots.map(slot => `${slot.start} - ${slot.end}`).join(' e ')}</p>
               <p><strong>Valor:</strong> R$ {calculatePrice().toFixed(2)}</p>
             </div>
             
@@ -425,7 +445,7 @@ export default function LocationDetails() {
       <PixPaymentDialog
         open={showPixDialog}
         onOpenChange={setShowPixDialog}
-        amount={calculatePrice()}
+        amount={createdAmount}
         locationName={location.name}
         onPaymentComplete={async (receiptUrl) => {
           if (createdReservationId) {

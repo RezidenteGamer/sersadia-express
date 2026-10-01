@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Calendar, Check, Clock, Copy, DollarSign, MapPin, Search, User, Key } from 'lucide-react';
 import { copyToClipboard } from '@/lib/native';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 
 export function AdminRefundsContent() {
   const { data: requests, isLoading } = useCancellationRequests();
@@ -101,7 +102,7 @@ export function AdminRefundsContent() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{request.start_time.substring(0, 5)} - {request.end_time.substring(0, 5)}</span>
+                  <span>{formatReservationPeriods(request)}</span>
                 </div>
                 <span className="text-primary font-medium">R$ {request.total_price.toFixed(2)}</span>
               </div>

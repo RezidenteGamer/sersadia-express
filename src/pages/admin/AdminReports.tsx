@@ -214,15 +214,21 @@ export function AdminReportsContent() {
       
       const { data, error } = await supabase
         .from('reservations')
-        .select('start_time')
+        .select('start_time, time_slots')
         .gte('created_at', startDate);
       
       if (error) throw error;
       
       const counts: Record<string, number> = {};
       data.forEach(r => {
-        const hour = r.start_time.substring(0, 2) + ':00';
-        counts[hour] = (counts[hour] || 0) + 1;
+        const starts = Array.isArray(r.time_slots)
+          ? r.time_slots.map(slot => slot && typeof slot === 'object' && !Array.isArray(slot) ? slot.start : null)
+          : [r.start_time];
+        starts.forEach(start => {
+          if (typeof start !== 'string') return;
+          const hour = start.substring(0, 2) + ':00';
+          counts[hour] = (counts[hour] || 0) + 1;
+        });
       });
       
       return Object.entries(counts)

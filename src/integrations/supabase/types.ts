@@ -489,6 +489,7 @@ export type Database = {
           start_time: string
           status: Database["public"]["Enums"]["reservation_status"]
           total_price: number
+          time_slots: Json | null
           updated_at: string
           user_id: string
           user_notes: string | null
@@ -510,6 +511,7 @@ export type Database = {
           start_time: string
           status?: Database["public"]["Enums"]["reservation_status"]
           total_price?: number
+          time_slots?: Json | null
           updated_at?: string
           user_id: string
           user_notes?: string | null
@@ -531,6 +533,7 @@ export type Database = {
           start_time?: string
           status?: Database["public"]["Enums"]["reservation_status"]
           total_price?: number
+          time_slots?: Json | null
           updated_at?: string
           user_id?: string
           user_notes?: string | null
@@ -641,6 +644,10 @@ export type Database = {
     Functions: {
       check_membership_status: { Args: never; Returns: boolean }
       expire_pending_reservations: { Args: never; Returns: number }
+      get_location_booked_slots: {
+        Args: { _location_id: string; _date: string }
+        Returns: { start_time: string; end_time: string }[]
+      }
       get_membership_by_mbrf_id: {
         Args: { _mbrf_id: string }
         Returns: {

@@ -47,12 +47,10 @@ export function useLocationAvailability(locationId: string, date: string) {
   return useQuery({
     queryKey: ['location-availability', locationId, date],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reservations')
-        .select('start_time, end_time, status')
-        .eq('location_id', locationId)
-        .eq('reservation_date', date)
-        .in('status', ['pending', 'confirmed', 'presence_confirmed']);
+      const { data, error } = await supabase.rpc('get_location_booked_slots', {
+        _location_id: locationId,
+        _date: date,
+      });
       
       if (error) throw error;
       return data;

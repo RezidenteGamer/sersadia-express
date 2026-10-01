@@ -19,6 +19,7 @@ import { usePerformCheckin } from '@/hooks/useCheckin';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ReservationWithDetails } from './types';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 
 const PAYMENT_METHODS = [
   { value: 'pix', label: 'PIX' },
@@ -143,7 +144,7 @@ export function ReservationDetail({ reservation: r }: DetailProps) {
           </div>
           <div className="flex items-center gap-3">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <p className="text-sm">{r.start_time.substring(0, 5)} – {r.end_time.substring(0, 5)}</p>
+            <p className="text-sm">{formatReservationPeriods(r)}</p>
           </div>
         </div>
 

@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PixPaymentDialog } from '@/components/PixPaymentDialog';
 import { useUploadReceipt } from '@/hooks/usePayments';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 import { motion } from 'framer-motion';
 
 export default function MyReservations() {
@@ -125,7 +126,7 @@ export default function MyReservations() {
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>{reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}</span>
+                    <span>{formatReservationPeriods(reservation)}</span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <StatusBadge status={reservation.status} />
@@ -245,7 +246,7 @@ export default function MyReservations() {
                 <p><strong>Código:</strong> {viewReservation.code}</p>
                 <p><strong>Local:</strong> {viewReservation.location?.name}</p>
                 <p><strong>Data:</strong> {format(new Date(viewReservation.reservation_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-                <p><strong>Horário:</strong> {viewReservation.start_time.substring(0, 5)} - {viewReservation.end_time.substring(0, 5)}</p>
+                <p><strong>Horários:</strong> {formatReservationPeriods(viewReservation)}</p>
                 <p><strong>Valor:</strong> R$ {viewReservation.total_price.toFixed(2)}</p>
                 <div className="flex items-center gap-2">
                   <strong>Status:</strong>

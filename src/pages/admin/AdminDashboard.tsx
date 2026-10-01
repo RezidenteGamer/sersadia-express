@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, MapPin, Users, DollarSign, Clock, ArrowRight, CheckCircle2, AlertCircle, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatReservationPeriods } from '@/lib/reservationPeriods';
 export function AdminDashboardContent() {
   const today = new Date().toISOString().split('T')[0];
 
@@ -184,7 +185,7 @@ export function AdminDashboardContent() {
                     <div className="space-y-1">
                       <p className="font-medium text-sm">{reservation.user_profile?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {reservation.location?.name} • {reservation.start_time.substring(0, 5)} - {reservation.end_time.substring(0, 5)}
+                        {reservation.location?.name} • {formatReservationPeriods(reservation)}
                       </p>
                     </div>
                     <StatusBadge status={reservation.status} />
